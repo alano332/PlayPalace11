@@ -238,6 +238,10 @@ class WarState(DataClassJSONMixin):
     defender_prepared: bool = False
     battle_in_progress: bool = False
 
+    # Current round dice rolls (for interactive rolling)
+    attacker_roll: int = 0  # Current round roll from attacker
+    defender_roll: int = 0  # Current round roll from defender
+
     # Dice rolls (for display/replay)
     attacker_dice: list[int] = field(default_factory=list)
     defender_dice: list[int] = field(default_factory=list)
@@ -265,6 +269,15 @@ class WarState(DataClassJSONMixin):
         """Check if both sides have prepared their forces."""
         return self.attacker_prepared and self.defender_prepared
 
+    def is_both_rolled(self) -> bool:
+        """Check if both sides have rolled for the current round."""
+        return self.attacker_roll > 0 and self.defender_roll > 0
+
+    def reset_round_rolls(self) -> None:
+        """Reset rolls for a new round."""
+        self.attacker_roll = 0
+        self.defender_roll = 0
+
     def reset(self) -> None:
         """Reset war state for a new war."""
         self.attacker_index = -1
@@ -281,6 +294,8 @@ class WarState(DataClassJSONMixin):
         self.attacker_prepared = False
         self.defender_prepared = False
         self.battle_in_progress = False
+        self.attacker_roll = 0
+        self.defender_roll = 0
         self.attacker_dice = []
         self.defender_dice = []
         self.cancelled_by_olympics = False

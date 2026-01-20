@@ -240,99 +240,134 @@ def prepare_forces(
     return True
 
 
-def roll_battle_dice(
-    game: AgeOfHeroesGame, is_attacker: bool
-) -> tuple[int, int, int]:
-    """Roll dice for battle. Returns (die1, die2, bonus)."""
+def player_roll_war_dice(game: AgeOfHeroesGame, player: AgeOfHeroesPlayer) -> int:
+    """Player clicks to roll dice for war. Returns the roll value (1d6)."""
     war = game.war_state
     active_players = game.get_active_players()
+    player_index = active_players.index(player)
 
-    # Roll two dice
-    die1 = random.randint(1, 6)
-    die2 = random.randint(1, 6)
-    base_total = die1 + die2
+    # Roll one die (war uses 1d6, not 2d6 like setup)
+    die_roll = random.randint(1, 6)
 
-    # Calculate bonuses
-    bonus = 0
+    # Store roll for this player
+    if player_index == war.attacker_index:
+        war.attacker_roll = die_roll
+        war.attacker_dice = [die_roll]
+    elif player_index == war.defender_index:
+        war.defender_roll = die_roll
+        war.defender_dice = [die_roll]
 
-    if is_attacker:
-        # Attacker bonus: +2 if has at least 1 general (Pascal: SetStore)
-        if war.get_attacker_total_generals() > 0:
-            bonus += 2
-        war.attacker_dice = [die1, die2]
-    else:
-        # Defender bonus: +2 if has general, +fortresses
-        if war.get_defender_total_generals() > 0:
-            bonus += 2
-
-        defender_index = war.defender_index
-        if defender_index < len(active_players):
-            defender = active_players[defender_index]
-            if hasattr(defender, "tribe_state") and defender.tribe_state:
-                bonus += defender.tribe_state.fortresses
-
-        war.defender_dice = [die1, die2]
-
+    # Play dice sound
     game.play_sound("game_pig/dice.ogg")
 
-    return die1, die2, bonus
+    # Announce roll
+    user = game.get_user(player)
+    if user:
+        user.speak_l("ageofheroes-war-roll-you", roll=die_roll)
+
+    # Announce to others
+    for p in game.players:
+        if p != player:
+            other_user = game.get_user(p)
+            if other_user:
+                other_user.speak_l(
+                    "ageofheroes-war-roll-other",
+                    player=player.name,
+                    roll=die_roll,
+                )
+
+    return die_roll
 
 
 def resolve_battle_round(game: AgeOfHeroesGame) -> tuple[str, int, int]:
-    """Resolve one round of battle. Returns (winner, attacker_losses, defender_losses).
+    """Resolve one round of battle using already-rolled dice. Returns (winner, attacker_losses, defender_losses).
 
     Winner is 'attacker', 'defender', or 'draw'.
+    NOTE: In Pascal, draws cause NO losses (unlike Risk-style games).
     """
     war = game.war_state
     active_players = game.get_active_players()
 
-    # Roll for both sides
-    att_die1, att_die2, att_bonus = roll_battle_dice(game, is_attacker=True)
-    def_die1, def_die2, def_bonus = roll_battle_dice(game, is_attacker=False)
+    # Use stored rolls from player clicks
+    att_dice_total = war.attacker_roll
+    def_dice_total = war.defender_roll
 
-    attacker_total = att_die1 + att_die2 + att_bonus
-    defender_total = def_die1 + def_die2 + def_bonus
+    # Calculate bonuses separately
+    att_gen_bonus = 0
+    att_fort_bonus = 0
+    def_gen_bonus = 0
+    def_fort_bonus = 0
 
-    # Announce rolls
-    if war.attacker_index < len(active_players):
-        attacker = active_players[war.attacker_index]
+    # Attacker bonus: +2 if has at least 1 general (Pascal: SetStore)
+    if war.get_attacker_total_generals() > 0:
+        att_gen_bonus = 2
+
+    # Defender bonus: +2 if has general, +fortresses
+    if war.get_defender_total_generals() > 0:
+        def_gen_bonus = 2
+
+    defender_index = war.defender_index
+    if defender_index < len(active_players):
+        defender_player = active_players[defender_index]
+        if hasattr(defender_player, "tribe_state") and defender_player.tribe_state:
+            def_fort_bonus = defender_player.tribe_state.fortresses
+
+    att_total_bonus = att_gen_bonus + att_fort_bonus
+    def_total_bonus = def_gen_bonus + def_fort_bonus
+
+    attacker_total = att_dice_total + att_total_bonus
+    defender_total = def_dice_total + def_total_bonus
+
+    # Get player references
+    attacker = active_players[war.attacker_index] if war.attacker_index < len(active_players) else None
+    defender = active_players[war.defender_index] if war.defender_index < len(active_players) else None
+
+    # Announce bonuses only if there are any
+    if attacker and att_total_bonus > 0:
         for p in game.players:
             user = game.get_user(p)
             if user:
                 if p == attacker:
+                    # Attacker sees their own bonuses
                     user.speak_l(
-                        "ageofheroes-dice-roll-you",
-                        total=att_die1 + att_die2,
-                        bonus=att_bonus,
+                        "ageofheroes-war-bonuses-you",
+                        general=att_gen_bonus,
+                        fortress=att_fort_bonus,
+                        total=attacker_total,
                     )
                 else:
+                    # Others see attacker's bonuses
                     user.speak_l(
-                        "ageofheroes-dice-roll",
-                        name=attacker.name,
-                        total=att_die1 + att_die2,
-                        bonus=att_bonus,
+                        "ageofheroes-war-bonuses-other",
+                        player=attacker.name,
+                        general=att_gen_bonus,
+                        fortress=att_fort_bonus,
+                        total=attacker_total,
                     )
 
-    if war.defender_index < len(active_players):
-        defender = active_players[war.defender_index]
+    if defender and def_total_bonus > 0:
         for p in game.players:
             user = game.get_user(p)
             if user:
                 if p == defender:
+                    # Defender sees their own bonuses
                     user.speak_l(
-                        "ageofheroes-dice-roll-you",
-                        total=def_die1 + def_die2,
-                        bonus=def_bonus,
+                        "ageofheroes-war-bonuses-you",
+                        general=def_gen_bonus,
+                        fortress=def_fort_bonus,
+                        total=defender_total,
                     )
                 else:
+                    # Others see defender's bonuses
                     user.speak_l(
-                        "ageofheroes-dice-roll",
-                        name=defender.name,
-                        total=def_die1 + def_die2,
-                        bonus=def_bonus,
+                        "ageofheroes-war-bonuses-other",
+                        player=defender.name,
+                        general=def_gen_bonus,
+                        fortress=def_fort_bonus,
+                        total=defender_total,
                     )
 
-    # Determine winner
+    # Determine winner and announce outcome
     attacker_losses = 0
     defender_losses = 0
 
@@ -341,18 +376,44 @@ def resolve_battle_round(game: AgeOfHeroesGame) -> tuple[str, int, int]:
         defender_losses = 1
         winner = "attacker"
         game.play_sound("game_ageofheroes/attack_win.ogg")
+
+        # Announce round outcome
+        game.broadcast_l(
+            "ageofheroes-round-attacker-wins",
+            attacker=attacker.name if attacker else "Attacker",
+            defender=defender.name if defender else "Defender",
+            att_total=attacker_total,
+            def_total=defender_total,
+        )
+
     elif defender_total > attacker_total:
         # Defender wins this round - attacker loses an army
         attacker_losses = 1
         winner = "defender"
         game.play_sound("game_ageofheroes/defend_win.ogg")
+
+        # Announce round outcome
+        game.broadcast_l(
+            "ageofheroes-round-defender-wins",
+            attacker=attacker.name if attacker else "Attacker",
+            defender=defender.name if defender else "Defender",
+            att_total=attacker_total,
+            def_total=defender_total,
+        )
+
     else:
-        # Draw - both lose an army
-        attacker_losses = 1
-        defender_losses = 1
+        # Draw - NO LOSSES in Pascal version (unlike Risk)
         winner = "draw"
 
-    # Apply losses
+        # Announce round outcome
+        game.broadcast_l(
+            "ageofheroes-round-draw",
+            attacker=attacker.name if attacker else "Attacker",
+            defender=defender.name if defender else "Defender",
+            total=attacker_total,
+        )
+
+    # Apply losses (only if not a draw)
     apply_battle_losses(game, attacker_losses, defender_losses)
 
     return winner, attacker_losses, defender_losses

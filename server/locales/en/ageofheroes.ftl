@@ -72,11 +72,12 @@ ageofheroes-option-changed-max-hand = Maximum hand size set to { $cards } cards.
 ageofheroes-setup-start = You are the leader of the { $tribe } tribe. Your special monument resource is { $special }. Roll the dice to determine turn order.
 ageofheroes-setup-viewer = Players are rolling dice to determine turn order.
 ageofheroes-roll-dice = Roll the dice
+ageofheroes-war-roll-dice = Roll the dice
 ageofheroes-dice-result = You rolled { $total } ({ $die1 } + { $die2 }).
 ageofheroes-dice-result-other = { $player } rolled { $total }.
 ageofheroes-dice-tie = Multiple players tied with { $total }. Rolling again...
-ageofheroes-first-player = { $player } rolled highest with { $total } and goes first!
-ageofheroes-first-player-you = With { $total } points, you go first!
+ageofheroes-first-player = { $player } rolled highest with { $total } and goes first.
+ageofheroes-first-player-you = With { $total } points, you go first.
 
 # Preparation phase
 ageofheroes-prepare-start = Players must play event cards and discard disasters.
@@ -97,20 +98,24 @@ ageofheroes-eruption = An eruption destroys one of { $player }'s cities.
 ageofheroes-eruption-you = An eruption destroys one of your cities.
 
 # Disaster effects
-ageofheroes-hunger-strikes = Hunger strikes the land!
-ageofheroes-lose-card-hunger = You lose { $card } to hunger.
-ageofheroes-barbarians-attack = Barbarians attack { $player }!
-ageofheroes-barbarians-attack-you = Barbarians attack you!
-ageofheroes-lose-card-barbarians = You lose { $card } to barbarians.
+ageofheroes-hunger-strikes = The grain is a lie.
+ageofheroes-lose-card-hunger = You lose { $card }.
+ageofheroes-barbarians-pillage = Barbarians attack { $player }'s resources.
+ageofheroes-barbarians-attack-you = Barbarians pillage your resources.
+ageofheroes-lose-card-barbarians = You lose { $card }.
 ageofheroes-block-with-card = { $player } blocks the disaster using { $card }.
 ageofheroes-block-with-card-you = You block the disaster using { $card }.
 
 # Fair phase
-ageofheroes-fair-start = The day dawns at the marketplace. Players draw cards based on their road network.
-ageofheroes-fair-draw = You draw { $count } { $count ->
+ageofheroes-fair-start = The day dawns at the marketplace.
+ageofheroes-fair-draw-base = You draw { $count } { $count ->
     [one] card
     *[other] cards
-} from the deck.
+}.
+ageofheroes-fair-draw-roads = You draw { $count } additional { $count ->
+    [one] card
+    *[other] cards
+} thanks to your road network.
 ageofheroes-fair-draw-other = { $player } draws { $count } { $count ->
     [one] card
     *[other] cards
@@ -184,15 +189,15 @@ ageofheroes-do-nothing = { $player } passes.
 ageofheroes-do-nothing-you = You pass...
 
 # War
-ageofheroes-war-declare = { $attacker } declares war on { $defender }! Goal: { $goal }.
+ageofheroes-war-declare = { $attacker } declares war on { $defender }. Goal: { $goal }.
 ageofheroes-war-prepare = Select your armies for { $action }.
 ageofheroes-war-no-army = You have no armies or hero cards available.
 ageofheroes-war-no-targets = No valid targets for war.
 ageofheroes-war-no-valid-goal = No valid war goals against this target.
 ageofheroes-war-select-target = Select which player to attack.
 ageofheroes-war-select-goal = Select your war goal.
-ageofheroes-war-prepare-attack = Select your attacking forces. Use +/- to adjust armies, generals, and heroes.
-ageofheroes-war-prepare-defense = { $attacker } is attacking you! Select your defending forces.
+ageofheroes-war-prepare-attack = Select your attacking forces.
+ageofheroes-war-prepare-defense = { $attacker } is attacking you; Select your defending forces.
 ageofheroes-war-select-armies = Select armies: { $count }
 ageofheroes-war-select-generals = Select generals: { $count }
 ageofheroes-war-select-heroes = Select heroes: { $count }
@@ -210,27 +215,69 @@ ageofheroes-war-prepared = Your forces: { $armies } { $armies ->
     [one] {" and 1 hero"}
     *[other] {" and { $heroes } heroes"}
 }.
+ageofheroes-war-roll-you = You roll { $roll }.
+ageofheroes-war-roll-other = { $player } rolls { $roll }.
+ageofheroes-war-bonuses-you = { $general ->
+    [0] {
+        { $fortress ->
+            [1] {"+1 from fortress"}
+            *[other] {"+{ $fortress } from fortresses"}
+        }
+    }
+    *[other] {
+        "+{ $general } from general{ $fortress ->
+            [0] {""}
+            [1] {", +1 from fortress"}
+            *[other] {", +{ $fortress } from fortresses"}
+        }"
+    }
+} = { $total } total.
+ageofheroes-war-bonuses-other = { $player }: { $general ->
+    [0] {
+        { $fortress ->
+            [1] {"+1 from fortress"}
+            *[other] {"+{ $fortress } from fortresses"}
+        }
+    }
+    *[other] {
+        "+{ $general } from general{ $fortress ->
+            [0] {""}
+            [1] {", +1 from fortress"}
+            *[other] {", +{ $fortress } from fortresses"}
+        }"
+    }
+} = { $total } total.
 
 # Battle
-ageofheroes-battle-start = { $attacker }'s { $attack_armies } { $attack_armies ->
+ageofheroes-battle-start = Battle begins. { $attacker }'s { $att_armies } { $att_armies ->
     [one] army
     *[other] armies
-} attacks { $defender }'s { $defend_armies } { $defend_armies ->
+} versus { $defender }'s { $def_armies } { $def_armies ->
     [one] army
     *[other] armies
 }!
-ageofheroes-battle-defenseless = { $attacker }'s { $attack_armies } { $attack_armies ->
-    [one] army
-    *[other] armies
-} attacks the defenseless { $defender }! The outcome is certain...
-ageofheroes-dice-roll = { $player } rolls { $total }{ $bonus ->
+ageofheroes-dice-roll-detailed = { $name } rolls { $dice }{ $general ->
     [0] {""}
-    *[other] { " (+{ $bonus } from bonuses)" }
-}.
-ageofheroes-dice-roll-you = You roll { $total }{ $bonus ->
+    *[other] { " + { $general } from general" }
+}{ $fortress ->
     [0] {""}
-    *[other] { " (+{ $bonus } from bonuses)" }
-}.
+    [one] { " + 1 from fortress" }
+    *[other] { " + { $fortress } from fortresses" }
+} = { $total }.
+ageofheroes-dice-roll-detailed-you = You roll { $dice }{ $general ->
+    [0] {""}
+    *[other] { " + { $general } from general" }
+}{ $fortress ->
+    [0] {""}
+    [one] { " + 1 from fortress" }
+    *[other] { " + { $fortress } from fortresses" }
+} = { $total }.
+ageofheroes-round-attacker-wins = { $attacker } wins the round ({ $att_total } vs { $def_total }). { $defender } loses an army.
+ageofheroes-round-defender-wins = { $defender } defends successfully ({ $def_total } vs { $att_total }). { $attacker } loses an army.
+ageofheroes-round-draw = Both sides tie at { $total }. No armies are lost in the stalemate.
+ageofheroes-battle-victory-attacker = { $attacker } is victorious against { $defender }, whose armies were crushed.
+ageofheroes-battle-victory-defender = { $defender } holds the line! { $attacker }'s forces are slaughtered.
+ageofheroes-battle-mutual-defeat = Both armies are destroyed in the conflict between { $attacker } and { $defender }.
 ageofheroes-general-bonus = +{ $count } from { $count ->
     [one] general
     *[other] generals
@@ -276,7 +323,7 @@ ageofheroes-army-recover-you = Your armies recover from the earthquake.
 
 # Olympics
 ageofheroes-olympics-cancel = { $player } plays Olympic Games. The armies are much too interested in watching these games, so they accidentally forget to fight each other.
-ageofheroes-olympics-prompt = { $attacker } has declared war! You have Olympic Games - use it to cancel?
+ageofheroes-olympics-prompt = { $attacker } has declared war. You have Olympic Games - use it to cancel?
 ageofheroes-yes = Yes
 ageofheroes-no = No
 
@@ -363,8 +410,8 @@ ageofheroes-wrong-phase = This action is not available in the current phase.
 ageofheroes-no-resources = You don't have the required resources.
 
 # Building costs (for display)
-ageofheroes-cost-army = Iron + 2 Grain
-ageofheroes-cost-fortress = Iron + Wood + Stone
-ageofheroes-cost-general = Iron + Gold
+ageofheroes-cost-army = 2 Grain, Iron
+ageofheroes-cost-fortress = Iron, Wood, Stone
+ageofheroes-cost-general = Iron, Gold
 ageofheroes-cost-road = 2 Stone
-ageofheroes-cost-city = 2 Wood + Stone
+ageofheroes-cost-city = 2 Wood, Stone

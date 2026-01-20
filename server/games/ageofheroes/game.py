@@ -205,7 +205,7 @@ class AgeOfHeroesGame(Game):
 
     @classmethod
     def get_category(cls) -> str:
-        return "category-card-games"
+        return "category-uncategorized"
 
     @classmethod
     def get_min_players(cls) -> int:
@@ -238,6 +238,18 @@ class AgeOfHeroesGame(Game):
                 is_enabled="_is_roll_dice_enabled",
                 is_hidden="_is_roll_dice_hidden",
                 get_label="_get_roll_dice_label",
+            )
+        )
+
+        # War battle - roll dice for combat
+        action_set.add(
+            Action(
+                id="war_roll_dice",
+                label="Roll dice",
+                handler="_action_war_roll_dice",
+                is_enabled="_is_war_roll_enabled",
+                is_hidden="_is_war_roll_hidden",
+                get_label="_get_war_roll_label",
             )
         )
 
@@ -642,6 +654,74 @@ class AgeOfHeroesGame(Game):
         user = self.get_user(player)
         locale = user.locale if user else "en"
         return Localization.get(locale, "ageofheroes-roll-dice")
+
+    def _is_war_roll_enabled(self, player: Player) -> str | None:
+        """War roll is enabled during WAR_BATTLE subphase for participants who haven't rolled."""
+        if not isinstance(player, AgeOfHeroesPlayer):
+            return "Not a valid player"
+        if self.status != "playing":
+            return "ageofheroes-game-not-started"
+        if self.phase != GamePhase.PLAY:
+            return "ageofheroes-wrong-phase"
+        if self.sub_phase != PlaySubPhase.WAR_BATTLE:
+            return "ageofheroes-wrong-phase"
+
+        # Check if player is a combatant
+        active_players = self.get_active_players()
+        if player not in active_players:
+            return "You are not in the game"
+        player_index = active_players.index(player)
+        war = self.war_state
+
+        is_attacker = player_index == war.attacker_index
+        is_defender = player_index == war.defender_index
+
+        if not is_attacker and not is_defender:
+            return "You are not involved in this war"
+
+        # Check if player has already rolled
+        if is_attacker and war.attacker_roll > 0:
+            return "ageofheroes-already-rolled"
+        if is_defender and war.defender_roll > 0:
+            return "ageofheroes-already-rolled"
+
+        return None
+
+    def _is_war_roll_hidden(self, player: Player) -> Visibility:
+        """War roll is visible only during WAR_BATTLE subphase for combatants."""
+        if not isinstance(player, AgeOfHeroesPlayer):
+            return Visibility.HIDDEN
+        if self.phase != GamePhase.PLAY:
+            return Visibility.HIDDEN
+        if self.sub_phase != PlaySubPhase.WAR_BATTLE:
+            return Visibility.HIDDEN
+
+        # Check if player is a combatant
+        active_players = self.get_active_players()
+        if player not in active_players:
+            return Visibility.HIDDEN
+        player_index = active_players.index(player)
+        war = self.war_state
+
+        is_attacker = player_index == war.attacker_index
+        is_defender = player_index == war.defender_index
+
+        if not is_attacker and not is_defender:
+            return Visibility.HIDDEN
+
+        # Hide if already rolled
+        if is_attacker and war.attacker_roll > 0:
+            return Visibility.HIDDEN
+        if is_defender and war.defender_roll > 0:
+            return Visibility.HIDDEN
+
+        return Visibility.VISIBLE
+
+    def _get_war_roll_label(self, player: Player, action_id: str) -> str:
+        """Get label for war roll dice action."""
+        user = self.get_user(player)
+        locale = user.locale if user else "en"
+        return Localization.get(locale, "ageofheroes-war-roll-dice")
 
     def _is_continue_enabled(self, player: Player) -> str | None:
         """Continue is enabled at phase transitions."""
@@ -1360,6 +1440,51 @@ class AgeOfHeroesGame(Game):
 
         self.rebuild_all_menus()
 
+    def _action_war_roll_dice(self, player: Player, action_id: str) -> None:
+        """Handle dice roll for war battle."""
+        if not isinstance(player, AgeOfHeroesPlayer):
+            return
+
+        # Roll dice using combat system
+        from .combat import player_roll_war_dice
+        player_roll_war_dice(self, player)
+
+        # Check if both players have rolled
+        if self.war_state.is_both_rolled():
+            self._resolve_war_round()
+
+        self.rebuild_all_menus()
+
+    def _resolve_war_round(self) -> None:
+        """Resolve one round of war battle after both players have rolled."""
+        from .combat import resolve_battle_round, is_battle_over
+
+        # Resolve the round
+        resolve_battle_round(self)
+
+        # Check if battle is over
+        if is_battle_over(self):
+            # Battle is finished
+            self._finish_war_battle()
+        else:
+            # Continue to next round - reset rolls
+            self.war_state.reset_round_rolls()
+            self.rebuild_all_menus()
+
+            # Jolt both bots to roll for next round
+            active_players = self.get_active_players()
+            war = self.war_state
+            if war.attacker_index < len(active_players):
+                attacker = active_players[war.attacker_index]
+                if attacker.is_bot:
+                    attacker.bot_think_ticks = 0
+                    attacker.bot_pending_action = None
+            if war.defender_index < len(active_players):
+                defender = active_players[war.defender_index]
+                if defender.is_bot:
+                    defender.bot_think_ticks = 0
+                    defender.bot_pending_action = None
+
     def _resolve_setup_rolls(self) -> None:
         """Resolve setup dice rolls and determine turn order."""
         active_players = self.get_active_players()
@@ -1938,14 +2063,25 @@ class AgeOfHeroesGame(Game):
                 continue
 
             # Count connected tribes via roads
-            cards_to_draw = self._count_road_network(player)
-            if cards_to_draw > 0:
-                drawn = self._draw_cards(cards_to_draw)
+            total_cards = self._count_road_network(player)
+
+            # First card is always drawn (base card, not from roads)
+            base_cards = 1
+            road_cards = total_cards - 1  # Additional cards from road network
+
+            # Draw all cards
+            if total_cards > 0:
+                drawn = self._draw_cards(total_cards)
                 player.hand.extend(drawn)
 
                 user = self.get_user(player)
                 if user:
-                    user.speak_l("ageofheroes-fair-draw", count=cards_to_draw)
+                    # Announce base card draw
+                    user.speak_l("ageofheroes-fair-draw-base", count=base_cards)
+
+                    # Announce additional road cards if any
+                    if road_cards > 0:
+                        user.speak_l("ageofheroes-fair-draw-roads", count=road_cards)
 
                 # Announce to others
                 for p in self.players:
@@ -1955,7 +2091,7 @@ class AgeOfHeroesGame(Game):
                             other_user.speak_l(
                                 "ageofheroes-fair-draw-other",
                                 player=player.name,
-                                count=cards_to_draw,
+                                count=total_cards,
                             )
 
     def _count_road_network(self, player: AgeOfHeroesPlayer) -> int:
@@ -2223,21 +2359,33 @@ class AgeOfHeroesGame(Game):
         self.road_request_from = -1
         self.road_request_to = -1
 
-        # Check if builder can still build more things
-        available = get_affordable_buildings(self, builder)
+        # Return to SELECT_ACTION subphase
+        self.sub_phase = PlaySubPhase.SELECT_ACTION
+        self.rebuild_all_menus()
 
-        if available:
-            # Stay in construction mode - builder can build more
-            self.sub_phase = PlaySubPhase.CONSTRUCTION
-            self.rebuild_all_menus()
-            builder_user = self.get_user(builder)
-            if builder_user:
-                builder_user.speak_l("ageofheroes-construction-menu")
+        # If builder is a bot, resume construction
+        if builder.is_bot:
+            from .construction import get_affordable_buildings
+            available = get_affordable_buildings(self, builder)
+            if available:
+                # Continue building
+                self._bot_perform_construction(builder)
+            else:
+                # No more resources to build
+                self._end_action(builder)
         else:
-            # No more buildings available - end action
-            self.sub_phase = PlaySubPhase.SELECT_ACTION
-            self.rebuild_all_menus()
-            self._end_action(builder)
+            # For human players, check if they can still build
+            available = get_affordable_buildings(self, builder)
+            if available:
+                # Show construction menu again
+                self.sub_phase = PlaySubPhase.CONSTRUCTION
+                self.rebuild_all_menus()
+                builder_user = self.get_user(builder)
+                if builder_user:
+                    builder_user.speak_l("ageofheroes-construction-menu")
+            else:
+                # No more buildings available - end action
+                self._end_action(builder)
 
     def _action_deny_road(self, player: Player, action_id: str) -> None:
         """Handle denying road request."""
@@ -2273,11 +2421,32 @@ class AgeOfHeroesGame(Game):
         self.road_request_from = -1
         self.road_request_to = -1
 
-        # Return builder to construction menu
-        self.sub_phase = PlaySubPhase.CONSTRUCTION
-        if builder_user:
-            builder_user.speak_l("ageofheroes-construction-menu")
+        # Return to SELECT_ACTION subphase
+        self.sub_phase = PlaySubPhase.SELECT_ACTION
         self.rebuild_all_menus()
+
+        # If builder is a bot, resume construction (or end action)
+        if builder.is_bot and isinstance(builder, AgeOfHeroesPlayer):
+            from .construction import get_affordable_buildings
+            available = get_affordable_buildings(self, builder)
+            if available:
+                # Continue building
+                self._bot_perform_construction(builder)
+            else:
+                # No more resources to build
+                self._end_action(builder)
+        else:
+            # For human players, return to construction menu
+            available = get_affordable_buildings(self, builder) if isinstance(builder, AgeOfHeroesPlayer) else []
+            if available:
+                self.sub_phase = PlaySubPhase.CONSTRUCTION
+                self.rebuild_all_menus()
+                if builder_user:
+                    builder_user.speak_l("ageofheroes-construction-menu")
+            else:
+                # No more resources
+                if isinstance(builder, AgeOfHeroesPlayer):
+                    self._end_action(builder)
 
     def _action_select_war_target(self, player: Player, action_id: str) -> None:
         """Handle war target selection."""
@@ -2604,28 +2773,6 @@ class AgeOfHeroesGame(Game):
             player.pending_war_heroes_as_generals = 0
             self.rebuild_all_menus()
 
-    def _execute_war_battle(self) -> None:
-        """Execute the war battle and resolve results."""
-        # Run battle rounds until one side is defeated
-        max_rounds = 20  # Safety limit
-        rounds = 0
-        while not is_battle_over(self) and rounds < max_rounds:
-            resolve_battle_round(self)
-            rounds += 1
-
-        # Apply war outcome
-        apply_war_outcome(self)
-
-        # Reset war state
-        self.war_state.reset()
-
-        # Return to action selection and end attacker's turn
-        self.sub_phase = PlaySubPhase.SELECT_ACTION
-        self.rebuild_all_menus()
-
-        # End the attacker's turn (current player)
-        if isinstance(self.current_player, AgeOfHeroesPlayer):
-            self._end_action(self.current_player)
 
     def _action_select_offer_card(self, player: Player, action_id: str) -> None:
         """Handle card selection for trade offer - first step."""
@@ -3047,6 +3194,13 @@ class AgeOfHeroesGame(Game):
         if not isinstance(player, AgeOfHeroesPlayer):
             return
 
+        # Skip eliminated players
+        if player.is_spectator or (player.tribe_state and player.tribe_state.is_eliminated()):
+            # Skip this player's turn and advance to next
+            self.advance_turn(announce=False)
+            self._start_turn()
+            return
+
         # Process end-of-turn effects from previous turn
         if player.tribe_state:
             armies_back, generals_back, recovered = player.tribe_state.process_end_of_turn()
@@ -3187,12 +3341,32 @@ class AgeOfHeroesGame(Game):
                 return False
 
             if auto_road:
-                # Bot mode: Auto-build to first target
+                # Bot mode: Select first target and send permission request
                 target_index, direction = targets[0]
-                from .construction import spend_resources, BUILDING_COSTS
-                spend_resources(player, BUILDING_COSTS[BuildingType.ROAD], self.discard_pile)
-                self.road_supply -= 1
-                build_road(self, player, target_index, direction)
+                active_players = self.get_active_players()
+                builder_index = active_players.index(player)
+
+                # Store the road request
+                player.pending_road_targets = targets
+                self.road_request_from = builder_index
+                self.road_request_to = target_index
+
+                # Enter road permission subphase
+                self.sub_phase = PlaySubPhase.ROAD_PERMISSION
+                self.rebuild_all_menus()
+
+                # Notify target player
+                if target_index < len(active_players):
+                    target = active_players[target_index]
+                    target_user = self.get_user(target)
+                    if target_user:
+                        target_user.speak_l("ageofheroes-road-request-received", requester=player.name)
+
+                    # If target is also a bot, have them auto-respond
+                    if target.is_bot:
+                        BotHelper.jolt_bot(target, ticks=5)
+
+                # Road request sent, waiting for response
                 return True
             else:
                 # Human mode: Return False to indicate road needs selection menu
@@ -3267,6 +3441,10 @@ class AgeOfHeroesGame(Game):
                     self._end_action(player)
                 return
 
+            # If we're waiting for road permission, exit loop and wait for response
+            if self.sub_phase == PlaySubPhase.ROAD_PERMISSION:
+                return
+
             # Continue loop - bot might build more things
 
     def _start_war_declaration(self, player: AgeOfHeroesPlayer) -> None:
@@ -3309,31 +3487,137 @@ class AgeOfHeroesGame(Game):
             self.rebuild_all_menus()
 
     def _execute_war_battle(self) -> None:
-        """Execute the war battle after both sides have prepared forces.
+        """Start the interactive war battle after both sides have prepared forces.
 
-        This shared logic runs the battle rounds and applies the outcome.
+        Players will now click to roll dice each round instead of automatic resolution.
         """
-        # Run battle rounds until one side is defeated
-        max_rounds = 20  # Safety limit
-        rounds = 0
-        while not is_battle_over(self) and rounds < max_rounds:
-            rounds += 1
-            resolve_battle_round(self)
+        # Announce battle start with army counts
+        active_players = self.get_active_players()
+        war = self.war_state
 
-        # Apply war outcome
+        if war.attacker_index < len(active_players) and war.defender_index < len(active_players):
+            attacker = active_players[war.attacker_index]
+            defender = active_players[war.defender_index]
+
+            att_armies = war.get_attacker_total_armies()
+            def_armies = war.get_defender_total_armies()
+
+            # Announce battle start
+            self.broadcast_l(
+                "ageofheroes-battle-start",
+                attacker=attacker.name,
+                defender=defender.name,
+                att_armies=att_armies,
+                def_armies=def_armies,
+            )
+
+        # Check if battle is already over (one side has 0 armies)
+        from .combat import is_battle_over
+        if is_battle_over(self):
+            # Battle is already over without needing to roll
+            self._finish_war_battle()
+            return
+
+        # Enter interactive battle mode
+        self.sub_phase = PlaySubPhase.WAR_BATTLE
+        war.battle_in_progress = True
+        war.reset_round_rolls()
+
+        # Rebuild menus to show "Roll dice" button
+        self.rebuild_all_menus()
+
+        # Jolt both bots to act immediately (set think ticks to 0)
+        active_players = self.get_active_players()
+        if war.attacker_index < len(active_players):
+            attacker = active_players[war.attacker_index]
+            if attacker.is_bot:
+                attacker.bot_think_ticks = 0
+                attacker.bot_pending_action = None
+        if war.defender_index < len(active_players):
+            defender = active_players[war.defender_index]
+            if defender.is_bot:
+                defender.bot_think_ticks = 0
+                defender.bot_pending_action = None
+
+    def _jolt_war_bots(self) -> None:
+        """Jolt bot players to roll dice in war."""
+        active_players = self.get_active_players()
+        war = self.war_state
+
+        if war.attacker_index < len(active_players):
+            attacker = active_players[war.attacker_index]
+            if attacker.is_bot and war.attacker_roll == 0:
+                # Clear any pending action and set to roll immediately next tick
+                attacker.bot_pending_action = None
+                attacker.bot_think_ticks = 1  # Will call bot_think on next tick
+
+        if war.defender_index < len(active_players):
+            defender = active_players[war.defender_index]
+            if defender.is_bot and war.defender_roll == 0:
+                # Clear any pending action and set to roll immediately next tick
+                defender.bot_pending_action = None
+                defender.bot_think_ticks = 1  # Will call bot_think on next tick
+
+    def _finish_war_battle(self) -> None:
+        """Finish the war battle and apply outcome."""
+        active_players = self.get_active_players()
+        war = self.war_state
+
+        # Save attacker/defender info BEFORE applying outcome (which resets war state)
+        from .combat import get_battle_winner
+        winner = get_battle_winner(self)
+
+        attacker_name = None
+        defender_name = None
+        if war.attacker_index < len(active_players) and war.defender_index < len(active_players):
+            attacker = active_players[war.attacker_index]
+            defender = active_players[war.defender_index]
+            attacker_name = attacker.name
+            defender_name = defender.name
+
+        # Apply war outcome (this may reset war state)
         apply_war_outcome(self)
 
+        # Announce battle end summary
+        if attacker_name and defender_name:
+            if winner == "attacker":
+                self.broadcast_l(
+                    "ageofheroes-battle-victory-attacker",
+                    attacker=attacker_name,
+                    defender=defender_name,
+                )
+            elif winner == "defender":
+                self.broadcast_l(
+                    "ageofheroes-battle-victory-defender",
+                    attacker=attacker_name,
+                    defender=defender_name,
+                )
+            else:
+                self.broadcast_l(
+                    "ageofheroes-battle-mutual-defeat",
+                    attacker=attacker_name,
+                    defender=defender_name,
+                )
+
         # Check for elimination of both players
-        active_players = self.get_active_players()
-        if self.war_state.attacker_index < len(active_players):
-            attacker = active_players[self.war_state.attacker_index]
+        if war.attacker_index < len(active_players):
+            attacker = active_players[war.attacker_index]
             if isinstance(attacker, AgeOfHeroesPlayer):
                 self._check_elimination(attacker)
 
-        if self.war_state.defender_index < len(active_players):
-            defender = active_players[self.war_state.defender_index]
+        if war.defender_index < len(active_players):
+            defender = active_players[war.defender_index]
             if isinstance(defender, AgeOfHeroesPlayer):
                 self._check_elimination(defender)
+
+        # Reset war state and end action
+        attacker_idx = war.attacker_index
+        war.reset()
+
+        if attacker_idx < len(active_players):
+            attacker = active_players[attacker_idx]
+            if isinstance(attacker, AgeOfHeroesPlayer):
+                self._end_action(attacker)
 
     def _bot_perform_war(self, player: AgeOfHeroesPlayer) -> None:
         """Bot performs war declaration and combat."""
@@ -3382,9 +3666,9 @@ class AgeOfHeroesGame(Game):
                 prepare_forces(self, defender, def_armies, def_generals, 0, 0)
 
         # Execute battle using shared logic
+        # Note: _execute_war_battle() enters interactive mode, battle will complete when both sides roll
+        # _finish_war_battle() will call _end_action() when battle is done
         self._execute_war_battle()
-
-        self._end_action(player)
 
     def _perform_do_nothing(self, player: AgeOfHeroesPlayer) -> None:
         """Perform do nothing action."""
@@ -3571,6 +3855,65 @@ class AgeOfHeroesGame(Game):
                     continue
 
                 self._bot_do_trading(player)
+        # During road permission request, target bot needs to respond
+        elif self.phase == GamePhase.PLAY and self.sub_phase == PlaySubPhase.ROAD_PERMISSION:
+            active_players = self.get_active_players()
+            if self.road_request_to < len(active_players):
+                target = active_players[self.road_request_to]
+                if target.is_bot and not target.is_spectator:
+                    # Count down thinking time
+                    if target.bot_think_ticks > 0:
+                        target.bot_think_ticks -= 1
+                    # Execute pending action
+                    elif target.bot_pending_action:
+                        action_id = target.bot_pending_action
+                        target.bot_pending_action = None
+                        self.execute_action(target, action_id)
+                    # Ask for action
+                    else:
+                        action_id = self.bot_think(target)
+                        if action_id:
+                            target.bot_pending_action = action_id
+        # During war battle, both attacker and defender need to roll
+        elif self.phase == GamePhase.PLAY and self.sub_phase == PlaySubPhase.WAR_BATTLE:
+            active_players = self.get_active_players()
+            war = self.war_state
+
+            # Process attacker bot (if still active)
+            if war.attacker_index < len(active_players):
+                attacker = active_players[war.attacker_index]
+                if attacker.is_bot and not attacker.is_spectator and war.attacker_roll == 0:
+                    # Count down thinking time
+                    if attacker.bot_think_ticks > 0:
+                        attacker.bot_think_ticks -= 1
+                    # Execute pending action
+                    elif attacker.bot_pending_action:
+                        action_id = attacker.bot_pending_action
+                        attacker.bot_pending_action = None
+                        self.execute_action(attacker, action_id)
+                    # Ask for action
+                    else:
+                        action_id = self.bot_think(attacker)
+                        if action_id:
+                            attacker.bot_pending_action = action_id
+
+            # Process defender bot (if still active)
+            if war.defender_index < len(active_players):
+                defender = active_players[war.defender_index]
+                if defender.is_bot and not defender.is_spectator and war.defender_roll == 0:
+                    # Count down thinking time
+                    if defender.bot_think_ticks > 0:
+                        defender.bot_think_ticks -= 1
+                    # Execute pending action
+                    elif defender.bot_pending_action:
+                        action_id = defender.bot_pending_action
+                        defender.bot_pending_action = None
+                        self.execute_action(defender, action_id)
+                    # Ask for action
+                    else:
+                        action_id = self.bot_think(defender)
+                        if action_id:
+                            defender.bot_pending_action = action_id
         else:
             # Normal turn-based bot handling
             BotHelper.on_tick(self)
@@ -3580,17 +3923,8 @@ class AgeOfHeroesGame(Game):
         if not isinstance(player, AgeOfHeroesPlayer):
             return None
 
-        # Setup phase - roll dice
-        if self.phase == GamePhase.SETUP:
-            if player.id not in self.setup_rolls:
-                return "roll_dice"
-
-        # Play phase - select action
-        if self.phase == GamePhase.PLAY and self.sub_phase == PlaySubPhase.SELECT_ACTION:
-            if self.current_player == player:
-                return self._bot_select_action(player)
-
-        return None
+        # Delegate to bot AI module
+        return bot_ai.bot_think(self, player)
 
     def _bot_select_action(self, player: AgeOfHeroesPlayer) -> str:
         """Bot selects a main action."""

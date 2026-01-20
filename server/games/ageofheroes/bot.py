@@ -27,6 +27,10 @@ if TYPE_CHECKING:
 
 def bot_think(game: AgeOfHeroesGame, player: AgeOfHeroesPlayer) -> str | None:
     """Main bot AI decision function. Returns action ID or None."""
+    # Eliminated players can't act
+    if player.is_spectator:
+        return None
+
     # Setup phase - roll dice
     if game.phase == GamePhase.SETUP:
         if player.id not in game.setup_rolls:
@@ -48,6 +52,34 @@ def bot_think_play_phase(
     game: AgeOfHeroesGame, player: AgeOfHeroesPlayer
 ) -> str | None:
     """Bot decision making during play phase."""
+    # War battle - both attacker and defender need to roll (regardless of whose turn it is)
+    if game.sub_phase == PlaySubPhase.WAR_BATTLE:
+        active_players = game.get_active_players()
+        # Check if player is still active (not eliminated)
+        if player not in active_players:
+            return None
+
+        player_index = active_players.index(player)
+        war = game.war_state
+
+        # Check if this bot is involved in the war and hasn't rolled
+        if player_index == war.attacker_index and war.attacker_roll == 0:
+            return "war_roll_dice"
+        if player_index == war.defender_index and war.defender_roll == 0:
+            return "war_roll_dice"
+
+    # Road permission request - respond even if not current player
+    active_players = game.get_active_players()
+    if player in active_players:
+        player_index = active_players.index(player)
+        if game.road_request_to == player_index and game.road_request_from >= 0:
+            # Bot is being asked for road permission - approve most of the time
+            # Could add more sophisticated logic here (e.g., deny if at war with requester)
+            if random.random() < 0.9:  # 90% approval rate
+                return "approve_road"
+            else:
+                return "deny_road"
+
     if game.current_player != player:
         return None
 
@@ -97,17 +129,33 @@ def bot_select_action(game: AgeOfHeroesGame, player: AgeOfHeroesPlayer) -> str:
         # Tax collection to get more special resources
         return f"action_{ActionType.TAX_COLLECTION.value}"
 
-    # If we have armies and there's a weak target, consider war
-    if armies >= 2:
+    # If we have armies, consider war (aggressive bot behavior)
+    if armies >= 1:
         war_check = can_declare_war(game, player)
         if war_check is None:
             targets = get_valid_war_targets(game, player)
             for target_idx, target in targets:
                 if hasattr(target, "tribe_state") and target.tribe_state:
                     target_armies = target.tribe_state.get_available_armies()
-                    # Attack if we have advantage (more armies than target)
-                    if armies > target_armies:
-                        if random.random() < 0.6:  # 60% chance to attack
+                    target_fortresses = target.tribe_state.fortresses
+
+                    # Calculate if war is viable
+                    # Attack if we're not too disadvantaged (allow equal or slightly weaker battles)
+                    effective_defense = target_armies + target_fortresses
+
+                    # Be more aggressive:
+                    # - Always attack if we have 2+ armies advantage
+                    # - 75% chance if equal strength
+                    # - 50% chance if 1 army disadvantage
+                    advantage = armies - effective_defense
+
+                    if advantage >= 2:
+                        return f"action_{ActionType.WAR.value}"
+                    elif advantage >= 0:  # Equal or better
+                        if random.random() < 0.75:
+                            return f"action_{ActionType.WAR.value}"
+                    elif advantage >= -1:  # Slight disadvantage
+                        if random.random() < 0.5:
                             return f"action_{ActionType.WAR.value}"
 
     # Build armies if we have few (aim for 3-4 for military strength)
@@ -254,7 +302,7 @@ def bot_select_war_target(
 
     # Score each target
     best_target = None
-    best_score = -1
+    best_score = -999  # Can be negative now (fighting with disadvantage)
     best_goal = WarGoal.CONQUEST
 
     for target_idx, target in targets:
@@ -264,9 +312,10 @@ def bot_select_war_target(
         target_armies = target.tribe_state.get_available_armies()
         target_fortresses = target.tribe_state.fortresses
 
-        # Only attack if we have advantage
+        # Be willing to attack even if slightly disadvantaged
         effective_defense = target_armies + target_fortresses
-        if our_armies <= effective_defense:
+        # Allow attacking if not more than 2 armies disadvantaged
+        if our_armies < effective_defense - 2:
             continue
 
         # Get valid goals for this target
@@ -274,7 +323,7 @@ def bot_select_war_target(
         if not goals:
             continue
 
-        # Score the target
+        # Score the target (can be negative now)
         score = our_armies - effective_defense
 
         # Select goal based on strategic value
@@ -317,8 +366,12 @@ def bot_select_armies(
     )
 
     if is_attacking:
-        # Commit most forces, keep 1 army for defense
-        armies = max(0, available_armies - 1)
+        # Commit all or most forces when attacking
+        # Only keep 1 back if we have 3+ armies, otherwise commit everything
+        if available_armies >= 3:
+            armies = available_armies - 1
+        else:
+            armies = available_armies
         generals = available_generals
         # Use hero cards as armies for extra strength
         heroes_as_armies = hero_cards

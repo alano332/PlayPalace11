@@ -97,3 +97,24 @@ def test_draw_short_stack_raise_all_in():
     assert game.pot_manager.total_pot() == pot_before + 5
     if game.betting:
         assert game.betting.current_bet == 10
+
+
+def test_draw_short_all_in_does_not_reopen_betting():
+    game = FiveCardDrawGame()
+    user1 = MockUser("Alice")
+    user2 = MockUser("Bob")
+    game.add_player("Alice", user1)
+    game.add_player("Bob", user2)
+    game.on_start()
+    player = game.current_player
+    assert player is not None
+    player.chips = 15
+    if game.betting:
+        game.betting.current_bet = 10
+        game.betting.last_raise_size = 10
+        game.betting.bets[player.id] = 0
+        game.betting.acted_since_raise = set()
+    game._action_all_in(player, "all_in")
+    if game.betting:
+        assert game.betting.current_bet == 10
+        assert game.betting.acted_since_raise == {player.id}

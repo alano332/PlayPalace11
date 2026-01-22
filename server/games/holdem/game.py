@@ -760,7 +760,10 @@ class HoldemGame(Game):
         p.all_in = True
         self.play_sound("game_3cardpoker/bet.ogg")
         self.pot_manager.add_contribution(p.id, amount)
-        is_raise = self.betting.amount_to_call(p.id) < amount
+        to_call = self.betting.amount_to_call(p.id)
+        min_raise = max(self.betting.last_raise_size, 1)
+        raise_amount = amount - to_call
+        is_raise = raise_amount >= min_raise and amount > to_call
         self.betting.record_bet(p.id, amount, is_raise=is_raise)
         self.action_log.append(("poker-log-all-in", {"player": p.name, "amount": amount}))
         self.broadcast_l("poker-player-all-in", player=p.name, amount=amount)

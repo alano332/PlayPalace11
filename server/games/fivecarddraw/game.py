@@ -289,6 +289,24 @@ class FiveCardDrawGame(Game):
                 is_hidden="_is_check_hidden",
             )
         )
+        action_set.add(
+            Action(
+                id="check_dealer",
+                label=Localization.get(locale, "poker-check-dealer"),
+                handler="_action_check_dealer",
+                is_enabled="_is_check_enabled",
+                is_hidden="_is_check_hidden",
+            )
+        )
+        action_set.add(
+            Action(
+                id="check_position",
+                label=Localization.get(locale, "poker-check-position"),
+                handler="_action_check_position",
+                is_enabled="_is_check_enabled",
+                is_hidden="_is_check_hidden",
+            )
+        )
         for i in range(1, 6):
             action_set.add(
                 Action(
@@ -310,6 +328,8 @@ class FiveCardDrawGame(Game):
         self.define_keybind("A", "All in", ["all_in"])
         self.define_keybind("d", "Read hand", ["speak_hand"], include_spectators=False)
         self.define_keybind("g", "Hand value", ["speak_hand_value"], include_spectators=False)
+        self.define_keybind("x", "Dealer", ["check_dealer"], include_spectators=True)
+        self.define_keybind("z", "Position", ["check_position"], include_spectators=True)
         self.define_keybind("b", "Current bet", ["check_bet"], include_spectators=True)
         self.define_keybind("m", "Minimum raise", ["check_min_raise"], include_spectators=True)
         self.define_keybind("l", "Action log", ["check_log"], include_spectators=True)
@@ -852,6 +872,29 @@ class FiveCardDrawGame(Game):
             user.speak_l("poker-timer-disabled")
         else:
             user.speak_l("poker-timer-remaining", seconds=remaining)
+
+    def _action_check_dealer(self, player: Player, action_id: str) -> None:
+        user = self.get_user(player)
+        if not user:
+            return
+        active = [p for p in self.get_active_players() if p.chips > 0 or p.all_in]
+        dealer_id = self.table_state.get_button_id([p.id for p in active])
+        dealer_player = self.get_player_by_id(dealer_id) if dealer_id else None
+        if dealer_player:
+            user.speak_l("poker-dealer-is", player=dealer_player.name)
+
+    def _action_check_position(self, player: Player, action_id: str) -> None:
+        user = self.get_user(player)
+        if not user:
+            return
+        active = [p for p in self.get_active_players() if p.chips > 0 or p.all_in]
+        if not active:
+            return
+        dealer_id = self.table_state.get_button_id([p.id for p in active])
+        order = [p.id for p in active]
+        if dealer_id and player.id in order:
+            idx = (order.index(player.id) - order.index(dealer_id)) % len(order)
+            user.speak_l("poker-position-dealer", position=idx)
 
     # ==========================================================================
     # Helpers

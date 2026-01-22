@@ -13,6 +13,7 @@ poker-check-log = Action log
 poker-check-turn-timer = Turn timer
 poker-check-blind-timer = Blind timer
 poker-check-button = Who has the button
+poker-check-dealer = Who is the dealer
 poker-check-position = Your position
 
 poker-read-hand = Read hand
@@ -46,7 +47,9 @@ poker-blind-timer-remaining = { $seconds } seconds until blinds increase.
 poker-blinds-raise-next-hand = Blinds will raise next hand.
 
 poker-button-is = Button is with { $player }.
+poker-dealer-is = Dealer is { $player }.
 poker-position = You are { $position } seats after the button.
+poker-position-dealer = You are { $position } seats after the dealer.
 
 poker-reveal-both = Reveal both hole cards
 poker-reveal-first = Reveal first hole card

@@ -22,33 +22,6 @@ class TurnManagementMixin:
         - self.current_player property
     """
 
-    # Type hints for expected attributes (satisfied by Game class)
-    turn_player_ids: list[str]
-    turn_index: int
-    turn_direction: int
-    turn_skip_count: int
-
-    def get_player_by_id(self, player_id: str) -> "Player | None":
-        """Get player by ID (implemented in Game)."""
-        raise NotImplementedError
-
-    def get_user(self, player: "Player") -> "User | None":
-        """Get user for player (implemented in Game)."""
-        raise NotImplementedError
-
-    def broadcast_l(self, message_id: str, buffer: str = "misc", **kwargs) -> None:
-        """Send localized message (implemented in Game or mixin)."""
-        raise NotImplementedError
-
-    def rebuild_all_menus(self) -> None:
-        """Rebuild all menus (implemented in Game or mixin)."""
-        raise NotImplementedError
-
-    @property
-    def current_player(self) -> "Player | None":
-        """Get current player (implemented in Game)."""
-        raise NotImplementedError
-
     def set_turn_players(self, players: list["Player"], reset_index: bool = True) -> None:
         """Set the list of players in turn order.
 

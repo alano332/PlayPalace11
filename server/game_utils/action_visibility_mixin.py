@@ -25,30 +25,6 @@ class ActionVisibilityMixin:
         - self.get_active_player_count() -> int
     """
 
-    # Type hints for expected attributes (satisfied by Game class)
-    status: str
-    host: str
-    players: list["Player"]
-    team_manager: "TeamManager"
-
-    def get_user(self, player: "Player") -> "User | None":
-        """Get user for player (implemented in Game)."""
-        raise NotImplementedError
-
-    @classmethod
-    def get_min_players(cls) -> int:
-        """Return minimum players (implemented in Game)."""
-        raise NotImplementedError
-
-    @classmethod
-    def get_max_players(cls) -> int:
-        """Return maximum players (implemented in Game)."""
-        raise NotImplementedError
-
-    def get_active_player_count(self) -> int:
-        """Get active player count (implemented in Game)."""
-        raise NotImplementedError
-
     # --- Lobby actions ---
 
     def _is_start_game_enabled(self, player: "Player") -> str | None:

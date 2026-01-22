@@ -45,7 +45,21 @@ def test_draw_bot_game_completes():
         if game.status == "finished":
             break
         game.on_tick()
-    assert game.status == "finished"
+    if game.status != "finished":
+        current = game.current_player.name if game.current_player else None
+        betting = game.betting
+        active_ids = game._active_betting_ids() if hasattr(game, "_active_betting_ids") else set()
+        all_in_ids = game._all_in_ids() if hasattr(game, "_all_in_ids") else set()
+        raise AssertionError(
+            "Game did not finish. "
+            f"status={game.status}, phase={getattr(game, 'phase', None)}, "
+            f"hand={getattr(game, 'hand_number', None)}, "
+            f"current={current}, "
+            f"active={len(active_ids)}, all_in={len(all_in_ids)}, "
+            f"betting_current={getattr(betting, 'current_bet', None)}, "
+            f"betting_acted={len(getattr(betting, 'acted_since_raise', [])) if betting else None}, "
+            f"bets={getattr(betting, 'bets', None)}"
+        )
 
 
 def test_draw_raise_too_large_rejected():

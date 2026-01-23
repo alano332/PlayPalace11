@@ -400,7 +400,7 @@ class HoldemGame(Game):
         self.define_keybind("f", "Fold", ["fold"])
         self.define_keybind("c", "Call/Check", ["call"])
         self.define_keybind("r", "Raise", ["raise"])
-        self.define_keybind("A", "All in", ["all_in"])
+        self.define_keybind("shift+a", "All in", ["all_in"])
         self.define_keybind("d", "Read hand", ["speak_hand"], include_spectators=False)
         self.define_keybind("e", "Read table", ["speak_table"], include_spectators=True)
         self.define_keybind("g", "Hand value", ["speak_hand_value"], include_spectators=False)
@@ -498,6 +498,9 @@ class HoldemGame(Game):
         self._post_blinds(active)
         self._deal_hole_cards(active)
         self._start_betting_round(preflop=True)
+
+    def _queue_new_hand(self) -> None:
+        self._next_hand_wait_ticks = 100
 
     def _post_antes(self, active: list[HoldemPlayer]) -> None:
         ante = self._current_ante()
@@ -639,14 +642,7 @@ class HoldemGame(Game):
         else:
             start_index = (self.table_state.button_index + 1) % len(order)
         self._set_turn_by_index(start_index, order)
-        if self.phase == "preflop":
-            self.broadcast_l("holdem-betting-round-preflop")
-        elif self.phase == "flop":
-            self.broadcast_l("holdem-betting-round-flop")
-        elif self.phase == "turn":
-            self.broadcast_l("holdem-betting-round-turn")
-        elif self.phase == "river":
-            self.broadcast_l("holdem-betting-round-river")
+        # Betting round announcements removed (cards are announced instead)
 
     def _set_turn_by_index(self, start_index: int, order: list[str]) -> None:
         if not order:
@@ -693,6 +689,11 @@ class HoldemGame(Game):
     def on_tick(self) -> None:
         super().on_tick()
         if not self.game_active:
+            return
+        if getattr(self, "_next_hand_wait_ticks", 0) > 0:
+            self._next_hand_wait_ticks -= 1
+            if self._next_hand_wait_ticks == 0:
+                self._start_new_hand()
             return
         if self.pending_showdown:
             if self.pending_board_wait_ticks > 0:
@@ -877,10 +878,10 @@ class HoldemGame(Game):
     def _showdown(self) -> None:
         self.phase = "showdown"
         self.broadcast_l("poker-showdown")
-        self._announce_showdown_hands()
         self._resolve_pots()
+        self._announce_showdown_hands(skip_best=True)
         self._advance_blind_level()
-        self._start_new_hand()
+        self._queue_new_hand()
 
     def _award_uncontested(self, active_ids: set[str]) -> None:
         winner = self.get_player_by_id(next(iter(active_ids))) if active_ids else None
@@ -893,7 +894,7 @@ class HoldemGame(Game):
         self.broadcast_l("poker-player-wins-pot", player=winner.name, amount=amount)
         self._sync_team_scores()
         self._advance_blind_level()
-        self._start_new_hand()
+        self._queue_new_hand()
 
     def _resolve_pots(self) -> None:
         pots = self.pot_manager.get_pots()
@@ -927,7 +928,7 @@ class HoldemGame(Game):
                 self.broadcast_l("poker-players-split-pot", players=names, amount=pot.amount, hand=desc)
         self._sync_team_scores()
 
-    def _announce_showdown_hands(self) -> None:
+    def _announce_showdown_hands(self, skip_best: bool = False) -> None:
         active = [p for p in self.get_active_players() if isinstance(p, HoldemPlayer) and not p.folded]
         if len(active) <= 1:
             return
@@ -942,7 +943,9 @@ class HoldemGame(Game):
                 best_hand(p.hand + self.community)[0],
             ),
         )
-        for (message_id, kwargs), _score in lines:
+        for idx, ((message_id, kwargs), _score) in enumerate(lines):
+            if skip_best and idx == 0:
+                continue
             self.broadcast_l(message_id, **kwargs)
 
     def _order_winners_by_button(self, winners: list[HoldemPlayer]) -> list[HoldemPlayer]:

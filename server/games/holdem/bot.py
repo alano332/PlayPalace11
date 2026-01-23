@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from ...game_utils.poker_evaluator import best_hand
 from ...game_utils.poker_state import order_after_button
+from ...game_utils.poker_actions import compute_pot_limit_caps, clamp_total_to_cap
 
 if TYPE_CHECKING:
     from .game import HoldemGame, HoldemPlayer
@@ -25,14 +26,15 @@ def bot_think(game: "HoldemGame", player: "HoldemPlayer") -> str | None:
     stack_bb = player.chips / max(1, game.current_big_blind or 1)
     position = _position_index(game, player)
 
+    can_raise_amount = _can_raise_amount(game, player, to_call)
     if len(game.community) < 3:
         strength = _preflop_strength(player)
-        return _decide_preflop(strength, to_call, can_raise, stack_bb, position)
+        return _decide_preflop(strength, to_call, can_raise, stack_bb, position, can_raise_amount)
 
     score = None
     if len(player.hand) + len(game.community) >= 5:
         score, _ = best_hand(player.hand + game.community)
-    return _decide_postflop(score, to_call, can_raise, stack_bb, position)
+    return _decide_postflop(score, to_call, can_raise, stack_bb, position, can_raise_amount)
 
 
 def _position_index(game: "HoldemGame", player: "HoldemPlayer") -> int:
@@ -75,14 +77,15 @@ def _decide_preflop(
     can_raise: bool,
     stack_bb: float,
     position: int,
+    can_raise_amount: bool,
 ) -> str:
     late_position = position >= 2
     if to_call == 0:
-        if can_raise and strength >= 2 and stack_bb >= 6:
+        if can_raise and can_raise_amount and strength >= 2 and stack_bb >= 6:
             return "raise"
         return "call"
     if strength >= 3:
-        if can_raise and stack_bb >= 8 and to_call <= stack_bb * 2:
+        if can_raise and can_raise_amount and stack_bb >= 8 and to_call <= stack_bb * 2:
             return "raise"
         return "call"
     if strength == 2:
@@ -104,14 +107,15 @@ def _decide_postflop(
     can_raise: bool,
     stack_bb: float,
     position: int,
+    can_raise_amount: bool,
 ) -> str:
     late_position = position >= 2
     if to_call == 0:
-        if score and score[0] >= 2 and can_raise and stack_bb >= 6:
+        if score and score[0] >= 2 and can_raise and can_raise_amount and stack_bb >= 6:
             return "raise"
         return "call"
     if score and score[0] >= 4:
-        return "raise" if can_raise and stack_bb >= 6 else "call"
+        return "raise" if can_raise and can_raise_amount and stack_bb >= 6 else "call"
     if score and score[0] >= 2:
         if to_call <= max(1, stack_bb * 2):
             return "call"
@@ -127,3 +131,14 @@ def _decide_postflop(
 
 def _rank_value(rank: int) -> int:
     return 14 if rank == 1 else rank
+
+
+def _can_raise_amount(game: "HoldemGame", player: "HoldemPlayer", to_call: int) -> bool:
+    if not game.betting:
+        return False
+    min_raise = max(game.betting.last_raise_size, 1)
+    if player.chips - to_call < min_raise:
+        return False
+    caps = compute_pot_limit_caps(game.pot_manager.total_pot(), to_call, game.options.raise_mode)
+    total = clamp_total_to_cap(to_call + min_raise, caps)
+    return total - to_call >= min_raise

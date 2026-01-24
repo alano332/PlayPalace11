@@ -37,9 +37,10 @@ class CrazyEightsOptions(GameOptions):
 
     winning_score: int = option_field(
         IntOption(
-            min_value=1,
-            max_value=10000,
+            min_val=1,
+            max_val=10000,
             default=500,
+            value_key="score",
             label="crazyeights-set-winning-score",
             prompt="crazyeights-enter-winning-score",
             change_msg="crazyeights-option-changed-winning-score",

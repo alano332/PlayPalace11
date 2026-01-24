@@ -1294,10 +1294,11 @@ class MainWindow(wx.Frame):
         convo = packet.get("convo")
         lang = packet.get("language")
         # For now all chats are in English
-        #if lang not in self.lang_codes.values():
-            #lang = "Other"
-        # If language matches, ignore subscription tracking
         same_user = packet.get("sender") == self.credentials["username"]
+        """comment out all of this code for now
+        if lang not in self.lang_codes.values():
+            lang = "Other"
+        # If language matches, ignore subscription tracking
         if (
             not same_user
             and lang != self.client_options["social"]["chat_input_language"]
@@ -1311,6 +1312,7 @@ class MainWindow(wx.Frame):
                 # Check if the user is ignoring this language
                 if not self.client_options["social"]["language_subscriptions"][lang]:
                     return
+        end this comment"""
         message = (
             packet.get("sender")
             + " says "
@@ -1319,11 +1321,12 @@ class MainWindow(wx.Frame):
             + packet.get("message")
         )
         # Convo doesn't support muting, or the mute flag is disabled
-        if (
+        if True:
+            """(
             same_user
             or convo not in {"global", "local"}
             or not self.client_options["social"][f"mute_{convo}_chat"]
-        ):
+        ):"""
             sound = "chat"
             if convo == "local":
                 sound += "local"

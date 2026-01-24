@@ -371,6 +371,7 @@ class CrazyEightsGame(Game):
         for player in self.players:
             user = self.get_user(player)
             if user:
+                user.stop_ambience()
                 user.stop_music()
 
         self._team_manager.team_mode = "individual"
@@ -463,6 +464,7 @@ class CrazyEightsGame(Game):
             BotHelper.jolt_bot(player, ticks=random.randint(30, 40))
 
         self._start_turn_timer()
+        self._sync_turn_actions(player)
         self.rebuild_all_menus()
 
     def _advance_turn(self) -> None:

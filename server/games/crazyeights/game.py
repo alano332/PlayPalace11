@@ -395,6 +395,7 @@ class CrazyEightsGame(Game):
     def _start_new_hand(self) -> None:
         self.round += 1
         self.turn_direction = 1
+        self.turn_skip_count = 0
         self.awaiting_wild_suit = False
         self.pending_round_winner_id = None
         self.turn_has_drawn = False

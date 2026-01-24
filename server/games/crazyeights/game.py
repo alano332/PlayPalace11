@@ -13,7 +13,7 @@ from ...game_utils.poker_timer import PokerTurnTimer
 from ...messages.localization import Localization
 from ...ui.keybinds import KeybindState
 from ...users.bot import Bot
-from ...users.user import User
+from ...users.base import User
 from .bot import bot_think
 
 

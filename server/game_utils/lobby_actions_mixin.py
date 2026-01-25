@@ -123,8 +123,10 @@ class LobbyActionsMixin:
         player.is_spectator = not player.is_spectator
         if player.is_spectator:
             self.broadcast_l("now-spectating", player=player.name)
+            self.broadcast_sound("join_spectator.ogg")
         else:
             self.broadcast_l("now-playing", player=player.name)
+            self.broadcast_sound("leave_spectator.ogg")
 
         self.rebuild_all_menus()
 

@@ -865,26 +865,7 @@ class Server:
             table_id = selection_id[6:]  # Remove "table_" prefix
             table = self._tables.get_table(table_id)
             if table:
-                # Show join options
-                items = [
-                    MenuItem(
-                        text=Localization.get(user.locale, "join-as-player"),
-                        id="join_player",
-                    ),
-                    MenuItem(
-                        text=Localization.get(user.locale, "join-as-spectator"),
-                        id="join_spectator",
-                    ),
-                    MenuItem(text=Localization.get(user.locale, "back"), id="back"),
-                ]
-                user.show_menu(
-                    "join_menu", items, escape_behavior=EscapeBehavior.SELECT_LAST
-                )
-                self._user_states[user.username] = {
-                    "menu": "join_menu",
-                    "table_id": table_id,
-                    "game_type": game_type,
-                }
+                self._auto_join_table(user, table, game_type)
             else:
                 user.speak_l("table-not-exists")
                 self._show_tables_menu(user, game_type)
@@ -908,31 +889,54 @@ class Server:
             table_id = selection_id[6:]
             table = self._tables.get_table(table_id)
             if table:
-                items = [
-                    MenuItem(
-                        text=Localization.get(user.locale, "join-as-player"),
-                        id="join_player",
-                    ),
-                    MenuItem(
-                        text=Localization.get(user.locale, "join-as-spectator"),
-                        id="join_spectator",
-                    ),
-                    MenuItem(text=Localization.get(user.locale, "back"), id="back"),
-                ]
-                user.show_menu(
-                    "join_menu", items, escape_behavior=EscapeBehavior.SELECT_LAST
-                )
-                self._user_states[user.username] = {
-                    "menu": "join_menu",
-                    "table_id": table_id,
-                    "game_type": table.game_type,
-                    "return_menu": "active_tables_menu",
-                }
+                self._auto_join_table(user, table, table.game_type)
             else:
                 user.speak_l("table-not-exists")
                 self._show_active_tables_menu(user)
         elif selection_id == "back":
             self._show_main_menu(user)
+
+    def _auto_join_table(
+        self, user: NetworkUser, table: "Table", game_type: str
+    ) -> None:
+        """Automatically join a table as player or spectator.
+
+        Joins as player if:
+        - Game has not started yet (status is "waiting")
+        - Game has room for more players (less than max_players)
+
+        Otherwise joins as spectator.
+        """
+        game = table.game
+        if not game:
+            user.speak_l("table-not-exists")
+            self._show_tables_menu(user, game_type)
+            return
+
+        table_id = table.table_id
+
+        # Determine if user can join as player
+        can_join_as_player = (
+            game.status != "playing"
+            and len(game.players) < game.get_max_players()
+        )
+
+        if can_join_as_player:
+            # Join as player
+            table.add_member(user.username, user, as_spectator=False)
+            game.add_player(user.username, user)
+            game.broadcast_l("table-joined", player=user.username)
+            game.broadcast_sound("join.ogg")
+            game.rebuild_all_menus()
+        else:
+            # Join as spectator
+            table.add_member(user.username, user, as_spectator=True)
+            user.speak_l("spectator-joined", host=table.host)
+            game.broadcast_l("now-spectating", player=user.username)
+            game.broadcast_sound("join_spectator.ogg")
+            game.rebuild_all_menus()
+
+        self._user_states[user.username] = {"menu": "in_game", "table_id": table_id}
 
     def _return_from_join_menu(self, user: NetworkUser, state: dict) -> None:
         """Return to the appropriate tables menu after join."""
@@ -982,6 +986,9 @@ class Server:
                     # No matching player - join as spectator instead
                     table.add_member(user.username, user, as_spectator=True)
                     user.speak_l("spectator-joined", host=table.host)
+                    game.broadcast_l("now-spectating", player=user.username)
+                    game.broadcast_sound("join_spectator.ogg")
+                    game.rebuild_all_menus()
                     self._user_states[user.username] = {
                         "menu": "in_game",
                         "table_id": table_id,
@@ -1004,6 +1011,9 @@ class Server:
         elif selection_id == "join_spectator":
             table.add_member(user.username, user, as_spectator=True)
             user.speak_l("spectator-joined", host=table.host)
+            game.broadcast_l("now-spectating", player=user.username)
+            game.broadcast_sound("join_spectator.ogg")
+            game.rebuild_all_menus()
             # TODO: spectator viewing - for now just track membership
             self._user_states[user.username] = {"menu": "in_game", "table_id": table_id}
 

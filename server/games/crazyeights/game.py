@@ -495,7 +495,7 @@ class CrazyEightsGame(Game):
             self.discard_pile.append(start_card)
             self.current_suit = start_card.suit
             self._broadcast_start_card()
-            self.broadcast_l("crazyeights-dealt-cards", cards=7)
+            self.broadcast_l("crazyeights-dealt-cards", cards=5)
             self.rebuild_all_menus()
         self._start_turn()
 

@@ -18,6 +18,7 @@ from ...users.base import User
 from datetime import datetime
 from .bot import bot_think
 
+SUIT_SORT_ORDER = {1: 0, 2: 1, 3: 2, 4: 3}
 
 TURN_TIMER_CHOICES = ["5", "10", "15", "20", "30", "45", "60", "90", "0"]
 TURN_TIMER_LABELS = {
@@ -351,7 +352,13 @@ class CrazyEightsGame(Game):
         turn_set.remove("pass")
         if self.status != "playing" or player.is_spectator:
             return
-        for card in player.hand:
+        nonwild_cards = sorted(
+            (card for card in player.hand if card.rank != 8),
+            key=lambda c: (SUIT_SORT_ORDER.get(c.suit, 4), -c.rank, c.id),
+        )
+        wild_cards = [card for card in player.hand if card.rank == 8]
+        ordered_cards = nonwild_cards + wild_cards
+        for card in ordered_cards:
             turn_set.add(
                 Action(
                     id=f"play_card_{card.id}",
@@ -487,6 +494,7 @@ class CrazyEightsGame(Game):
             self.discard_pile.append(start_card)
             self.current_suit = start_card.suit
             self._broadcast_start_card()
+            self.broadcast_l("crazyeights-dealt-cards", cards=7)
         self._start_turn()
 
     def _draw_start_card(self) -> Card | None:
@@ -1114,7 +1122,7 @@ class CrazyEightsGame(Game):
             user = self.get_user(p)
             if not user:
                 continue
-            parts = [
+            points_parts = [
                 Localization.get(
                     user.locale,
                     "crazyeights-round-points-from",
@@ -1123,12 +1131,16 @@ class CrazyEightsGame(Game):
                 )
                 for opp, score in points_from
             ]
-            detail = ", ".join(parts)
+            details = (
+                Localization.format_list_and(user.locale, points_parts)
+                if points_parts
+                else Localization.get(user.locale, "crazyeights-round-details-none")
+            )
             user.speak_l(
-                "crazyeights-round-winner",
+                "crazyeights-round-summary",
                 player=winner.name,
-                points=total,
-                detail=detail,
+                details=details,
+                total=total,
             )
 
     def _broadcast_start_card(self) -> None:

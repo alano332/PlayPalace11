@@ -346,9 +346,36 @@ class AdministrationMixin:
         if selection_id == "approve":
             await self._approve_user(user, pending_username)
         elif selection_id == "decline":
-            await self._decline_user(user, pending_username)
+            self._show_decline_reason_editbox(user, pending_username)
         elif selection_id == "back":
             self._show_account_approval_menu(user)
+
+    def _show_decline_reason_editbox(self, user: NetworkUser, pending_username: str) -> None:
+        """Show editbox for entering decline reason."""
+        prompt = Localization.get(user.locale, "decline-reason-prompt")
+        user.show_editbox(
+            "decline_reason",
+            prompt,
+            default_value="",
+            multiline=False,
+            read_only=False,
+        )
+        self._user_states[user.username] = {
+            "menu": "decline_reason_editbox",
+            "pending_username": pending_username,
+        }
+
+    async def _handle_decline_reason_editbox(
+        self, admin: NetworkUser, text: str, state: dict
+    ) -> None:
+        """Handle decline reason editbox submission."""
+        pending_username = state.get("pending_username")
+        if not pending_username:
+            self._show_account_approval_menu(admin)
+            return
+
+        # Proceed with decline, passing the reason (empty text uses fallback)
+        await self._decline_user(admin, pending_username, reason=text)
 
     async def _handle_promote_admin_selection(
         self, user: NetworkUser, selection_id: str
@@ -491,7 +518,7 @@ class AdministrationMixin:
         self._show_account_approval_menu(admin)
 
     @require_admin
-    async def _decline_user(self, admin: NetworkUser, username: str) -> None:
+    async def _decline_user(self, admin: NetworkUser, username: str, reason: str = "") -> None:
         """Decline and delete a pending user account."""
         # Check if the user is online first
         waiting_user = self._users.get(username)
@@ -504,10 +531,28 @@ class AdministrationMixin:
                 "account-action", "accountactionnotify.ogg", exclude_username=admin.username
             )
 
-            # If user is online, disconnect them
+            # If user is online, disconnect them with the reason
             if waiting_user:
-                waiting_user.speak_l("account-declined-goodbye")
-                await waiting_user.connection.send({"type": "disconnect", "reconnect": False})
+                # Build the full decline message with reason
+                decline_message = Localization.get(
+                    waiting_user.locale, "account-declined-goodbye"
+                )
+                display_reason = reason.strip() if reason else ""
+                if not display_reason:
+                    display_reason = Localization.get(
+                        waiting_user.locale, "approval-reject-no-reason"
+                    )
+                # Combine into single message for the dialog
+                full_message = f"{decline_message}\n{display_reason}"
+                waiting_user.speak(full_message)
+                # Flush queued messages before disconnect so client receives them
+                for msg in waiting_user.get_queued_messages():
+                    await waiting_user.connection.send(msg)
+                await waiting_user.connection.send({
+                    "type": "disconnect",
+                    "reconnect": False,
+                    "show_message": True,
+                })
 
         self._show_account_approval_menu(admin)
 

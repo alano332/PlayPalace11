@@ -254,6 +254,10 @@ waiting-for-approval = Tài khoản của bạn đang chờ quản trị viên p
 account-approved-welcome = Tài khoản của bạn đã được phê duyệt! Chào mừng đến với PlayPalace!
 account-declined-goodbye = Yêu cầu tạo tài khoản của bạn đã bị từ chối.
 
+# Lý do từ chối
+decline-reason-prompt = Nhập lý do từ chối (hoặc nhấn Escape để hủy):
+approval-reject-no-reason = Không có lý do được cung cấp.
+
 # Thông báo Admin về yêu cầu tài khoản
 account-request = yêu cầu tài khoản
 account-action = đã xử lý tài khoản

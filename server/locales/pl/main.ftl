@@ -251,6 +251,10 @@ waiting-for-approval = Twoje konto oczekuje na zatwierdzenie przez administrator
 account-approved-welcome = Twoje konto zostało zatwierdzone! Witaj w PlayPalace!
 account-declined-goodbye = Twoja prośba o konto została odrzucona.
 
+# Powód odrzucenia
+decline-reason-prompt = Podaj powód odrzucenia (lub naciśnij Escape, aby anulować):
+approval-reject-no-reason = Nie podano powodu.
+
 # Admin notifications for account requests
 account-request = prośba o konto
 account-action = podjęto działanie dotyczące konta

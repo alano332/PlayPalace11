@@ -2230,8 +2230,21 @@ class Server(AdministrationMixin):
             return
 
         user = self._users.get(username)
+        if not user:
+            return
+
+        # Check for admin editbox handlers
+        state = self._user_states.get(username, {})
+        current_menu = state.get("menu")
+
+        if current_menu == "decline_reason_editbox":
+            text = packet.get("text", "")
+            await self._handle_decline_reason_editbox(user, text, state)
+            return
+
+        # Forward to game if user is in a table
         table = self._tables.find_user_table(username)
-        if table and table.game and user:
+        if table and table.game:
             player = table.game.get_player_by_id(user.uuid)
             if player:
                 table.game.handle_event(player, packet)

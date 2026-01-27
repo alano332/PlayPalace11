@@ -201,6 +201,10 @@ waiting-for-approval = 您的账户正在等待管理员审批，请稍候...
 account-approved-welcome = 您的账户已获批准！欢迎来到 PlayPalace！
 account-declined-goodbye = 您的账户申请已被拒绝。
 
+# 拒绝原因
+decline-reason-prompt = 请输入拒绝原因（或按Escape键取消）：
+approval-reject-no-reason = 未提供原因。
+
 # 账户请求的管理员通知
 account-request = 账户请求
 account-action = 账户操作已完成

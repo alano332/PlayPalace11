@@ -211,6 +211,10 @@ waiting-for-approval = Sua conta está aguardando aprovação de um administrado
 account-approved-welcome = Sua conta foi aprovada! Bem-vindo ao PlayPalace!
 account-declined-goodbye = Sua solicitação de conta foi recusada.
 
+# Motivo da recusa
+decline-reason-prompt = Digite um motivo para a recusa (ou pressione Escape para cancelar):
+approval-reject-no-reason = Nenhum motivo fornecido.
+
 # Notificações de admin para solicitações de conta
 account-request = solicitação de conta
 account-action = ação de conta realizada

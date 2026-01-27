@@ -254,6 +254,10 @@ waiting-for-approval = Your account is waiting for approval by an administrator.
 account-approved-welcome = Your account has been approved! Welcome to PlayPalace!
 account-declined-goodbye = Your account request has been declined.
 
+# Decline reason
+decline-reason-prompt = Enter a reason for declining (or press Escape to cancel):
+approval-reject-no-reason = No reason given.
+
 # Admin notifications for account requests
 account-request = account request
 account-action = account action taken

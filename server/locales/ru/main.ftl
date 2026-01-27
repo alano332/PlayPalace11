@@ -293,6 +293,10 @@ waiting-for-approval = Ваш аккаунт ожидает подтвержде
 account-approved-welcome = Ваш аккаунт одобрен! Добро пожаловать в PlayPalace!
 account-declined-goodbye = Ваш запрос на создание аккаунта был отклонён.
 
+# Причина отклонения
+decline-reason-prompt = Введите причину отклонения (или нажмите Escape для отмены):
+approval-reject-no-reason = Причина не указана.
+
 # Admin notifications for account requests
 account-request = запрос аккаунта
 account-action = действие с аккаунтом выполнено

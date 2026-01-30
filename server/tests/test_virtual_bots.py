@@ -397,3 +397,253 @@ def test_clear_bots_removes_tables_and_calls_db(monkeypatch):
     assert tables_killed == 1
     assert "Cleaner" not in manager._bots
     assert server._db.cleared == 1
+
+
+def test_load_config_with_max_tables_per_game(tmp_path):
+    """Test that max_tables_per_game config is loaded correctly."""
+    config_path = tmp_path / "config.toml"
+    config_path.write_text(
+        """
+        [virtual_bots]
+        names = ["BotA"]
+        max_tables_per_game = 2
+        """
+    )
+
+    server = FakeServer()
+    manager = VirtualBotManager(server)
+    manager.load_config(config_path)
+
+    assert manager._config.max_tables_per_game == 2
+
+
+def test_count_bot_owned_tables():
+    """Test counting tables owned by virtual bots."""
+
+    class FakeTablesWithAll(FakeTables):
+        def __init__(self, tables_list):
+            super().__init__()
+            self._all_tables = tables_list
+
+        def get_all_tables(self):
+            return self._all_tables
+
+    # Create mock tables with games
+    table1 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotA")
+    )
+    table2 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotB")
+    )
+    table3 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "ninetynine", host="BotA")
+    )
+    table4 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="HumanPlayer")
+    )
+
+    server = FakeServer()
+    server._tables = FakeTablesWithAll([table1, table2, table3, table4])
+
+    manager = VirtualBotManager(server)
+    manager._bots["BotA"] = VirtualBot("BotA")
+    manager._bots["BotB"] = VirtualBot("BotB")
+    # HumanPlayer is not a bot
+
+    assert manager._count_bot_owned_tables("scopa") == 2  # BotA and BotB
+    assert manager._count_bot_owned_tables("ninetynine") == 1  # Only BotA
+    assert manager._count_bot_owned_tables("othergame") == 0
+
+
+def test_can_create_game_type_with_limits():
+    """Test that _can_create_game_type respects limits."""
+
+    class FakeTablesWithAll(FakeTables):
+        def __init__(self, tables_list):
+            super().__init__()
+            self._all_tables = tables_list
+
+        def get_all_tables(self):
+            return self._all_tables
+
+    # Create 2 scopa tables owned by bots
+    table1 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotA")
+    )
+    table2 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotB")
+    )
+
+    server = FakeServer()
+    server._tables = FakeTablesWithAll([table1, table2])
+
+    manager = VirtualBotManager(server)
+    manager._bots["BotA"] = VirtualBot("BotA")
+    manager._bots["BotB"] = VirtualBot("BotB")
+
+    # Set limit of 2 per game type
+    manager._config.max_tables_per_game = 2
+
+    # Should not be able to create more scopa tables (at limit)
+    assert manager._can_create_game_type("scopa") is False
+
+    # Should be able to create ninetynine (0 tables exist)
+    assert manager._can_create_game_type("ninetynine") is True
+
+    # Increase limit to 3
+    manager._config.max_tables_per_game = 3
+    assert manager._can_create_game_type("scopa") is True
+
+    # 0 means unlimited
+    manager._config.max_tables_per_game = 0
+    assert manager._can_create_game_type("scopa") is True
+
+
+def test_try_create_game_respects_limits_and_falls_back_to_join(monkeypatch):
+    """Test that _try_create_game picks alternative game or joins when limited."""
+
+    class FakeTablesWithAll(FakeTables):
+        def __init__(self):
+            super().__init__()
+            self._all_tables = []
+
+        def get_all_tables(self):
+            return self._all_tables
+
+        def create_table(self, game_type, host_name, user):
+            return SimpleNamespace(table_id="new-table", game=None)
+
+    # Create 2 scopa tables owned by bots (at limit)
+    table1 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotA")
+    )
+    table2 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotB")
+    )
+
+    server = FakeServer()
+    server._tables = FakeTablesWithAll()
+    server._tables._all_tables = [table1, table2]
+
+    manager = VirtualBotManager(server)
+    manager._bots["BotA"] = VirtualBot("BotA")
+    manager._bots["BotB"] = VirtualBot("BotB")
+    manager._config.max_tables_per_game = 2  # Limit of 2 per game type
+
+    # Create a bot that wants to create a game
+    bot = VirtualBot("Creator", state=VirtualBotState.ONLINE_IDLE)
+    manager._bots["Creator"] = bot
+    server._users["Creator"] = DummyNetworkUser()
+
+    # Mock registry to only return scopa (which is at limit)
+    class ScopaGameClass:
+        @classmethod
+        def get_type(cls):
+            return "scopa"
+
+        @classmethod
+        def get_name(cls):
+            return "Scopa"
+
+    monkeypatch.setattr(
+        registry_module.GameRegistry,
+        "get_all",
+        classmethod(lambda cls: [ScopaGameClass]),
+    )
+
+    # No waiting tables to join either
+    server._tables.waiting_tables = []
+
+    # Should fail since scopa is at limit and no other games available
+    created = manager._try_create_game(bot)
+    assert created is False
+    assert bot.state == VirtualBotState.ONLINE_IDLE  # State unchanged
+
+    # Now add a waiting table - should fall back to joining
+    game = DummyGameForJoin(host="other")
+    table = DummyTableForJoin("table-1", game)
+    server._tables.waiting_tables = [table]
+
+    monkeypatch.setattr("server.core.virtual_bots.random.choice", lambda seq: seq[0])
+
+    created = manager._try_create_game(bot)
+    assert created is True
+    assert bot.state == VirtualBotState.IN_GAME
+    assert bot.table_id == "table-1"  # Joined existing table
+
+
+def test_try_create_game_picks_available_game_type(monkeypatch):
+    """Test that _try_create_game picks a game type that isn't at its limit."""
+
+    class FakeTablesWithAll(FakeTables):
+        def __init__(self):
+            super().__init__()
+            self._all_tables = []
+            self.created_game_types = []
+
+        def get_all_tables(self):
+            return self._all_tables
+
+        def create_table(self, game_type, host_name, user):
+            self.created_game_types.append(game_type)
+            return SimpleNamespace(table_id="new-table", game=None)
+
+    # Create 2 scopa tables (at limit)
+    table1 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotA")
+    )
+    table2 = SimpleNamespace(
+        game=SimpleNamespace(get_type=lambda: "scopa", host="BotB")
+    )
+
+    server = FakeServer()
+    server._tables = FakeTablesWithAll()
+    server._tables._all_tables = [table1, table2]
+
+    manager = VirtualBotManager(server)
+    manager._bots["BotA"] = VirtualBot("BotA")
+    manager._bots["BotB"] = VirtualBot("BotB")
+    manager._config.max_tables_per_game = 2  # Limit of 2 per game type
+
+    bot = VirtualBot("Creator", state=VirtualBotState.ONLINE_IDLE)
+    manager._bots["Creator"] = bot
+    server._users["Creator"] = DummyNetworkUser()
+
+    # Mock registry with scopa (at limit) and ninetynine (available)
+    class ScopaGameClass:
+        @classmethod
+        def get_type(cls):
+            return "scopa"
+
+        @classmethod
+        def get_name(cls):
+            return "Scopa"
+
+    class NinetyNineGameClass:
+        @classmethod
+        def get_type(cls):
+            return "ninetynine"
+
+        @classmethod
+        def get_name(cls):
+            return "Ninety Nine"
+
+        def __init__(self):
+            self.players = []
+
+        def initialize_lobby(self, host_name, user):
+            self.players.append(SimpleNamespace(name=host_name))
+
+    monkeypatch.setattr(
+        registry_module.GameRegistry,
+        "get_all",
+        classmethod(lambda cls: [ScopaGameClass, NinetyNineGameClass]),
+    )
+    # Force random.choice to pick the first available (ninetynine since scopa is filtered)
+    monkeypatch.setattr("server.core.virtual_bots.random.choice", lambda seq: seq[0])
+
+    created = manager._try_create_game(bot)
+
+    assert created is True
+    assert server._tables.created_game_types == ["ninetynine"]
+    assert bot.state == VirtualBotState.IN_GAME

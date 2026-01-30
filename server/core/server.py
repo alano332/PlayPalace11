@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-import os
 import sys
 import time
 from collections import deque
@@ -16,7 +15,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback when available
     import tomli as tomllib  # type: ignore[import]
 
-from .tick import TickScheduler
+from .tick import TickScheduler, load_server_config
 from .administration import AdministrationMixin
 from .virtual_bots import VirtualBotManager
 from ..network.websocket_server import WebSocketServer, ClientConnection
@@ -42,8 +41,20 @@ DEFAULT_LOGIN_FAILURES_PER_MINUTE = 3
 DEFAULT_REGISTRATION_ATTEMPTS_PER_MINUTE = 2
 LOGIN_RATE_WINDOW_SECONDS = 60
 REGISTRATION_RATE_WINDOW_SECONDS = 60
-BOOTSTRAP_WARNING_ENV = "PLAYPALACE_SUPPRESS_BOOTSTRAP_WARNING"
 
+
+def _coerce_bool(value: Any, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return default
 
 # Default paths based on module location
 _MODULE_DIR = Path(__file__).parent.parent
@@ -94,6 +105,7 @@ class Server(AdministrationMixin):
         self._password_max_length = DEFAULT_PASSWORD_MAX_LENGTH
         self._ws_max_message_size = DEFAULT_WS_MAX_MESSAGE_BYTES
         self._config_path = Path(config_path) if config_path else _MODULE_DIR / "config.toml"
+        self._allow_insecure_ws = False
         self._login_ip_limit = DEFAULT_LOGIN_ATTEMPTS_PER_MINUTE
         self._login_user_limit = DEFAULT_LOGIN_FAILURES_PER_MINUTE
         self._registration_ip_limit = DEFAULT_REGISTRATION_ATTEMPTS_PER_MINUTE
@@ -115,6 +127,9 @@ class Server(AdministrationMixin):
         """Start the server."""
         print(f"Starting PlayPalace v{VERSION} server...")
 
+        # Enforce transport requirements before bringing up listeners
+        self._validate_transport_security()
+
         # Connect to database
         self._db.connect()
         self._auth = AuthManager(self._db)
@@ -123,10 +138,13 @@ class Server(AdministrationMixin):
         promoted_user = self._db.initialize_trust_levels()
         if promoted_user:
             print(f"User '{promoted_user}' has been promoted to server owner (trust level 3).")
-        self._warn_if_no_users()
 
         # Load existing tables
         self._load_tables()
+
+        # Load server configuration
+        server_config = load_server_config()
+        tick_interval_ms = server_config.get("tick_interval_ms")
 
         # Initialize virtual bots
         self._virtual_bots.load_config()
@@ -153,8 +171,10 @@ class Server(AdministrationMixin):
         print(f"Max inbound websocket message size: {self._ws_max_message_size} bytes")
 
         # Start tick scheduler
-        self._tick_scheduler = TickScheduler(self._on_tick)
+        self._tick_scheduler = TickScheduler(self._on_tick, tick_interval_ms)
         await self._tick_scheduler.start()
+        if tick_interval_ms:
+            print(f"Tick interval: {tick_interval_ms}ms ({1000 // tick_interval_ms} ticks/sec)")
 
         protocol = "wss" if self._ssl_cert else "ws"
         print(f"Server running on {protocol}://{self.host}:{self.port}")
@@ -229,6 +249,9 @@ class Server(AdministrationMixin):
         if isinstance(net_cfg, dict):
             max_bytes = _read_limit(net_cfg, "max_message_bytes", self._ws_max_message_size, minimum=1)
             self._ws_max_message_size = max_bytes
+            self._allow_insecure_ws = _coerce_bool(
+                net_cfg.get("allow_insecure_ws"), self._allow_insecure_ws
+            )
 
         rate_cfg = auth_cfg.get("rate_limits") if isinstance(auth_cfg, dict) else None
         if isinstance(rate_cfg, dict):
@@ -249,39 +272,11 @@ class Server(AdministrationMixin):
                 rate_cfg, "registration_window_seconds", self._registration_ip_window, minimum=1
             )
 
-    def _warn_if_no_users(self) -> None:
-        """Print a warning if no user accounts exist yet."""
-        if os.environ.get(BOOTSTRAP_WARNING_ENV):
-            return
-        try:
-            if self._db.get_user_count() > 0:
-                return
-        except Exception:  # pragma: no cover - defensive
-            return
-
-        print(
-            "WARNING: No user accounts exist. Run "
-            "`uv run python -m server.cli bootstrap-owner --username <name>` "
-            "to create an initial administrator before exposing this server on the network. "
-            f"Set {BOOTSTRAP_WARNING_ENV}=1 to suppress this warning for CI or local testing."
-        )
-
-    def _warn_if_no_users(self) -> None:
-        """Print a warning if no user accounts exist yet."""
-        if os.environ.get(BOOTSTRAP_WARNING_ENV):
-            return
-        try:
-            if self._db.get_user_count() > 0:
-                return
-        except Exception:  # pragma: no cover - defensive
-            return
-
-        print(
-            "WARNING: No user accounts exist. Run "
-            "`uv run python -m server.cli bootstrap-owner --username <name>` "
-            "to create an initial administrator before exposing this server on the network. "
-            f"Set {BOOTSTRAP_WARNING_ENV}=1 to suppress this warning for CI or local testing."
-        )
+    def _validate_transport_security(self) -> None:
+        if not self._ssl_cert and not self._allow_insecure_ws:
+            raise RuntimeError(
+                "TLS is required. Provide --ssl-cert/--ssl-key or set [network].allow_insecure_ws to true."
+            )
 
     @staticmethod
     def _get_client_ip(client: ClientConnection) -> str:

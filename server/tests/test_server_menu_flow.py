@@ -294,6 +294,42 @@ async def test_handle_chat_local_only_reaches_approved(server):
 
 @pytest.mark.asyncio
 @pytest.mark.slow
+async def test_handle_chat_local_not_in_table_reaches_lobby(server):
+    host = make_network_user("Host")
+    lobby_friend = make_network_user("LobbyFriend")
+    in_table = make_network_user("InTable")
+    pending = make_network_user("Pending", approved=False)
+    server._users = {
+        host.username: host,
+        lobby_friend.username: lobby_friend,
+        in_table.username: in_table,
+        pending.username: pending,
+    }
+
+    class DummyTable:
+        def __init__(self):
+            self.members = [SimpleNamespace(username="InTable")]
+
+    table = DummyTable()
+
+    def find_user_table(username):
+        return table if username == "InTable" else None
+
+    server._tables = SimpleNamespace(find_user_table=find_user_table)
+
+    client = SimpleNamespace(username=host.username)
+    await server._handle_chat(client, {"convo": "local", "message": "hi"})
+
+    assert lobby_friend.connection.sent
+    assert lobby_friend.connection.sent[-1]["message"] == "hi"
+    assert host.connection.sent
+    assert host.connection.sent[-1]["message"] == "hi"
+    assert not in_table.connection.sent
+    assert not pending.connection.sent
+
+
+@pytest.mark.asyncio
+@pytest.mark.slow
 async def test_handle_chat_global_reaches_all_approved(server):
     sender = make_network_user("Sender")
     approved = make_network_user("ApprovedFriend")
@@ -310,3 +346,38 @@ async def test_handle_chat_global_reaches_all_approved(server):
     assert sender.connection.sent and sender.connection.sent[-1]["message"] == "wave"
     assert approved.connection.sent and approved.connection.sent[-1]["message"] == "wave"
     assert not pending.connection.sent
+
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_handle_keybind_whos_at_table_when_not_in_game(server):
+    caller = make_network_user("Caller")
+    lobby_friend = make_network_user("LobbyFriend")
+    in_table = make_network_user("InTable")
+    server._users = {
+        caller.username: caller,
+        lobby_friend.username: lobby_friend,
+        in_table.username: in_table,
+    }
+
+    class DummyTable:
+        pass
+
+    table = DummyTable()
+
+    def find_user_table(username):
+        return table if username == "InTable" else None
+
+    server._tables = SimpleNamespace(find_user_table=find_user_table)
+
+    client = SimpleNamespace(username=caller.username)
+    await server._handle_keybind(
+        client,
+        {"key": "w", "control": True},
+    )
+
+    messages = caller.get_queued_messages()
+    assert messages, "expected speak message for ctrl+w"
+    assert messages[-1]["type"] == "speak"
+    assert "Caller" in messages[-1]["text"]
+    assert "LobbyFriend" in messages[-1]["text"]

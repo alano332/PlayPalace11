@@ -205,18 +205,27 @@ class Server(AdministrationMixin):
         """Handle client disconnection."""
         print(f"Client disconnected: {client.address}")
         if client.username:
+            username = client.username
+            table = self._tables.find_user_table(username)
             # Check user status before cleanup
-            user = self._users.get(client.username)
+            user = self._users.get(username)
+
+            if table and user:
+                if table.game:
+                    player = table.game.get_player_by_id(user.uuid)
+                    if player:
+                        table.game._perform_leave_game(player)
+                table.remove_member(username)
 
             # Only broadcast offline if user was approved and not banned
             if user and user.approved and user.trust_level != TrustLevel.BANNED:
                 is_admin = user.trust_level.value >= TrustLevel.ADMIN.value
                 offline_sound = "offlineadmin.ogg" if is_admin else "offline.ogg"
-                self._broadcast_presence_l("user-offline", client.username, offline_sound)
+                self._broadcast_presence_l("user-offline", username, offline_sound)
 
             # Clean up user state
-            self._users.pop(client.username, None)
-            self._user_states.pop(client.username, None)
+            self._users.pop(username, None)
+            self._user_states.pop(username, None)
 
     def _broadcast_presence_l(
         self, message_id: str, player_name: str, sound: str
@@ -2307,6 +2316,20 @@ class Server(AdministrationMixin):
 
         user = self._users.get(username)
         table = self._tables.find_user_table(username)
+        if not table and user:
+            if packet.get("key") == "w" and packet.get("control"):
+                players = [
+                    u.username
+                    for u in self._users.values()
+                    if u.approved and not self._tables.find_user_table(u.username)
+                ]
+                if not players:
+                    user.speak_l("table-no-players")
+                    return
+                names = Localization.format_list_and(user.locale, players)
+                key = "table-players-one" if len(players) == 1 else "table-players-many"
+                user.speak_l(key, count=len(players), players=names)
+            return
         if table and table.game and user:
             player = table.game.get_player_by_id(user.uuid)
             if player:
@@ -2383,6 +2406,13 @@ class Server(AdministrationMixin):
                     user = self._users.get(member_name)
                     if user and user.approved:  # Only send to approved users
                         await user.connection.send(chat_packet)
+            else:
+                for user in self._users.values():
+                    if not user.approved:
+                        continue
+                    if self._tables.find_user_table(user.username):
+                        continue
+                    await user.connection.send(chat_packet)
         elif convo == "global":
             # Broadcast to all approved users only
             for user in self._users.values():

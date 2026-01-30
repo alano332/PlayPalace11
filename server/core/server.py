@@ -216,7 +216,9 @@ class Server(AdministrationMixin):
                     player = table.game.get_player_by_id(user.uuid)
                     if player:
                         table.game._perform_leave_game(player)
-                table.remove_member(username)
+                # Keep membership for rejoin unless this was the last member
+                if len(table.members) <= 1:
+                    table.remove_member(username)
 
             # Only broadcast offline if user was approved and not banned
             if user and user.approved and user.trust_level != TrustLevel.BANNED:

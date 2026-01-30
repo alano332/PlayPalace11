@@ -234,7 +234,7 @@ class Server(AdministrationMixin):
         for username, user in self._users.items():
             if not user.approved:
                 continue  # Don't send broadcasts to unapproved users
-            user.speak_l(message_id, player=player_name)
+            user.speak_l(message_id, buffer="activity", player=player_name)
             user.play_sound(sound)
 
     def _broadcast_admin_announcement(self, admin_name: str) -> None:
@@ -242,21 +242,21 @@ class Server(AdministrationMixin):
         for username, user in self._users.items():
             if not user.approved:
                 continue  # Don't send broadcasts to unapproved users
-            user.speak_l("user-is-admin", player=admin_name)
+            user.speak_l("user-is-admin", buffer="activity", player=admin_name)
 
     def _broadcast_server_owner_announcement(self, owner_name: str) -> None:
         """Broadcast a server owner announcement to all approved online users."""
         for username, user in self._users.items():
             if not user.approved:
                 continue  # Don't send broadcasts to unapproved users
-            user.speak_l("user-is-server-owner", player=owner_name)
+            user.speak_l("user-is-server-owner", buffer="activity", player=owner_name)
 
     def _broadcast_table_created(self, host_name: str, game_name: str) -> None:
         """Broadcast a table creation announcement to all approved online users."""
         for username, user in self._users.items():
             if not user.approved:
                 continue  # Don't send broadcasts to unapproved users
-            user.speak_l("table-created", host=host_name, game=game_name)
+            user.speak_l("table-created", buffer="activity", host=host_name, game=game_name)
             user.play_sound("table_created.ogg")
 
     async def _on_client_message(self, client: ClientConnection, packet: dict) -> None:
@@ -2324,11 +2324,11 @@ class Server(AdministrationMixin):
                     if u.approved and not self._tables.find_user_table(u.username)
                 ]
                 if not players:
-                    user.speak_l("table-no-players")
+                    user.speak_l("online-users-none")
                     return
                 names = Localization.format_list_and(user.locale, players)
-                key = "table-players-one" if len(players) == 1 else "table-players-many"
-                user.speak_l(key, count=len(players), players=names)
+                key = "online-users-one" if len(players) == 1 else "online-users-many"
+                user.speak_l(key, count=len(players), users=names)
             return
         if table and table.game and user:
             player = table.game.get_player_by_id(user.uuid)
@@ -2391,13 +2391,14 @@ class Server(AdministrationMixin):
         message = packet.get("message", "")
         language = packet.get("language", "Other")
 
-        chat_packet = {
-            "type": "chat",
-            "convo": convo,
-            "sender": username,
-            "message": message,
-            "language": language,
-        }
+        chat_text = (
+            username
+            + " says "
+            + ("globally" if convo == "global" else "")
+            + ": "
+            + message
+        )
+        chat_sound = "chatlocal.ogg" if convo == "local" else "chat.ogg"
 
         if convo == "local":
             table = self._tables.find_user_table(username)
@@ -2405,19 +2406,22 @@ class Server(AdministrationMixin):
                 for member_name in [m.username for m in table.members]:
                     user = self._users.get(member_name)
                     if user and user.approved:  # Only send to approved users
-                        await user.connection.send(chat_packet)
+                        user.speak(chat_text, buffer="chats")
+                        user.play_sound(chat_sound)
             else:
                 for user in self._users.values():
                     if not user.approved:
                         continue
                     if self._tables.find_user_table(user.username):
                         continue
-                    await user.connection.send(chat_packet)
+                    user.speak(chat_text, buffer="chats")
+                    user.play_sound(chat_sound)
         elif convo == "global":
             # Broadcast to all approved users only
             for user in self._users.values():
                 if user.approved:
-                    await user.connection.send(chat_packet)
+                    user.speak(chat_text, buffer="chats")
+                    user.play_sound(chat_sound)
 
     def _get_online_usernames(self) -> list[str]:
         """Return sorted list of online usernames."""

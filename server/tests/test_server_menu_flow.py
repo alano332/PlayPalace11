@@ -288,12 +288,14 @@ async def test_handle_chat_local_only_reaches_approved(server):
     client = SimpleNamespace(username=host.username)
     await server._handle_chat(client, {"convo": "local", "message": "hi"})
 
-    assert approved.connection.sent and approved.connection.sent[-1]["message"] == "hi"
+    packets = approved.get_queued_messages()
+    assert packets and packets[-1]["type"] == "speak"
+    assert packets[-1]["buffer"] == "chats"
+    assert "hi" in packets[-1]["text"]
     assert not pending.connection.sent
 
 
 @pytest.mark.asyncio
-@pytest.mark.slow
 async def test_handle_chat_local_not_in_table_reaches_lobby(server):
     host = make_network_user("Host")
     lobby_friend = make_network_user("LobbyFriend")
@@ -320,10 +322,16 @@ async def test_handle_chat_local_not_in_table_reaches_lobby(server):
     client = SimpleNamespace(username=host.username)
     await server._handle_chat(client, {"convo": "local", "message": "hi"})
 
-    assert lobby_friend.connection.sent
-    assert lobby_friend.connection.sent[-1]["message"] == "hi"
-    assert host.connection.sent
-    assert host.connection.sent[-1]["message"] == "hi"
+    lobby_packets = lobby_friend.get_queued_messages()
+    lobby_speaks = [p for p in lobby_packets if p.get("type") == "speak"]
+    assert lobby_speaks
+    assert lobby_speaks[-1]["buffer"] == "chats"
+    assert "hi" in lobby_speaks[-1]["text"]
+    host_packets = host.get_queued_messages()
+    host_speaks = [p for p in host_packets if p.get("type") == "speak"]
+    assert host_speaks
+    assert host_speaks[-1]["buffer"] == "chats"
+    assert "hi" in host_speaks[-1]["text"]
     assert not in_table.connection.sent
     assert not pending.connection.sent
 
@@ -343,13 +351,20 @@ async def test_handle_chat_global_reaches_all_approved(server):
     client = SimpleNamespace(username=sender.username)
     await server._handle_chat(client, {"convo": "global", "message": "wave"})
 
-    assert sender.connection.sent and sender.connection.sent[-1]["message"] == "wave"
-    assert approved.connection.sent and approved.connection.sent[-1]["message"] == "wave"
+    sender_packets = sender.get_queued_messages()
+    assert sender_packets
+    assert sender_packets[-1]["type"] == "speak"
+    assert sender_packets[-1]["buffer"] == "chats"
+    assert "wave" in sender_packets[-1]["text"]
+    approved_packets = approved.get_queued_messages()
+    assert approved_packets
+    assert approved_packets[-1]["type"] == "speak"
+    assert approved_packets[-1]["buffer"] == "chats"
+    assert "wave" in approved_packets[-1]["text"]
     assert not pending.connection.sent
 
 
 @pytest.mark.asyncio
-@pytest.mark.slow
 async def test_handle_keybind_whos_at_table_when_not_in_game(server):
     caller = make_network_user("Caller")
     lobby_friend = make_network_user("LobbyFriend")
@@ -381,3 +396,4 @@ async def test_handle_keybind_whos_at_table_when_not_in_game(server):
     assert messages[-1]["type"] == "speak"
     assert "Caller" in messages[-1]["text"]
     assert "LobbyFriend" in messages[-1]["text"]
+    assert "user" in messages[-1]["text"].lower()

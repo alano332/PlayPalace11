@@ -1418,6 +1418,7 @@ class Server(AdministrationMixin):
                     current=len(game.players),
                     min=min_players,
                     max=max_players,
+                    buffer="table",
                 )
             self._user_states[user.username] = {
                 "menu": "in_game",

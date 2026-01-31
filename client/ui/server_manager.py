@@ -1,5 +1,6 @@
 """Server manager dialogs for managing servers and user accounts."""
 
+import re
 import wx
 import sys
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 # Add parent directory to path to import config_manager
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config_manager import ConfigManager
+from constants import DEFAULT_CREDENTIAL_HINT
 
 
 class AccountEditorDialog(wx.Dialog):
@@ -28,7 +30,7 @@ class AccountEditorDialog(wx.Dialog):
             account_id: Account ID to edit, or None to create new account
         """
         title = "Edit Account" if account_id else "Add Account"
-        super().__init__(parent, title=title, size=(400, 280))
+        super().__init__(parent, title=title, size=(400, 330))
 
         self.config_manager = config_manager
         self.server_id = server_id
@@ -64,11 +66,35 @@ class AccountEditorDialog(wx.Dialog):
         password_label = wx.StaticText(panel, label="&Password:")
         sizer.Add(password_label, 0, wx.LEFT | wx.TOP, 10)
 
+        password_sizer = wx.BoxSizer(wx.HORIZONTAL)
         password_value = ""
         if self.account_data:
             password_value = self.account_data.get("password", "")
+
+        # Create both masked and plain text controls for password
         self.password_input = wx.TextCtrl(panel, value=password_value, style=wx.TE_PASSWORD)
-        sizer.Add(self.password_input, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
+        self.password_input.SetName("Password")
+        self.password_plain = wx.TextCtrl(panel, value=password_value)
+        self.password_plain.SetName("Password")
+        self.password_plain.Hide()
+
+        password_sizer.Add(self.password_input, 1, wx.RIGHT, 5)
+        password_sizer.Add(self.password_plain, 1, wx.RIGHT, 5)
+
+        self.show_password_btn = wx.Button(panel, label="&Show Password")
+        password_sizer.Add(self.show_password_btn, 0)
+
+        sizer.Add(password_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
+
+        # Email
+        email_label = wx.StaticText(panel, label="&Email:")
+        sizer.Add(email_label, 0, wx.LEFT | wx.TOP, 10)
+
+        email_value = ""
+        if self.account_data:
+            email_value = self.account_data.get("email", "")
+        self.email_input = wx.TextCtrl(panel, value=email_value)
+        sizer.Add(self.email_input, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
 
         # Notes
         notes_label = wx.StaticText(panel, label="&Notes:")
@@ -85,6 +111,9 @@ class AccountEditorDialog(wx.Dialog):
         # Buttons
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
+        credential_policy_btn = wx.Button(panel, label="Default Credential &Policy")
+        button_sizer.Add(credential_policy_btn, 0, wx.RIGHT, 5)
+
         close_btn = wx.Button(panel, wx.ID_CANCEL, "&Close")
         button_sizer.Add(close_btn, 0)
 
@@ -93,11 +122,15 @@ class AccountEditorDialog(wx.Dialog):
         panel.SetSizer(sizer)
 
         # Bind events
+        self.show_password_btn.Bind(wx.EVT_BUTTON, self.on_show_password)
+        credential_policy_btn.Bind(wx.EVT_BUTTON, self.on_credential_policy)
         close_btn.Bind(wx.EVT_BUTTON, self.on_close)
 
         # Auto-save on field changes
         self.username_input.Bind(wx.EVT_KILL_FOCUS, self.on_field_change)
         self.password_input.Bind(wx.EVT_KILL_FOCUS, self.on_field_change)
+        self.password_plain.Bind(wx.EVT_KILL_FOCUS, self.on_field_change)
+        self.email_input.Bind(wx.EVT_KILL_FOCUS, self.on_field_change)
         self.notes_input.Bind(wx.EVT_KILL_FOCUS, self.on_field_change)
 
         # Set focus
@@ -106,24 +139,126 @@ class AccountEditorDialog(wx.Dialog):
     def on_key(self, event):
         """Handle key events."""
         if event.GetKeyCode() == wx.WXK_ESCAPE:
+            if not self._validate_for_close():
+                return
             self._save_if_needed()
             self.EndModal(wx.ID_OK)
         else:
             event.Skip()
+
+    def on_show_password(self, event):
+        """Toggle password visibility."""
+        if self.password_input.IsShown():
+            # Switch to plain text (show password)
+            current_value = self.password_input.GetValue()
+            self.password_plain.SetValue(current_value)
+            self.password_input.Hide()
+            self.password_plain.Show()
+            self.show_password_btn.SetLabel("&Hide Password")
+            self.password_plain.SetFocus()
+        else:
+            # Switch to masked (hide password)
+            current_value = self.password_plain.GetValue()
+            self.password_input.SetValue(current_value)
+            self.password_plain.Hide()
+            self.password_input.Show()
+            self.show_password_btn.SetLabel("&Show")
+            self.password_input.SetFocus()
+
+        self.password_input.GetParent().Layout()
 
     def on_field_change(self, event):
         """Handle field change - auto-save."""
         self._save_if_needed()
         event.Skip()
 
-    def _save_if_needed(self):
-        """Save account data if there are changes."""
+    def _get_password_value(self) -> str:
+        """Get the current password value from whichever control is visible."""
+        if self.password_input.IsShown():
+            return self.password_input.GetValue()
+        else:
+            return self.password_plain.GetValue()
+
+    def _validate_email(self, email: str) -> bool:
+        """Validate email address format.
+
+        Args:
+            email: Email address to validate
+
+        Returns:
+            True if valid (empty or valid format), False otherwise
+        """
+        if not email:
+            return True  # Empty is allowed
+        # Lowercase and validate against pattern
+        email_lower = email.lower()
+        pattern = r'^[a-z0-9_.-]+@[a-z0-9_.-]+$'
+        return bool(re.match(pattern, email_lower))
+
+    def _validate_for_close(self) -> bool:
+        """Validate all fields before closing.
+
+        Validates in display order: username, password, email.
+
+        Returns:
+            True if all fields are valid, False otherwise
+        """
         username = self.username_input.GetValue().strip()
-        password = self.password_input.GetValue()
+        password = self._get_password_value()
+        email = self.email_input.GetValue().strip()
+
+        # Validate username
+        if not username:
+            wx.MessageBox(
+                "Username cannot be empty.",
+                "Validation Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            self.username_input.SetFocus()
+            return False
+
+        # Validate password
+        if not password:
+            wx.MessageBox(
+                "Password cannot be empty.",
+                "Validation Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            # Focus the visible password field
+            if self.password_input.IsShown():
+                self.password_input.SetFocus()
+            else:
+                self.password_plain.SetFocus()
+            return False
+
+        # Validate email
+        if not self._validate_email(email):
+            wx.MessageBox(
+                "Invalid email address format.",
+                "Validation Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+            self.email_input.SetFocus()
+            return False
+
+        return True
+
+    def _save_if_needed(self) -> bool:
+        """Save account data if there are changes.
+
+        Returns:
+            True if saved successfully or no save needed, False if validation failed
+        """
+        username = self.username_input.GetValue().strip()
+        password = self._get_password_value()
+        email = self.email_input.GetValue().strip().lower()
         notes = self.notes_input.GetValue().strip()
 
         if not username:
-            return  # Don't save without a username
+            return True  # Don't save without a username, but not an error
+
+        if not self._validate_email(email):
+            return False  # Validation failed
 
         if self.account_id:
             # Update existing account
@@ -132,6 +267,7 @@ class AccountEditorDialog(wx.Dialog):
                 self.account_id,
                 username=username,
                 password=password,
+                email=email,
                 notes=notes,
             )
         else:
@@ -140,11 +276,23 @@ class AccountEditorDialog(wx.Dialog):
                 self.server_id,
                 username=username,
                 password=password,
+                email=email,
                 notes=notes,
             )
+        return True
+
+    def on_credential_policy(self, event):
+        """Handle credential policy button click."""
+        wx.MessageBox(
+            DEFAULT_CREDENTIAL_HINT,
+            "Credential Policy",
+            wx.OK | wx.ICON_INFORMATION,
+        )
 
     def on_close(self, event):
         """Handle close button click."""
+        if not self._validate_for_close():
+            return
         self._save_if_needed()
         self.EndModal(wx.ID_OK)
 
@@ -317,6 +465,10 @@ class ServerEditorDialog(wx.Dialog):
         for account_id, account in accounts.items():
             self.accounts_list.Append(account.get("username", "Unknown"))
             self._account_ids.append(account_id)
+
+        # Select first item if nothing is selected
+        if self.accounts_list.GetSelection() == wx.NOT_FOUND and self.accounts_list.GetCount() > 0:
+            self.accounts_list.SetSelection(0)
 
     def _refresh_certificate_status(self):
         """Update trusted certificate status text and button."""
@@ -559,6 +711,9 @@ class ServerManagerDialog(wx.Dialog):
         if self._initial_server_id and self._initial_server_id in self._server_ids:
             idx = self._server_ids.index(self._initial_server_id)
             self.servers_list.SetSelection(idx)
+        # Otherwise select first item if nothing is selected
+        elif self.servers_list.GetSelection() == wx.NOT_FOUND and self.servers_list.GetCount() > 0:
+            self.servers_list.SetSelection(0)
 
     def _get_selected_server_id(self) -> str:
         """Get the currently selected server ID."""

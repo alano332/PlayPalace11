@@ -87,6 +87,9 @@ class Server(AdministrationMixin):
         self._ssl_cert = ssl_cert
         self._ssl_key = ssl_key
 
+        if db_path == "playpalace.db":
+            db_path = str(_MODULE_DIR / "playpalace.db")
+
         # Initialize components
         self._db = Database(db_path)
         self._auth: AuthManager | None = None
@@ -3000,7 +3003,13 @@ async def run_server(
         )
         return
 
-    server = Server(host=host, port=port, ssl_cert=ssl_cert, ssl_key=ssl_key)
+    server = Server(
+        host=host,
+        port=port,
+        ssl_cert=ssl_cert,
+        ssl_key=ssl_key,
+        db_path=str(db_path),
+    )
     await server.start()
 
     try:

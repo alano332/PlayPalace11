@@ -1,5 +1,5 @@
 # PlayPalace Server Configuration
-# Copy this file to config.toml and customize as needed.
+# Important: Copy this file to config.toml first. Ccustomize as needed.
 
 [auth]
 # These limits are enforced during both login and registration.
@@ -27,9 +27,24 @@ tick_interval_ms = 50
 [virtual_bots]
 # Bot names - these will be used for virtual bot usernames
 names = [
-    "Alex", "Jordan", "Taylor", "Morgan", "Casey",
-    "Riley", "Quinn", "Avery", "Skyler", "Jamie",
-    "Phoenix", "River", "Sage", "Rowan", "Finley"
+    "Smith", "Bastardo", "Scorpion", "Speakertest", "Kitana",
+    "Assembly_programmer", "Liu_kang", "Omega-alpha", "Alpha-omega", "Gama8",
+    "Electric-bastard", "Yamaha", "Jupiter", "Mars", "Artemis",
+    "Fire-lightning", "New_play", "Y2k-breaker", "R2dbag", "Subzero",
+    "H4mg", "4theplaying", "@mazing", "Virus", "Swordswing45",
+    "Extremekiller", "Tornado26", "Legend", "Gamesmaster", "Angel",
+    "Sa", "Gamerstorm", "Eternalgamer", "Sonic_ninja", "Summer",
+    "Sniper_70", "Blindgamer", "Nightblade", "Darkblade", "Dastardo",
+    "Boxer", "Music_and_lasers", "Ak47", "Hacker", "De_best",
+    "Flying_processor", "Best_gamer", "Destructionmaster", "Braillegamer", "Braillenote",
+    "Lasergun", "Michael", "Anna", "Emma", "Matt",
+    "Steamtrain", "Star06", "Cyrus", "Godlygamer", "Megagaming",
+    "Roflgamer_official", "Randomuser", "Capturer", "Commander", "Death",
+    "Timemaster", "Chronos", "Titan", "Aria", "Ares",
+    "Assassin", "Ball", "Master_fighter", "Lol", "Ultranovagaming",
+    "Silva", "Lily", "Yeet", "Mortalkombat", "Gun",
+    "Kai", "Sauce_code", "Lasergamer", "Still_thinking", "Still_existing",
+    "Never_existed", "Bladethegamer", "Bestgame"
 ]
 
 # Timing settings (in ticks, 50ms each = 20 ticks/sec)
@@ -124,7 +139,7 @@ profile = "mixer"
 # table = "scopa_lounge"
 # game = "scopa"
 # bot_groups = ["mixers"]
-# min_bots = 0  # Raise this to require a minimum number of bots.
+# min_bots = 1
 # max_bots = 4
 # priority = 25
 # Optional tick-based scheduling: run this lounge for half of each 60-second (1200-tick) cycle

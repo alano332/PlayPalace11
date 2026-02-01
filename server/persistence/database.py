@@ -65,6 +65,7 @@ class Database:
     """
 
     def __init__(self, db_path: str | Path = "playpalace.db"):
+        """Initialize the database wrapper with a path."""
         self.db_path = Path(db_path)
         self._conn: sqlite3.Connection | None = None
 

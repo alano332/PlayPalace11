@@ -362,6 +362,7 @@ class TeamManager(DataClassJSONMixin):
 
         # Sort: individual first, then by total players, then alphabetically
         def sort_key(mode: str) -> tuple:
+            """Sort key for team modes (individual first, then size)."""
             if mode == "individual":
                 return (0, 0, "")
             parts = mode.split("v")

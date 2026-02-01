@@ -84,6 +84,7 @@ class GameCommunicationMixin:
         """
 
         def get_label(game: "Game", player: "Player") -> str:
+            """Resolve a localized label for the player's locale."""
             user = game.get_user(player)
             locale = user.locale if user else "en"
             return Localization.get(locale, message_id)

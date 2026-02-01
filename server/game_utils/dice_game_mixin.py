@@ -226,6 +226,7 @@ class DiceGameMixin:
         dice.kept = list(range(dice.num_dice))
 
     def _has_kept_value(self, player: Player, value: int) -> bool:
+        """Return True if any kept die shows the given face value."""
         if not hasattr(player, "dice"):
             return False
         dice = player.dice
@@ -239,6 +240,7 @@ class DiceGameMixin:
         return False
 
     def _has_unkept_value(self, player: Player, value: int) -> bool:
+        """Return True if any rerollable die shows the given face value."""
         if not hasattr(player, "dice"):
             return False
         dice = player.dice
@@ -260,74 +262,92 @@ class DiceGameMixin:
     # Games must implement _is_dice_toggle_enabled, _is_dice_toggle_hidden, _get_dice_toggle_label
 
     def _is_toggle_die_0_enabled(self, player: Player, *, action_id: str = None) -> str | None:
+        """Check if toggling die 0 is enabled (via generic handler)."""
         die_index = int(action_id.split("_")[-1]) if action_id else 0
         return self._is_dice_toggle_enabled(player, die_index)
 
     def _is_toggle_die_1_enabled(self, player: Player, *, action_id: str = None) -> str | None:
+        """Check if toggling die 1 is enabled (via generic handler)."""
         die_index = int(action_id.split("_")[-1]) if action_id else 1
         return self._is_dice_toggle_enabled(player, die_index)
 
     def _is_toggle_die_2_enabled(self, player: Player, *, action_id: str = None) -> str | None:
+        """Check if toggling die 2 is enabled (via generic handler)."""
         die_index = int(action_id.split("_")[-1]) if action_id else 2
         return self._is_dice_toggle_enabled(player, die_index)
 
     def _is_toggle_die_3_enabled(self, player: Player, *, action_id: str = None) -> str | None:
+        """Check if toggling die 3 is enabled (via generic handler)."""
         die_index = int(action_id.split("_")[-1]) if action_id else 3
         return self._is_dice_toggle_enabled(player, die_index)
 
     def _is_toggle_die_4_enabled(self, player: Player, *, action_id: str = None) -> str | None:
+        """Check if toggling die 4 is enabled (via generic handler)."""
         die_index = int(action_id.split("_")[-1]) if action_id else 4
         return self._is_dice_toggle_enabled(player, die_index)
 
     def _is_toggle_die_5_enabled(self, player: Player, *, action_id: str = None) -> str | None:
+        """Check if toggling die 5 is enabled (via generic handler)."""
         die_index = int(action_id.split("_")[-1]) if action_id else 5
         return self._is_dice_toggle_enabled(player, die_index)
 
     def _is_toggle_die_0_hidden(self, player: Player, *, action_id: str = None) -> Visibility:
+        """Check if die 0 toggle action should be hidden."""
         die_index = int(action_id.split("_")[-1]) if action_id else 0
         return self._is_dice_toggle_hidden(player, die_index)
 
     def _is_toggle_die_1_hidden(self, player: Player, *, action_id: str = None) -> Visibility:
+        """Check if die 1 toggle action should be hidden."""
         die_index = int(action_id.split("_")[-1]) if action_id else 1
         return self._is_dice_toggle_hidden(player, die_index)
 
     def _is_toggle_die_2_hidden(self, player: Player, *, action_id: str = None) -> Visibility:
+        """Check if die 2 toggle action should be hidden."""
         die_index = int(action_id.split("_")[-1]) if action_id else 2
         return self._is_dice_toggle_hidden(player, die_index)
 
     def _is_toggle_die_3_hidden(self, player: Player, *, action_id: str = None) -> Visibility:
+        """Check if die 3 toggle action should be hidden."""
         die_index = int(action_id.split("_")[-1]) if action_id else 3
         return self._is_dice_toggle_hidden(player, die_index)
 
     def _is_toggle_die_4_hidden(self, player: Player, *, action_id: str = None) -> Visibility:
+        """Check if die 4 toggle action should be hidden."""
         die_index = int(action_id.split("_")[-1]) if action_id else 4
         return self._is_dice_toggle_hidden(player, die_index)
 
     def _is_toggle_die_5_hidden(self, player: Player, *, action_id: str = None) -> Visibility:
+        """Check if die 5 toggle action should be hidden."""
         die_index = int(action_id.split("_")[-1]) if action_id else 5
         return self._is_dice_toggle_hidden(player, die_index)
 
     def _get_toggle_die_0_label(self, player: Player, action_id: str) -> str:
+        """Return the label for the die 0 toggle action."""
         die_index = int(action_id.split("_")[-1])
         return self._get_dice_toggle_label(player, die_index)
 
     def _get_toggle_die_1_label(self, player: Player, action_id: str) -> str:
+        """Return the label for the die 1 toggle action."""
         die_index = int(action_id.split("_")[-1])
         return self._get_dice_toggle_label(player, die_index)
 
     def _get_toggle_die_2_label(self, player: Player, action_id: str) -> str:
+        """Return the label for the die 2 toggle action."""
         die_index = int(action_id.split("_")[-1])
         return self._get_dice_toggle_label(player, die_index)
 
     def _get_toggle_die_3_label(self, player: Player, action_id: str) -> str:
+        """Return the label for the die 3 toggle action."""
         die_index = int(action_id.split("_")[-1])
         return self._get_dice_toggle_label(player, die_index)
 
     def _get_toggle_die_4_label(self, player: Player, action_id: str) -> str:
+        """Return the label for the die 4 toggle action."""
         die_index = int(action_id.split("_")[-1])
         return self._get_dice_toggle_label(player, die_index)
 
     def _get_toggle_die_5_label(self, player: Player, action_id: str) -> str:
+        """Return the label for the die 5 toggle action."""
         die_index = int(action_id.split("_")[-1])
         return self._get_dice_toggle_label(player, die_index)
 

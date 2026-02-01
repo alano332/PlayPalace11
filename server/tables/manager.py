@@ -13,6 +13,7 @@ class TableManager:
     """Manage all active tables on the server."""
 
     def __init__(self):
+        """Initialize the table registry."""
         self._tables: dict[str, Table] = {}
         self._server: Any = None  # Reference to server for destroy/save notifications
 

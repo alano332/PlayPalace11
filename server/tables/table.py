@@ -46,6 +46,7 @@ class Table(DataClassJSONMixin):
     _db: Any = field(default=None, repr=False)  # Reference to Database (for ratings)
 
     def __post_init__(self):
+        """Initialize non-serialized runtime references."""
         self._game = None
         self._users = {}
         self._manager = None
@@ -54,10 +55,12 @@ class Table(DataClassJSONMixin):
 
     @property
     def game(self) -> "Game | None":
+        """Return the current game instance."""
         return self._game
 
     @game.setter
     def game(self, value: "Game | None") -> None:
+        """Set the game instance and update serialized state."""
         self._game = value
         if value:
             self.game_json = value.to_json()

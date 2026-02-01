@@ -43,9 +43,11 @@ class Card(DataClassJSONMixin):
     suit: int  # Suit number (0=none, 1=diamonds, 2=clubs, 3=hearts, 4=spades)
 
     def __hash__(self) -> int:
+        """Hash cards by stable id for set/dict usage."""
         return self.id
 
     def __eq__(self, other: object) -> bool:
+        """Compare cards by id equality."""
         if not isinstance(other, Card):
             return False
         return self.id == other.id

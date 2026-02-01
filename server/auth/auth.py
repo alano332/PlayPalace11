@@ -30,6 +30,7 @@ class AuthManager:
     """
 
     def __init__(self, database: "Database"):
+        """Initialize the auth manager with a database backend."""
         self._db = database
         self._sessions: dict[str, str] = {}  # session_token -> username
         self._hasher = PasswordHasher()

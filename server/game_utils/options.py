@@ -101,9 +101,11 @@ class IntOption(OptionMeta):
     )
 
     def get_label_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return label formatting kwargs for the current value."""
         return {self.value_key: value}
 
     def get_change_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return change-message kwargs for the current value."""
         return {self.value_key: value}
 
     def create_action(
@@ -114,6 +116,7 @@ class IntOption(OptionMeta):
         current_value: Any,
         locale: str,
     ) -> Action:
+        """Create an editbox action for setting an integer option."""
         label = Localization.get(
             locale, self.label, **self.get_label_kwargs(current_value)
         )
@@ -130,6 +133,7 @@ class IntOption(OptionMeta):
         )
 
     def validate_and_convert(self, value: str) -> tuple[bool, Any]:
+        """Validate and clamp integer input."""
         try:
             int_val = int(value)
             int_val = max(self.min_val, min(self.max_val, int_val))
@@ -157,9 +161,11 @@ class FloatOption(OptionMeta):
     )
 
     def get_label_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return label formatting kwargs for the current value."""
         return {self.value_key: value}
 
     def get_change_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return change-message kwargs for the current value."""
         return {self.value_key: value}
 
     def create_action(
@@ -170,6 +176,7 @@ class FloatOption(OptionMeta):
         current_value: Any,
         locale: str,
     ) -> Action:
+        """Create an editbox action for setting a float option."""
         label = Localization.get(
             locale, self.label, **self.get_label_kwargs(current_value)
         )
@@ -186,6 +193,7 @@ class FloatOption(OptionMeta):
         )
 
     def validate_and_convert(self, value: str) -> tuple[bool, Any]:
+        """Validate and clamp float input."""
         try:
             float_val = float(value)
             float_val = max(self.min_val, min(self.max_val, float_val))
@@ -220,6 +228,7 @@ class MenuOption(OptionMeta):
         return value
 
     def get_label_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return label formatting kwargs for the current value."""
         return {self.value_key: value}
 
     def get_label_kwargs_localized(self, value: Any, locale: str) -> dict[str, Any]:
@@ -228,6 +237,7 @@ class MenuOption(OptionMeta):
         return {self.value_key: display_value}
 
     def get_change_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return change-message kwargs for the current value."""
         return {self.value_key: value}
 
     def get_change_kwargs_localized(self, value: Any, locale: str) -> dict[str, Any]:
@@ -243,6 +253,7 @@ class MenuOption(OptionMeta):
         current_value: Any,
         locale: str,
     ) -> Action:
+        """Create a menu action for selecting a value from choices."""
         # Use localized choice value in the label
         label = Localization.get(
             locale, self.label, **self.get_label_kwargs_localized(current_value, locale)
@@ -261,6 +272,7 @@ class MenuOption(OptionMeta):
         )
 
     def validate_and_convert(self, value: str) -> tuple[bool, Any]:
+        """Validate a menu option selection."""
         # For menu options, the value comes from a predefined list, so it's valid
         return True, value
 
@@ -297,13 +309,16 @@ class BoolOption(OptionMeta):
     value_key: str = "enabled"  # Key used in localization
 
     def __post_init__(self):
+        """Disable prompts for boolean toggles."""
         # Bool options don't need a prompt - they just toggle
         self.prompt = ""
 
     def get_label_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return label formatting kwargs for the current value."""
         return {self.value_key: "on" if value else "off"}
 
     def get_change_kwargs(self, value: Any) -> dict[str, Any]:
+        """Return change-message kwargs for the current value."""
         return {self.value_key: "on" if value else "off"}
 
     def create_action(
@@ -314,6 +329,7 @@ class BoolOption(OptionMeta):
         current_value: Any,
         locale: str,
     ) -> Action:
+        """Create a toggle action for boolean options."""
         # Get localized on/off value
         on_off_key = "option-on" if current_value else "option-off"
         on_off = Localization.get(locale, on_off_key)
@@ -328,6 +344,7 @@ class BoolOption(OptionMeta):
         )
 
     def validate_and_convert(self, value: str) -> tuple[bool, Any]:
+        """Validate a boolean input value."""
         # For bool options, we just flip the value
         return True, value.lower() in ("true", "1", "yes")
 

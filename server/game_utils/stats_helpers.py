@@ -133,6 +133,7 @@ class LeaderboardHelper:
         if winner_extractor is None:
             # Default: look up winner by name in player_results
             def winner_extractor(r: "GameResult") -> str | None:
+                """Extract winner player_id from the GameResult."""
                 winner_name = r.custom_data.get("winner_name")
                 if winner_name:
                     for p in r.player_results:
@@ -141,6 +142,7 @@ class LeaderboardHelper:
                 return None
 
         def score_extractor(result: "GameResult", player_id: str) -> int | None:
+            """Return 1 for wins, 0 otherwise for leaderboard aggregation."""
             winner_id = winner_extractor(result)
             if winner_id == player_id:
                 return 1
@@ -171,6 +173,7 @@ class PlayerRating:
         return self.mu - 3 * self.sigma
 
     def __str__(self) -> str:
+        """Return a formatted rating string."""
         return f"{self.mu:.1f} ± {self.sigma:.1f}"
 
 
@@ -293,6 +296,7 @@ class RatingHelper:
         if ranking_extractor is None:
             # Default: winner first, everyone else tied for second
             def ranking_extractor(r: "GameResult") -> list[list[str]]:
+                """Build winner-vs-rest rankings from a GameResult."""
                 winner_name = r.custom_data.get("winner_name")
                 # Include humans and virtual bots, exclude table bots
                 human_players = [

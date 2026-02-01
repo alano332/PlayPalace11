@@ -71,6 +71,7 @@ class DurationEstimateMixin:
 
         # Spawn simulation threads
         def run_simulation():
+            """Run a single headless simulation and collect tick counts."""
             try:
                 result = subprocess.run(
                     base_cmd,

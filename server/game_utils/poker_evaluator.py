@@ -271,12 +271,14 @@ def _rank_value(rank: int) -> int:
 
 
 def _rank_name(rank: int, locale: str) -> str:
+    """Return the localized rank name for a poker rank value."""
     normalized = 1 if rank == 14 else rank
     key = RANK_KEYS.get(normalized)
     return Localization.get(locale, key) if key else str(rank)
 
 
 def _rank_name_plural(rank: int, locale: str) -> str:
+    """Return the localized plural rank name for a poker rank value."""
     name = _rank_name(rank, locale)
     normalized = 1 if rank == 14 else rank
     key = RANK_KEYS.get(normalized)
@@ -287,6 +289,7 @@ def _rank_name_plural(rank: int, locale: str) -> str:
 
 
 def _rank_list(ranks: Iterable[int], locale: str, cap: bool = False) -> str:
+    """Format a list of ranks into a localized, human-readable list."""
     names = [_rank_name(rank, locale) for rank in ranks]
     if cap:
         names = [_cap(name) for name in names]
@@ -294,6 +297,7 @@ def _rank_list(ranks: Iterable[int], locale: str, cap: bool = False) -> str:
 
 
 def _cap(name: str) -> str:
+    """Capitalize the first character of a string if present."""
     if not name:
         return name
     first = name[0].upper()
@@ -301,11 +305,13 @@ def _cap(name: str) -> str:
 
 
 def _is_flush(suits: Iterable[int]) -> bool:
+    """Return True if all suits are the same and not suit-less."""
     suit_set = set(suits)
     return len(suit_set) == 1 and next(iter(suit_set)) != SUIT_NONE
 
 
 def _is_straight(ranks: list[int]) -> tuple[bool, int]:
+    """Return True and the high card if the ranks form a straight."""
     unique = sorted(set(ranks), reverse=True)
     if len(unique) != 5:
         return False, 0
@@ -323,5 +329,6 @@ def _is_straight(ranks: list[int]) -> tuple[bool, int]:
 
 
 def _highest_of_excluding(ranks: list[int], excluded: set[int]) -> list[int]:
+    """Return remaining ranks sorted high-to-low excluding a set."""
     remaining = [r for r in ranks if r not in excluded]
     return sorted(remaining, reverse=True)

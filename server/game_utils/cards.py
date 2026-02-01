@@ -30,7 +30,13 @@ RS_RANK_NINETY_NINE = 19
 
 @dataclass
 class Card(DataClassJSONMixin):
-    """A playing card."""
+    """Playing card model.
+
+    Attributes:
+        id: Unique identifier.
+        rank: Card rank (1-13 standard, 1-10 Italian, 14-19 RS Games special).
+        suit: Suit number (0=none, 1=diamonds, 2=clubs, 3=hearts, 4=spades).
+    """
 
     id: int  # Unique identifier
     rank: int  # Card rank (1-13 for standard, 1-10 for Italian, 14-19 for RS Games special)
@@ -47,7 +53,11 @@ class Card(DataClassJSONMixin):
 
 @dataclass
 class Deck(DataClassJSONMixin):
-    """A deck of cards with draw/shuffle operations."""
+    """Deck of cards with draw/shuffle operations.
+
+    Attributes:
+        cards: Ordered list of cards in the deck.
+    """
 
     cards: list[Card] = field(default_factory=list)
 

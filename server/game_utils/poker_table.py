@@ -7,7 +7,12 @@ from mashumaro.mixins.json import DataClassJSONMixin
 
 @dataclass
 class PokerTableState(DataClassJSONMixin):
-    """Tracks dealer/button and blind positions."""
+    """Track dealer/button and blind positions.
+
+    Attributes:
+        button_index: Index into current active player list.
+        button_player_id: Stored player id for button continuity.
+    """
     button_index: int = 0
     button_player_id: str | None = None
 

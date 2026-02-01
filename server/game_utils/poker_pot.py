@@ -7,13 +7,24 @@ from mashumaro.mixins.json import DataClassJSONMixin
 
 @dataclass
 class PokerPot(DataClassJSONMixin):
+    """Represent a single main/side pot.
+
+    Attributes:
+        amount: Total chips in this pot.
+        eligible_player_ids: Players eligible to win this pot.
+    """
     amount: int
     eligible_player_ids: set[str] = field(default_factory=set)
 
 
 @dataclass
 class PokerPotManager(DataClassJSONMixin):
-    """Track contributions and compute main/side pots."""
+    """Track contributions and compute main/side pots.
+
+    Attributes:
+        contributions: Player id -> chips contributed.
+        folded: Player ids that have folded.
+    """
 
     contributions: dict[str, int] = field(default_factory=dict)
     folded: set[str] = field(default_factory=set)

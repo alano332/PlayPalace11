@@ -38,7 +38,14 @@ if TYPE_CHECKING:
 
 @dataclass
 class OptionMeta:
-    """Metadata for a game option."""
+    """Base metadata for a game option.
+
+    Attributes:
+        default: Default option value.
+        label: Localization key for the option label.
+        change_msg: Localization key for change announcements.
+        prompt: Localization key for input prompt (if applicable).
+    """
 
     default: Any
     label: str  # Localization key for the option label
@@ -79,7 +86,13 @@ class OptionMeta:
 
 @dataclass
 class IntOption(OptionMeta):
-    """Integer option with min/max validation."""
+    """Integer option with min/max validation.
+
+    Attributes:
+        min_val: Minimum value (inclusive).
+        max_val: Maximum value (inclusive).
+        value_key: Localization placeholder key for the value.
+    """
 
     min_val: int = 0
     max_val: int = 100
@@ -127,7 +140,14 @@ class IntOption(OptionMeta):
 
 @dataclass
 class FloatOption(OptionMeta):
-    """Float option with min/max validation and decimal rounding."""
+    """Float option with min/max validation and rounding.
+
+    Attributes:
+        min_val: Minimum value (inclusive).
+        max_val: Maximum value (inclusive).
+        decimal_places: Decimal places to round to.
+        value_key: Localization placeholder key for the value.
+    """
 
     min_val: float = 0.0
     max_val: float = 100.0
@@ -177,7 +197,13 @@ class FloatOption(OptionMeta):
 
 @dataclass
 class MenuOption(OptionMeta):
-    """Menu selection option."""
+    """Menu selection option.
+
+    Attributes:
+        choices: Static list or callable to provide choices.
+        value_key: Localization placeholder key for the value.
+        choice_labels: Optional mapping of choice -> localization key.
+    """
 
     choices: list[str] | Callable[["Game", "Player"], list[str]] = field(
         default_factory=list
@@ -247,11 +273,10 @@ class MenuOption(OptionMeta):
 
 @dataclass
 class TeamModeOption(MenuOption):
-    """
-    Menu option specifically for team modes.
+    """Menu option specialized for team modes.
 
-    Stores team modes in internal format ("individual", "2v2", "2v2v2")
-    but displays them in localized format ("Individual", "2 teams of 2").
+    Stores team modes in internal format ("individual", "2v2", "2v2v2") but
+    displays them in localized format ("Individual", "2 teams of 2").
     """
 
     def get_localized_choice(self, value: str, locale: str) -> str:
@@ -263,7 +288,11 @@ class TeamModeOption(MenuOption):
 
 @dataclass
 class BoolOption(OptionMeta):
-    """Boolean toggle option."""
+    """Boolean toggle option.
+
+    Attributes:
+        value_key: Localization placeholder key for the value.
+    """
 
     value_key: str = "enabled"  # Key used in localization
 
@@ -332,18 +361,10 @@ def get_all_option_metas(options_class: type) -> dict[str, OptionMeta]:
 
 @dataclass
 class GameOptions(DataClassJSONMixin):
-    """Base class for game options with declarative option support.
+    """Base class for declarative game options.
 
     Subclasses should use option_field() for options that need auto-generated
-    UI and handlers:
-
-        @dataclass
-        class MyOptions(GameOptions):
-            target_score: int = option_field(IntOption(...))
-            difficulty: str = option_field(MenuOption(...))
-
-            # Regular fields without option_field work normally
-            internal_state: int = 0
+    UI and handlers.
     """
 
     def get_option_metas(self) -> dict[str, OptionMeta]:
@@ -389,12 +410,12 @@ class GameOptions(DataClassJSONMixin):
 
 
 class OptionsHandlerMixin:
-    """Mixin providing declarative options handling for games.
+    """Handle declarative options for games.
 
-    Expects on the Game class:
-        - self.options: GameOptions (subclass with option_field declarations)
-        - self.get_user(player) -> User | None
-        - self.rebuild_all_menus()
+    Expected Game attributes:
+        options: GameOptions instance.
+        get_user(player) -> User | None.
+        rebuild_all_menus().
     """
 
     def create_options_action_set(self, player: "Player") -> ActionSet:

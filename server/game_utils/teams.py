@@ -18,7 +18,15 @@ if TYPE_CHECKING:
 
 @dataclass
 class Team(DataClassJSONMixin):
-    """A team of players."""
+    """Team container for team-based games.
+
+    Attributes:
+        index: Team index (0-based).
+        members: Player names on the team.
+        round_score: Points earned this round.
+        total_score: Total points across rounds.
+        eliminated: True if eliminated (inverse modes).
+    """
 
     index: int  # Team number (0-based)
     members: list[str] = field(default_factory=list)  # Player names
@@ -29,10 +37,9 @@ class Team(DataClassJSONMixin):
 
 @dataclass
 class TeamManager(DataClassJSONMixin):
-    """
-    Manages team assignments and scoring for games.
+    """Manage team assignments and scoring for games.
 
-    Supports individual mode (teams of 1) and various team configurations
+    Supports individual mode (teams of 1) and common team configurations
     like 2v2, 3v3, 2v2v2, etc.
     """
 

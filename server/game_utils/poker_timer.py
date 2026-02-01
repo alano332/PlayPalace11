@@ -7,7 +7,11 @@ from mashumaro.mixins.json import DataClassJSONMixin
 
 @dataclass
 class PokerTurnTimer(DataClassJSONMixin):
-    """Simple per-turn countdown timer (ticks at 20/s)."""
+    """Per-turn countdown timer (ticks at 20/s).
+
+    Attributes:
+        ticks_remaining: Remaining ticks in the countdown.
+    """
     ticks_remaining: int = 0
 
     def start(self, seconds: int) -> None:

@@ -18,7 +18,14 @@ if TYPE_CHECKING:
 
 @dataclass
 class LeaderboardEntry:
-    """An entry in a leaderboard."""
+    """Entry in a leaderboard.
+
+    Attributes:
+        player_id: Player UUID.
+        player_name: Display name.
+        value: Aggregated metric value.
+        rank: 1-based rank.
+    """
 
     player_id: str
     player_name: str
@@ -27,11 +34,10 @@ class LeaderboardEntry:
 
 
 class LeaderboardHelper:
-    """
-    Helper for building leaderboards from game results.
+    """Build leaderboards from game results.
 
-    Supports various aggregation modes (sum, max, avg, count) and
-    custom score extraction functions.
+    Supports aggregation modes (sum, max, avg, count) and custom score
+    extraction functions.
     """
 
     @staticmethod
@@ -147,7 +153,13 @@ class LeaderboardHelper:
 
 @dataclass
 class PlayerRating:
-    """A player's skill rating."""
+    """Player skill rating values.
+
+    Attributes:
+        player_id: Player UUID.
+        mu: Mean skill estimate.
+        sigma: Uncertainty (standard deviation).
+    """
 
     player_id: str
     mu: float  # Mean skill estimate
@@ -163,15 +175,10 @@ class PlayerRating:
 
 
 class RatingHelper:
-    """
-    Helper for tracking player skill ratings using OpenSkill.
+    """Track player ratings using OpenSkill (Plackett-Luce).
 
-    Uses the Plackett-Luce model which supports:
-    - Any number of players (not just 2)
-    - Teams
-    - Ties (players in same rank group)
-
-    Ratings are stored in the database and updated after each game.
+    Supports multi-player games, teams, and ties. Ratings are persisted per
+    game type and updated after each completed game.
     """
 
     # Default rating values (same as OpenSkill defaults)

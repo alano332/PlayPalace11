@@ -18,30 +18,28 @@ if TYPE_CHECKING:
 
 
 class DiceGameMixin:
-    """
-    Mixin providing dice toggle actions for games using DiceSet.
+    """Provide dice toggle actions for DiceSet-based games.
 
-    Supports two dice keeping styles:
-    - Dice indexes: Keys 1-5 toggle dice by index
-    - Dice values: Keys 1-6 reroll by face value, shift+1-6 keep by value
+    Supports two keeping styles:
+        - Dice indexes: keys 1-5 toggle dice by index.
+        - Dice values: keys 1-6 reroll by face value; shift+1-6 keep by value.
 
-    Expects the game class to have:
-    - self.get_user(player) -> User
-    - self.get_action_set(player, name) -> ActionSet
-    - self.rebuild_player_menu(player)
-    - Player objects with a `dice: DiceSet` attribute
+    Expected Game attributes:
+        get_user(player) -> User.
+        get_action_set(player, name) -> ActionSet.
+        rebuild_player_menu(player).
+        Player objects with a `dice: DiceSet` attribute.
 
-    Games must implement these methods for dice action state:
-    - _is_dice_toggle_enabled(self, player, die_index) -> str | None
-    - _is_dice_toggle_hidden(self, player, die_index) -> Visibility
-    - _get_dice_toggle_label(self, player, die_index) -> str
+    Required Game methods:
+        _is_dice_toggle_enabled(player, die_index) -> str | None.
+        _is_dice_toggle_hidden(player, die_index) -> Visibility.
+        _get_dice_toggle_label(player, die_index) -> str.
 
-    Usage:
+    Example:
         class MyGame(Game, DiceGameMixin):
             def create_turn_action_set(self, player):
                 action_set = ActionSet(name="turn")
                 self.add_dice_toggle_actions(action_set)
-                # ... add other actions
                 return action_set
 
             def setup_keybinds(self):

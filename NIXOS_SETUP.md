@@ -16,12 +16,17 @@
 
 ### Client
 
-**Status:** Client works in **silent mode** (no sound effects) due to missing audio device.
+**Status:** Client works in **silent mode** (no sound effects) unless audio is configured.
 
 ```bash
-# Run client (works but without sound)
+# Run client (silent mode is OK)
 ./run_client.sh
+
+# Headless GUI smoke tests (launches Xvfb screen 0 @ 1024x768x24)
+PLAYPALACE_USE_XVFB=1 ./run_client.sh
 ```
+
+The launcher now enters the pinned flake devshell automatically—no extra `.venv` or manual `pip install` needed.
 
 **Expected Warnings (can be ignored):**
 - `Gtk-WARNING`: UI layout warnings (cosmetic only)
@@ -77,8 +82,10 @@ Pre-built wheels are available in:
 
 ### Running Tests
 ```bash
-# Server tests
-nix-shell --run "cd server && uv run pytest"
+# Server tests (enter the flake devshell)
+nix --extra-experimental-features "nix-command flakes" \
+  develop . \
+  --command bash -c "cd server && uv run pytest"
 
 # Quick verification
 ./test_run.sh
@@ -98,7 +105,8 @@ nix-shell --run "cd server && uv run pytest"
 
 ## Technical Notes
 
-- **Server:** Uses uv for dependency management, works perfectly on NixOS
-- **Client:** Uses system wxPython from Nix (avoids 30-min build), creates venv for other deps
-- **Audio:** Client uses BASS audio library which requires a functional audio device
-- **Silent mode:** When no audio device is found, client runs without sound (fully functional otherwise)
+- **Pinned environment:** `flake.nix` / `flake.lock` capture the exact nixpkgs revision plus Python wheels (wxPython, websockets 16, accessible-output2, sound-lib, etc.).
+- **Server:** Uses uv for dependency management but now runs inside the pinned flake devshell.
+- **Client:** Uses wxPython + the same pinned Python deps—no ad-hoc `.venv`.
+- **Audio:** Client uses the BASS audio library which requires a functional audio device.
+- **Silent/headless:** When no audio device is found, the client runs without sound. Set `PLAYPALACE_USE_XVFB=1` for GUI testing on headless builders.

@@ -511,10 +511,10 @@ class ServerEditorDialog(wx.Dialog):
         port_label = wx.StaticText(panel, label="&Port:")
         sizer.Add(port_label, 0, wx.LEFT | wx.TOP, 10)
 
-        port_value = "8000"
+        port_value = 8000
         if self.server_data:
-            port_value = self.server_data.get("port", "8000")
-        self.port_input = wx.TextCtrl(panel, value=port_value)
+            port_value = self.server_data.get("port", 8000)
+        self.port_input = wx.TextCtrl(panel, value=str(port_value))
         sizer.Add(self.port_input, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
 
         # Trusted certificate button
@@ -710,7 +710,7 @@ class ServerEditorDialog(wx.Dialog):
                 self.server_id,
                 name=name,
                 host=host,
-                port=port,
+                port=int(port),
                 notes=notes,
             )
         else:
@@ -718,7 +718,7 @@ class ServerEditorDialog(wx.Dialog):
             self.server_id = self.config_manager.add_server(
                 name=name,
                 host=host,
-                port=port,
+                port=int(port),
                 notes=notes,
             )
             # Reload server data

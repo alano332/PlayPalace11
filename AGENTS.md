@@ -19,7 +19,7 @@ This repo uses Python 3.11+ and `uv` for dependency management.
 - Tests:
   - `cd server && uv run pytest` — run all server tests.
   - `cd server && uv run pytest -v` — verbose output.
-  - Inside `nix develop .`, you can also use helper scripts from repo root:
+  - Inside `nix develop .`, helper scripts are available from repo root:
     - `./scripts/nix_server_pytest.sh`
     - `./scripts/nix_client_pytest.sh` (installs pytest/pydantic into `.nix-python/` automatically)
 

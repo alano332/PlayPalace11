@@ -2,6 +2,25 @@ function isAbsoluteUrl(path) {
   return /^https?:\/\//i.test(path);
 }
 
+function isCrossOriginUrl(url) {
+  try {
+    const target = new URL(url, window.location.href);
+    return target.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function createAudioElement(url) {
+  const audio = new Audio();
+  if (isCrossOriginUrl(url)) {
+    // Required for Web Audio processing of cross-origin media.
+    audio.crossOrigin = "anonymous";
+  }
+  audio.src = url;
+  return audio;
+}
+
 function toSoundUrl(name, soundBaseUrl) {
   if (!name) {
     return "";
@@ -50,20 +69,32 @@ export function createAudioEngine(options = {}) {
     return context.state === "running";
   }
 
-  function connectElement(audio, gainNode, panValue = 0) {
+function connectElement(audio, gainNode, panValue = 0, url = "") {
     if (!context || !gainNode) {
-      return;
+      return false;
     }
 
-    const source = context.createMediaElementSource(audio);
-    if (typeof context.createStereoPanner === "function") {
-      const panner = context.createStereoPanner();
-      panner.pan.value = Math.max(-1, Math.min(1, panValue));
-      source.connect(panner);
-      panner.connect(gainNode);
-      return;
+    if (isCrossOriginUrl(url)) {
+      // Cross-origin media can be silenced by Web Audio without CORS;
+      // let the element play directly as a fallback.
+      return false;
     }
-    source.connect(gainNode);
+
+    try {
+      const source = context.createMediaElementSource(audio);
+      if (typeof context.createStereoPanner === "function") {
+        const panner = context.createStereoPanner();
+        panner.pan.value = Math.max(-1, Math.min(1, panValue));
+        source.connect(panner);
+        panner.connect(gainNode);
+        return true;
+      }
+      source.connect(gainNode);
+      return true;
+    } catch {
+      // Fallback to direct element playback if node creation fails.
+      return false;
+    }
   }
 
   function playSound(packet) {
@@ -73,7 +104,7 @@ export function createAudioEngine(options = {}) {
       return;
     }
 
-    const audio = new Audio(url);
+    const audio = createAudioElement(url);
     audio.preload = "auto";
     audio.volume = Math.max(0, Math.min(1, (packet.volume ?? 100) / 100));
     audio.playbackRate = Math.max(0.5, Math.min(2, (packet.pitch ?? 100) / 100));
@@ -89,7 +120,10 @@ export function createAudioEngine(options = {}) {
     });
 
     try {
-      connectElement(audio, effectsGain, (packet.pan ?? 0) / 100);
+      const attached = connectElement(audio, effectsGain, (packet.pan ?? 0) / 100, url);
+      if (!attached && effectsGain) {
+        audio.volume *= effectsGain.gain.value;
+      }
       void audio.play();
     } catch {
       // Ignore autoplay/stream failures before unlock.
@@ -114,13 +148,16 @@ export function createAudioEngine(options = {}) {
 
     stopMusic();
 
-    const audio = new Audio(url);
+    const audio = createAudioElement(url);
     audio.preload = "auto";
     audio.loop = looping;
     audio.volume = 1.0;
 
     try {
-      connectElement(audio, musicGain);
+      const attached = connectElement(audio, musicGain, 0, url);
+      if (!attached && musicGain) {
+        audio.volume *= musicGain.gain.value;
+      }
       void audio.play();
       currentMusic = audio;
       currentMusicName = name;

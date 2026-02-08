@@ -12,7 +12,15 @@ const REMEMBERED_USERNAME_KEY = "playpalace.web.remembered_username";
 
 function getDefaultServerUrl() {
   if (WEB_CLIENT_CONFIG.serverUrl) {
-    return WEB_CLIENT_CONFIG.serverUrl;
+    try {
+      const configured = new URL(WEB_CLIENT_CONFIG.serverUrl);
+      if (!configured.port && WEB_CLIENT_CONFIG.serverPort) {
+        configured.port = String(WEB_CLIENT_CONFIG.serverPort);
+      }
+      return configured.toString().replace(/\/$/, "");
+    } catch {
+      return WEB_CLIENT_CONFIG.serverUrl;
+    }
   }
 
   const host = window.location.hostname;

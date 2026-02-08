@@ -108,12 +108,24 @@ function createPacketValidator(schema) {
 }
 
 export async function loadPacketValidator() {
+  const schemaCandidates = [
+    "./packet_schema.json",
+    "../client/packet_schema.json",
+    "/client/packet_schema.json",
+  ];
   try {
-    const response = await fetch("../client/packet_schema.json", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    let schema = null;
+    for (const candidate of schemaCandidates) {
+      const response = await fetch(candidate, { cache: "no-store" });
+      if (!response.ok) {
+        continue;
+      }
+      schema = await response.json();
+      break;
     }
-    const schema = await response.json();
+    if (!schema) {
+      throw new Error("No packet schema path resolved");
+    }
     return createPacketValidator(schema);
   } catch (error) {
     console.warn("Packet schema not loaded; validation disabled.", error);

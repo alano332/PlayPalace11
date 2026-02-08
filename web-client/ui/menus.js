@@ -7,9 +7,25 @@ export function createMenuView({
   onBoundaryRepeat,
 }) {
   let renderVersion = 0;
+  let lastMenuSnapshot = "";
   let searchBuffer = "";
   let lastTypeTime = 0;
   const typeTimeoutSeconds = 0.15;
+
+  function menuSnapshot(menu) {
+    const itemsSnapshot = (menu.items || [])
+      .map((item) => `${item?.id ?? ""}|${item?.text ?? ""}|${item?.sound ?? ""}`)
+      .join("||");
+    return [
+      menu.menuId ?? "",
+      menu.selection ?? 0,
+      menu.multiletterEnabled ? "1" : "0",
+      menu.escapeBehavior ?? "",
+      menu.gridEnabled ? "1" : "0",
+      menu.gridWidth ?? 1,
+      itemsSnapshot,
+    ].join("::");
+  }
 
   function currentOptionId(index) {
     return `menu-option-${renderVersion}-${index}`;
@@ -143,7 +159,15 @@ export function createMenuView({
     render();
   });
 
-  store.subscribe(render);
+  store.subscribe(() => {
+    const nextSnapshot = menuSnapshot(store.state.currentMenu);
+    if (nextSnapshot === lastMenuSnapshot) {
+      return;
+    }
+    lastMenuSnapshot = nextSnapshot;
+    render();
+  });
+  lastMenuSnapshot = menuSnapshot(store.state.currentMenu);
   render();
 
   return {

@@ -335,7 +335,7 @@ function canOpenActionsPopup() {
   if (!menu || menu.menuId === "main_menu") {
     return false;
   }
-  return menu.escapeBehavior === "select_last_option" && menu.items.length > 0;
+  return menu.menuId === "turn_menu" && menu.items.length > 0;
 }
 
 function updateActionsButtonVisibility() {

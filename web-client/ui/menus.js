@@ -126,7 +126,11 @@ export function createMenuView({
     for (let i = 0; i < children.length; i += 1) {
       const li = children[i];
       const active = i === boundedSelection;
-      li.setAttribute("aria-selected", active ? "true" : "false");
+      if (!isCoarsePointer) {
+        li.setAttribute("aria-selected", active ? "true" : "false");
+      } else {
+        li.setAttribute("aria-current", active ? "true" : "false");
+      }
       li.classList.toggle("active", active);
     }
     if (useActiveDescendant && menu.items.length > 0) {
@@ -143,11 +147,21 @@ export function createMenuView({
     searchBuffer = "";
     lastTypeTime = 0;
     listEl.innerHTML = "";
+    if (isCoarsePointer) {
+      listEl.removeAttribute("role");
+      listEl.setAttribute("aria-label", "Menu");
+    } else {
+      listEl.setAttribute("role", "listbox");
+    }
     menu.items.forEach((item, index) => {
       const li = document.createElement("li");
       li.id = currentOptionId(index);
       li.className = "menu-item";
-      li.setAttribute("role", "option");
+      if (isCoarsePointer) {
+        li.setAttribute("role", "listitem");
+      } else {
+        li.setAttribute("role", "option");
+      }
       li.dataset.index = String(index);
       li.textContent = item.text;
       li.addEventListener("click", () => {

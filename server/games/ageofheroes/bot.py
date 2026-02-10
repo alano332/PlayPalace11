@@ -885,45 +885,19 @@ def bot_play_disaster_on_target(
         game._end_action(player)
         return
 
-    # Find the disaster card in hand
-    card_index = -1
-    for i, card in enumerate(player.hand):
-        if card.card_type == CardType.EVENT and card.subtype == disaster_type:
-            card_index = i
-            break
-
-    if card_index == -1:
+    card_index = _find_disaster_card_index(player.hand, disaster_type)
+    if card_index is None:
         game._end_action(player)
         return
 
-    # Get all other players as potential targets
-    active_players = game.get_active_players()
-    targets = []
-    for i, p in enumerate(active_players):
-        if p != player and hasattr(p, 'tribe_state') and p.tribe_state:
-            targets.append((i, p))
-
+    targets = _get_disaster_targets(game, player)
     if not targets:
         game._end_action(player)
         return
 
-    # Select best target based on disaster type
-    best_target = None
-    best_score = -999
-
-    if disaster_type == EventType.EARTHQUAKE:
-        for target_idx, target in targets:
-            score = _score_earthquake_target(player.tribe_state, target)
-            if score > best_score:
-                best_score = score
-                best_target = target
-    elif disaster_type == EventType.ERUPTION:
-        for target_idx, target in targets:
-            score = _score_eruption_target(player.tribe_state, target)
-            if score > best_score:
-                best_score = score
-                best_target = target
-
+    best_target, best_score = _select_best_disaster_target(
+        disaster_type, player.tribe_state, targets
+    )
     if not best_target or best_score <= 0:
         game._end_action(player)
         return
@@ -940,6 +914,53 @@ def bot_play_disaster_on_target(
     # Return to action selection so bot can continue its turn
     game.sub_phase = PlaySubPhase.SELECT_ACTION
     game.rebuild_all_menus()
+
+
+def _find_disaster_card_index(
+    hand: list[Card], disaster_type: str
+) -> int | None:
+    """Locate the first matching disaster card in hand."""
+    for i, card in enumerate(hand):
+        if card.card_type == CardType.EVENT and card.subtype == disaster_type:
+            return i
+    return None
+
+
+def _get_disaster_targets(
+    game: AgeOfHeroesGame, player: AgeOfHeroesPlayer
+) -> list[tuple[int, AgeOfHeroesPlayer]]:
+    """Collect valid disaster targets."""
+    active_players = game.get_active_players()
+    return [
+        (i, p)
+        for i, p in enumerate(active_players)
+        if p != player and hasattr(p, "tribe_state") and p.tribe_state
+    ]
+
+
+def _select_best_disaster_target(
+    disaster_type: str,
+    our_state: "TribeState",
+    targets: list[tuple[int, AgeOfHeroesPlayer]],
+) -> tuple[AgeOfHeroesPlayer | None, int]:
+    """Pick the highest scoring target for the given disaster type."""
+    best_target = None
+    best_score = -999
+
+    if disaster_type == EventType.EARTHQUAKE:
+        score_fn = _score_earthquake_target
+    elif disaster_type == EventType.ERUPTION:
+        score_fn = _score_eruption_target
+    else:
+        return None, best_score
+
+    for _target_idx, target in targets:
+        score = score_fn(our_state, target)
+        if score > best_score:
+            best_score = score
+            best_target = target
+
+    return best_target, best_score
 
 
 def bot_do_select_action(game: AgeOfHeroesGame, player: AgeOfHeroesPlayer) -> str:

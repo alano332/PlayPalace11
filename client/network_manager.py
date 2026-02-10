@@ -412,41 +412,14 @@ class NetworkManager:
         self, cert_dict, fingerprint_hex: str, pem: str, host: str
     ) -> CertificateInfo:
         """Convert Python's SSL cert dict into CertificateInfo."""
-        cert_dict = cert_dict or {}
-        # Enrich metadata with fields parsed from PEM if they were missing
-        if pem and (not cert_dict or "notBefore" not in cert_dict or "notAfter" not in cert_dict):
-            decoded = self._decode_certificate_dict(pem)
-            if decoded:
-                merged = dict(decoded)
-                # Preserve any values we already have, such as SAN entries that _test_decode_cert lacks
-                for key, value in cert_dict.items():
-                    if value:
-                        merged[key] = value
-                cert_dict = merged
-
-        subject = cert_dict.get("subject", [])
-        common_name = ""
-        for entry in subject:
-            for key, value in entry:
-                if key == "commonName":
-                    common_name = value
-        issuer = []
-        for entry in cert_dict.get("issuer", []):
-            issuer.append("=".join(entry_part[1] for entry_part in entry))
-        issuer_text = ", ".join(issuer) if issuer else "(unknown)"
+        cert_dict = self._merge_cert_metadata(cert_dict, pem)
+        common_name = self._extract_common_name(cert_dict)
+        issuer_text = self._format_issuer(cert_dict)
         sans = [
             value for kind, value in cert_dict.get("subjectAltName", []) if kind == "DNS"
         ]
-        matches = False
-        host_lower = (host or "").lower()
-        if host_lower:
-            if common_name.lower() == host_lower:
-                matches = True
-            elif any(san.lower() == host_lower for san in sans):
-                matches = True
-        display_fp = ":".join(
-            fingerprint_hex[i : i + 2] for i in range(0, len(fingerprint_hex), 2)
-        )
+        matches = self._certificate_matches_host(common_name, sans, host)
+        display_fp = self._format_fingerprint(fingerprint_hex)
         return CertificateInfo(
             host=host,
             common_name=common_name,
@@ -458,6 +431,49 @@ class NetworkManager:
             fingerprint_hex=fingerprint_hex,
             pem=pem,
             matches_host=matches,
+        )
+
+    def _merge_cert_metadata(self, cert_dict, pem: str | None) -> dict:
+        cert_dict = cert_dict or {}
+        if pem and (not cert_dict or "notBefore" not in cert_dict or "notAfter" not in cert_dict):
+            decoded = self._decode_certificate_dict(pem)
+            if decoded:
+                merged = dict(decoded)
+                for key, value in cert_dict.items():
+                    if value:
+                        merged[key] = value
+                cert_dict = merged
+        return cert_dict
+
+    @staticmethod
+    def _extract_common_name(cert_dict: dict) -> str:
+        subject = cert_dict.get("subject", [])
+        for entry in subject:
+            for key, value in entry:
+                if key == "commonName":
+                    return value
+        return ""
+
+    @staticmethod
+    def _format_issuer(cert_dict: dict) -> str:
+        issuer = []
+        for entry in cert_dict.get("issuer", []):
+            issuer.append("=".join(entry_part[1] for entry_part in entry))
+        return ", ".join(issuer) if issuer else "(unknown)"
+
+    @staticmethod
+    def _certificate_matches_host(common_name: str, sans: list[str], host: str) -> bool:
+        host_lower = (host or "").lower()
+        if not host_lower:
+            return False
+        if common_name.lower() == host_lower:
+            return True
+        return any(san.lower() == host_lower for san in sans)
+
+    @staticmethod
+    def _format_fingerprint(fingerprint_hex: str) -> str:
+        return ":".join(
+            fingerprint_hex[i : i + 2] for i in range(0, len(fingerprint_hex), 2)
         )
 
     def _get_server_host(self, server_url: str) -> str:

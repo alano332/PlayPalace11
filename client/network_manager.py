@@ -185,8 +185,10 @@ class NetworkManager:
             if websocket:
                 try:
                     await websocket.close()
-                except Exception:
-                    pass
+                except (websockets.exceptions.ConnectionClosed, OSError, RuntimeError):
+                    import traceback
+
+                    traceback.print_exc()
             if not self.should_stop:
                 wx.CallAfter(self.main_window.on_connection_lost)
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 EXCLUDES = [
     "server/tests",
-    "client/tests",
+    "clients/desktop/tests",
 ]
 
 
@@ -28,7 +28,7 @@ def main() -> int:
         "-q",
         "-r",
         "server",
-        "client",
+        "clients/desktop",
         "-x",
         exclude_arg,
     ]

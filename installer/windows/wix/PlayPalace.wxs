@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?define ClientSource=..\..\client\dist\PlayPalace ?>
 <?define ServerSource=..\..\server\dist ?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="PlayPalace" Manufacturer="XGDevGroup" Version="11.0.0.0" UpgradeCode="{b40ba410-e0df-422a-9f26-f630a7fe3d1d}" Language="1033" Codepage="1252">
     <Icon Id="ProductIcon" SourceFile="assets/product.ico" />
     <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
@@ -129,7 +129,7 @@
 
     <UI>
       <TextStyle Id="Tahoma" FaceName="Tahoma" Size="8" />
-      <UIRef Id="WixUI_InstallDir" />
+      <ui:WixUI Id="WixUI_InstallDir" />
 
       <Dialog Id="ServerConfigDlg" Width="370" Height="295" Title="!(loc.ConfigDialogTitle)">
         <Control Id="Title" Type="Text" X="15" Y="6" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.ConfigDialogTitle)" />
@@ -174,14 +174,10 @@
         </Control>
       </Dialog>
 
-      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDlg" Condition="1" />
-      <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Condition="1" />
-      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="ServerConfigDlg" Condition="(&amp;ServerFeature=3) AND (NOT Installed)" />
-      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="NOT((&amp;ServerFeature=3) AND (NOT Installed))" />
-      <Publish Dialog="ServerConfigDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Condition="1" />
-      <Publish Dialog="ServerConfigDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="1" />
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ServerConfigDlg" Condition="(&amp;ServerFeature=3) AND (NOT Installed)" />
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Condition="NOT((&amp;ServerFeature=3) AND (NOT Installed))" />
+      <!-- Override InstallDirDlg Next to route through ServerConfigDlg when server feature is selected -->
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="ServerConfigDlg" Condition="(&amp;ServerFeature=3) AND (NOT Installed)" Order="2" />
+      <!-- Override VerifyReadyDlg Back to go to ServerConfigDlg when server feature is selected -->
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ServerConfigDlg" Condition="(&amp;ServerFeature=3) AND (NOT Installed)" Order="2" />
     </UI>
 
     <WixVariable Id="WixUILicenseRtf" Value="LICENSE_PLACEHOLDER.rtf" />

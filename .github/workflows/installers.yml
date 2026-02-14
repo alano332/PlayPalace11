@@ -109,7 +109,12 @@ jobs:
         run: runuser --preserve-environment -u builder -- ./installer/linux/scripts/build_arch.sh
 
       - name: Test Arch packages
-        run: ./installer/linux/scripts/test_arch.sh
+        run: |
+          if command -v podman &>/dev/null; then
+            ./installer/linux/scripts/test_arch.sh
+          else
+            echo "Skipping smoke test: podman not available in container"
+          fi
 
       - name: Upload Arch packages
         uses: actions/upload-artifact@v4

@@ -141,45 +141,26 @@
         <Control Id="PortLabel" Type="Text" X="190" Y="60" Width="60" Height="10" Text="!(loc.ConfigPortLabel)" />
         <Control Id="PortEdit" Type="Edit" X="190" Y="72" Width="70" Height="18" Property="SERVERPORT" />
 
-        <Control Id="AllowInsecureCheck" Type="CheckBox" X="15" Y="100" Width="330" Height="16" Property="SERVERALLOWINSECURE" CheckBoxValue="1" Text="!(loc.ConfigAllowInsecure)">
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-        </Control>
+        <Control Id="AllowInsecureCheck" Type="CheckBox" X="15" Y="100" Width="330" Height="16" Property="SERVERALLOWINSECURE" CheckBoxValue="1" Text="!(loc.ConfigAllowInsecure)" />
 
         <Control Id="EnableSslCheck" Type="CheckBox" X="15" Y="122" Width="330" Height="16" Property="SERVERENABLESSL" CheckBoxValue="1" Text="!(loc.ConfigEnableSsl)" />
 
-        <Control Id="CertLabel" Type="Text" X="15" Y="145" Width="330" Height="10" Text="!(loc.ConfigCertPath)">
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
-        </Control>
-        <Control Id="CertPath" Type="PathEdit" X="15" Y="157" Width="330" Height="18" Property="SERVERCERTPATH">
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
-        </Control>
+        <Control Id="CertLabel" Type="Text" X="15" Y="145" Width="330" Height="10" Text="!(loc.ConfigCertPath)" />
+        <Control Id="CertPath" Type="PathEdit" X="15" Y="157" Width="330" Height="18" Property="SERVERCERTPATH" />
 
-        <Control Id="KeyLabel" Type="Text" X="15" Y="180" Width="330" Height="10" Text="!(loc.ConfigKeyPath)">
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
-        </Control>
-        <Control Id="KeyPath" Type="PathEdit" X="15" Y="192" Width="330" Height="18" Property="SERVERKEYPATH">
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
-        </Control>
+        <Control Id="KeyLabel" Type="Text" X="15" Y="180" Width="330" Height="10" Text="!(loc.ConfigKeyPath)" />
+        <Control Id="KeyPath" Type="PathEdit" X="15" Y="192" Width="330" Height="18" Property="SERVERKEYPATH" />
 
         <Control Id="GenerateCertBtn" Type="PushButton" X="15" Y="217" Width="160" Height="17" Text="!(loc.ConfigGenerateCert)">
           <Publish Event="SetProperty" Value="SERVERCERTPATH=[CommonAppDataFolder]PlayPalace\ssl\playpalace_cert.cer"><![CDATA[SERVERENABLESSL = "1"]]></Publish>
           <Publish Event="SetProperty" Value="SERVERKEYPATH=[CommonAppDataFolder]PlayPalace\ssl\playpalace_key.pfx"><![CDATA[SERVERENABLESSL = "1"]]></Publish>
           <Publish Event="DoAction" Value="SetGenerateCertCmd"><![CDATA[SERVERENABLESSL = "1"]]></Publish>
           <Publish Event="DoAction" Value="GenerateCertAction"><![CDATA[SERVERENABLESSL = "1"]]></Publish>
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
         </Control>
 
         <Control Id="ValidateCertBtn" Type="PushButton" X="185" Y="217" Width="160" Height="17" Text="!(loc.ConfigValidateCert)">
           <Publish Event="DoAction" Value="SetValidateCertCmd"><![CDATA[SERVERENABLESSL = "1"]]></Publish>
           <Publish Event="DoAction" Value="ValidateCertAction"><![CDATA[SERVERENABLESSL = "1"]]></Publish>
-          <Condition Action="disable"><![CDATA[SERVERENABLESSL <> "1"]]></Condition>
-          <Condition Action="enable"><![CDATA[SERVERENABLESSL = "1"]]></Condition>
         </Control>
 
         <Control Id="Back" Type="PushButton" X="150" Y="268" Width="56" Height="17" Text="!(loc.WixUIBack)">

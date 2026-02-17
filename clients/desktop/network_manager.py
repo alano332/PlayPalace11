@@ -159,6 +159,26 @@ class NetworkManager:
                 await self._send_authorize(websocket, username, password)
             elif self._refresh_valid():
                 await self._send_refresh_session(websocket, username)
+                # Wait for the server's response to the refresh attempt.
+                # If it fails (or the server silently drops the packet),
+                # fall back to password-based authorize.
+                try:
+                    message = await asyncio.wait_for(websocket.recv(), timeout=10.0)
+                    packet = json.loads(message)
+                    if packet.get("type") == "refresh_session_failure":
+                        self.session_token = None
+                        self.session_expires_at = None
+                        self.refresh_token = None
+                        self.refresh_expires_at = None
+                        await self._send_authorize(websocket, username, password)
+                    else:
+                        wx.CallAfter(self._handle_packet, packet)
+                except asyncio.TimeoutError:
+                    self.session_token = None
+                    self.session_expires_at = None
+                    self.refresh_token = None
+                    self.refresh_expires_at = None
+                    await self._send_authorize(websocket, username, password)
             else:
                 self.session_token = None
                 self.session_expires_at = None

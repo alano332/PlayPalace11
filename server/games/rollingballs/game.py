@@ -253,15 +253,20 @@ class RollingBallsGame(ActionGuardMixin, Game):
 
         action_set = ActionSet(name="turn")
 
-        # Take N balls (dynamic based on min/max options)
-        for n in range(self.options.min_take, self.options.max_take + 1):
+        # View pipe (always visible during play, doesn't require turn)
+        if self.options.view_pipe_limit > 0:
+            remaining = self.options.view_pipe_limit - player.view_pipe_uses
             action_set.add(
                 Action(
-                    id=f"take_{n}",
-                    label=Localization.get(locale, "rb-take", count=n),
-                    handler="_action_take",
-                    is_enabled="_is_take_enabled",
-                    is_hidden="_is_take_hidden",
+                    id="view_pipe",
+                    label=Localization.get(
+                        locale, "rb-view-pipe-action", remaining=remaining
+                    ),
+                    handler="_action_view_pipe",
+                    is_enabled="_is_view_pipe_enabled",
+                    is_hidden="_is_view_pipe_hidden",
+                    get_label="_get_view_pipe_label",
+                    show_in_actions_menu=True,
                 )
             )
 
@@ -281,20 +286,15 @@ class RollingBallsGame(ActionGuardMixin, Game):
                 )
             )
 
-        # View pipe (actions menu only, doesn't require turn)
-        if self.options.view_pipe_limit > 0:
-            remaining = self.options.view_pipe_limit - player.view_pipe_uses
+        # Take N balls (dynamic based on min/max options)
+        for n in range(self.options.min_take, self.options.max_take + 1):
             action_set.add(
                 Action(
-                    id="view_pipe",
-                    label=Localization.get(
-                        locale, "rb-view-pipe-action", remaining=remaining
-                    ),
-                    handler="_action_view_pipe",
-                    is_enabled="_is_view_pipe_enabled",
-                    is_hidden="_is_view_pipe_hidden",
-                    get_label="_get_view_pipe_label",
-                    show_in_actions_menu=True,
+                    id=f"take_{n}",
+                    label=Localization.get(locale, "rb-take", count=n),
+                    handler="_action_take",
+                    is_enabled="_is_take_enabled",
+                    is_hidden="_is_take_hidden",
                 )
             )
 
@@ -448,16 +448,17 @@ class RollingBallsGame(ActionGuardMixin, Game):
         value = ball["value"]
         description = ball["description"]
         abs_value = abs(value)
+        sound_value = abs_value if abs_value <=5 else 5
 
         # Play takeball sound immediately, schedule value sound 1 tick later
         self.play_sound("game_rollingballs/takeball.ogg")
         if value > 0:
-            self.schedule_sound(f"game_rollingballs/plus{abs_value}.ogg", delay_ticks=1, volume=80)
+            self.schedule_sound(f"game_rollingballs/plus{sound_value}.ogg", delay_ticks=1, volume=80)
             self.broadcast_l(
                 "rb-ball-plus", num=ball_num, description=description, value=abs_value
             )
         elif value < 0:
-            self.schedule_sound(f"game_rollingballs/minus{abs_value}.ogg", delay_ticks=1)
+            self.schedule_sound(f"game_rollingballs/minus{sound_value}.ogg", delay_ticks=1)
             self.broadcast_l(
                 "rb-ball-minus", num=ball_num, description=description, value=abs_value
             )

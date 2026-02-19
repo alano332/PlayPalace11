@@ -41,17 +41,6 @@ def get_pack_names() -> list[str]:
     return list(load_ball_packs().keys())
 
 
-def _format_pack_name(pack_id: str) -> str:
-    """Format a pack ID for display (underscores to spaces, title case)."""
-    return pack_id.replace("_", " ").title()
-
-
-@dataclass
-class BallPackOption(MenuOption):
-    """Menu option that displays pack IDs as title-cased names."""
-
-    def get_localized_choice(self, value: str, locale: str) -> str:
-        return _format_pack_name(value)
 
 
 @dataclass
@@ -62,6 +51,7 @@ class RollingBallsPlayer(Player):
     has_reshuffled: bool = False  # Reset each turn
     view_pipe_uses: int = 0  # Total uses this game
     reshuffle_uses: int = 0  # Total uses this game
+    last_viewed_pipe: list[dict] | None = None  # Snapshot of pipe at last view
 
 
 @dataclass
@@ -124,8 +114,8 @@ class RollingBallsOptions(GameOptions):
         )
     )
     ball_pack: str = option_field(
-        BallPackOption(
-            default="rorys_pack",
+        MenuOption(
+            default=get_pack_names()[0],
             choices=lambda game, player: get_pack_names(),
             value_key="pack",
             label="rb-set-ball-pack",
@@ -342,9 +332,10 @@ class RollingBallsGame(ActionGuardMixin, Game):
         can_view = (
             self.options.view_pipe_limit > 0
             and rb_player.view_pipe_uses < self.options.view_pipe_limit
+            and self.status == "playing"
         )
-        if can_view and self.status == "playing":
-            return Visibility.HIDDEN  # Actions menu only
+        if can_view:
+            return Visibility.VISIBLE
         return Visibility.HIDDEN
 
     # ==========================================================================
@@ -460,7 +451,10 @@ class RollingBallsGame(ActionGuardMixin, Game):
         if not user:
             return
 
-        rb_player.view_pipe_uses += 1
+        # Only count as a use if the pipe changed since last view
+        if rb_player.last_viewed_pipe != self.pipe:
+            rb_player.view_pipe_uses += 1
+            rb_player.last_viewed_pipe = [b.copy() for b in self.pipe]
 
         # Build pipe description
         user.speak_l(
@@ -499,6 +493,7 @@ class RollingBallsGame(ActionGuardMixin, Game):
             rb_p.has_reshuffled = False
             rb_p.view_pipe_uses = 0
             rb_p.reshuffle_uses = 0
+            rb_p.last_viewed_pipe = None
 
         # Fill pipe
         total_balls = self.fill_pipe()

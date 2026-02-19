@@ -1390,14 +1390,15 @@ class Server(AdministrationMixin):
             }
         )
 
-    def _show_main_menu(self, user: NetworkUser) -> None:
+    def _show_main_menu(self, user: NetworkUser, *, reset_history: bool = False) -> None:
         """Show the main menu to a user."""
-        # Reset menu history when returning to main menu (fresh navigation tree).
-        current_menus = getattr(user, "_current_menus", None)
-        if isinstance(current_menus, dict):
-            for menu_id in list(current_menus.keys()):
-                if menu_id != "main_menu":
-                    current_menus.pop(menu_id, None)
+        if reset_history:
+            # Fresh navigation tree (used when returning from active game flows).
+            current_menus = getattr(user, "_current_menus", None)
+            if isinstance(current_menus, dict):
+                for menu_id in list(current_menus.keys()):
+                    if menu_id != "main_menu":
+                        current_menus.pop(menu_id, None)
 
         items = []
         if user.approved:
@@ -1438,7 +1439,7 @@ class Server(AdministrationMixin):
             items,
             multiletter=True,
             escape_behavior=EscapeBehavior.SELECT_LAST,
-            position=1,
+            position=1 if reset_history else None,
         )
         user.play_music("mainmus.ogg")
         user.stop_ambience()
@@ -1782,7 +1783,7 @@ class Server(AdministrationMixin):
                 game_user = table.game._users.get(user.uuid)
                 if game_user is not user:
                     table.remove_member(username)
-                    self._show_main_menu(user)
+                    self._show_main_menu(user, reset_history=True)
             return
 
         await self._dispatch_menu_selection(user, selection_id, state, current_menu)
@@ -3497,7 +3498,7 @@ class Server(AdministrationMixin):
             if not player.is_bot:
                 player_user = self._users.get(player.name)
                 if player_user:
-                    self._show_main_menu(player_user)
+                    self._show_main_menu(player_user, reset_history=True)
 
     def on_game_result(self, result) -> None:
         """Handle game result persistence.
@@ -3601,7 +3602,7 @@ class Server(AdministrationMixin):
                 game_user = table.game._users.get(user.uuid)
                 if game_user is not user:
                     table.remove_member(username)
-                    self._show_main_menu(user)
+                    self._show_main_menu(user, reset_history=True)
 
     async def _handle_editbox(self, client: ClientConnection, packet: dict) -> None:
         """Handle editbox submissions.
@@ -3647,7 +3648,7 @@ class Server(AdministrationMixin):
                 game_user = table.game._users.get(user.uuid)
                 if game_user is not user:
                     table.remove_member(username)
-                    self._show_main_menu(user)
+                    self._show_main_menu(user, reset_history=True)
 
     async def _handle_chat(self, client: ClientConnection, packet: dict) -> None:
         """Handle chat message."""

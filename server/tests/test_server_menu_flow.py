@@ -59,11 +59,25 @@ def test_show_main_menu_resets_submenu_history(server):
         "language_menu": {"items": [], "position": 2},
     }
 
-    server._show_main_menu(user)
+    server._show_main_menu(user, reset_history=True)
 
     assert "main_menu" in user._current_menus
     assert "options_menu" not in user._current_menus
     assert "language_menu" not in user._current_menus
+
+
+@pytest.mark.slow
+def test_show_main_menu_preserves_history_without_reset(server):
+    user = make_network_user("KeepMenus")
+    user._current_menus = {
+        "main_menu": {"items": [], "position": 3},
+        "options_menu": {"items": [], "position": 2},
+    }
+
+    server._show_main_menu(user)
+
+    assert "options_menu" in user._current_menus
+    assert user._current_menus["main_menu"]["position"] == 3
 
 
 @pytest.mark.asyncio
@@ -303,6 +317,26 @@ async def test_back_prunes_previous_menu_position_history(server):
 
     assert "language_menu" not in user._current_menus
     assert server._user_states[user.username]["menu"] == "options_menu"
+
+
+@pytest.mark.asyncio
+@pytest.mark.slow
+async def test_back_to_main_menu_restores_previous_main_selection(server):
+    user = make_network_user("BackMain", locale="en")
+    server._users[user.username] = user
+    server._tables = SimpleNamespace(find_user_table=lambda username: None)
+
+    server._show_main_menu(user)
+    server._user_states[user.username] = {"menu": "main_menu"}
+    client = SimpleNamespace(username=user.username)
+
+    await server._handle_menu(client, {"selection_id": "options"})
+    assert server._user_states[user.username]["menu"] == "options_menu"
+
+    await server._handle_menu(client, {"selection_id": "back"})
+    assert server._user_states[user.username]["menu"] == "main_menu"
+    # "Options" is the 6th item in the approved-user main menu.
+    assert user._current_menus["main_menu"]["position"] == 6
 
 
 @pytest.mark.asyncio

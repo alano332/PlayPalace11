@@ -291,6 +291,7 @@ class ThreesGame(Game, DiceGameMixin):
             BotHelper.jolt_bot(player, ticks=random.randint(15, 30))  # nosec B311
 
         self.rebuild_all_menus()
+        self.update_player_menu(player, selection_id="toggle_die_0")
 
     # Dice toggle handlers provided by DiceGameMixin
 

@@ -423,6 +423,8 @@ class YahtzeeGame(ActionGuardMixin, Game, DiceGameMixin):
             BotHelper.jolt_bot(player, ticks=random.randint(15, 25))  # nosec B311
 
         self.rebuild_all_menus()
+        if ytz_player.rolls_left > 0:
+            self.update_player_menu(player, selection_id="toggle_die_0")
 
     def _action_score(self, player: Player, action_id: str) -> None:
         """Handle scoring in a category."""
@@ -558,13 +560,22 @@ class YahtzeeGame(ActionGuardMixin, Game, DiceGameMixin):
                 lines.append(f"  {cat_name}: -")
 
         upper_total = ytz_current.get_upper_total()
-        lines.append(
-            Localization.get(locale, "yahtzee-scoresheet-upper-total", total=upper_total)
-        )
-        bonus = 35 if ytz_current.upper_bonus_awarded else 0
-        lines.append(
-            Localization.get(locale, "yahtzee-scoresheet-upper-bonus", bonus=bonus)
-        )
+        if ytz_current.upper_bonus_awarded:
+            lines.append(
+                Localization.get(
+                    locale, "yahtzee-scoresheet-upper-total-bonus", total=upper_total
+                )
+            )
+        else:
+            needed = max(0, 63 - upper_total)
+            lines.append(
+                Localization.get(
+                    locale,
+                    "yahtzee-scoresheet-upper-total-needed",
+                    total=upper_total,
+                    needed=needed,
+                )
+            )
 
         lines.append(Localization.get(locale, "yahtzee-scoresheet-lower"))
 

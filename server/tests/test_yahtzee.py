@@ -207,6 +207,22 @@ class TestYahtzeeGameUnit:
         action_set = game.create_turn_action_set(player)
         assert action_set._order.index("dice_key_1") < action_set._order.index("roll")
 
+    def test_roll_focuses_first_dice_toggle(self):
+        """After rolling, focus should move to first dice toggle item."""
+        game = YahtzeeGame()
+        user = MockUser("Alice")
+        player = game.add_player("Alice", user)
+        game.on_start()
+
+        game.execute_action(player, "roll")
+
+        assert any(
+            message.type == "update_menu"
+            and message.data.get("menu_id") == "turn_menu"
+            and message.data.get("selection_id") == "toggle_die_0"
+            for message in user.messages
+        )
+
 
 class TestYahtzeePlayTest:
     """Integration tests for complete game play."""

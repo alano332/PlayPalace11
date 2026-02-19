@@ -67,6 +67,23 @@ class TestThreesGameUnit:
         loaded_game = ThreesGame.from_json(json_str)
         assert loaded_game.current_round == 3
 
+    def test_roll_focuses_first_dice_toggle(self):
+        """After rolling, focus should move to first dice toggle item."""
+        game = ThreesGame()
+        user = MockUser("Alice")
+        player = game.add_player("Alice", user)
+        game.add_player("Bob", MockUser("Bob"))
+        game.on_start()
+
+        game.execute_action(player, "roll")
+
+        assert any(
+            message.type == "update_menu"
+            and message.data.get("menu_id") == "turn_menu"
+            and message.data.get("selection_id") == "toggle_die_0"
+            for message in user.messages
+        )
+
 
 class TestThreesPlayTest:
     """Integration tests for complete game play."""

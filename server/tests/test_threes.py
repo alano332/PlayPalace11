@@ -84,6 +84,34 @@ class TestThreesGameUnit:
             for message in user.messages
         )
 
+    def test_second_roll_focuses_first_available_toggle(self):
+        """After locking die 0, focus should move to next available toggle."""
+        game = ThreesGame()
+        user = MockUser("Alice")
+        player = game.add_player("Alice", user)
+        game.add_player("Bob", MockUser("Bob"))
+        game.on_start()
+
+        player.dice.values = [1, 2, 3, 4, 5]
+        player.dice.kept = [0]
+        player.dice.locked = []
+        user.clear_messages()
+
+        game.execute_action(player, "roll")
+
+        updates = [
+            message
+            for message in user.messages
+            if message.type == "update_menu"
+            and message.data.get("menu_id") == "turn_menu"
+            and message.data.get("selection_id")
+        ]
+        assert updates
+        selected = updates[-1].data.get("selection_id")
+        assert selected is not None
+        assert selected.startswith("toggle_die_")
+        assert selected != "toggle_die_0"
+
 
 class TestThreesPlayTest:
     """Integration tests for complete game play."""

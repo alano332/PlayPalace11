@@ -1,5 +1,6 @@
 """Tests for the Sorry game scaffold."""
 
+import json
 import random
 
 from server.core.users.test_user import MockUser
@@ -108,6 +109,7 @@ def test_serialization_round_trip_preserves_options() -> None:
     """Scaffold options and state should serialize cleanly."""
     game = SorryGame(
         options=SorryOptions(
+            rules_profile="a5065_core",
             auto_apply_single_move=True,
             faster_setup_one_pawn_out=False,
         )
@@ -121,9 +123,65 @@ def test_serialization_round_trip_preserves_options() -> None:
     payload = game.to_json()
     loaded = SorryGame.from_json(payload)
 
+    assert loaded.options.rules_profile == "a5065_core"
     assert loaded.options.auto_apply_single_move is True
     assert loaded.options.faster_setup_one_pawn_out is False
     assert loaded.game_state.turn_phase == "draw"
+
+
+def test_unknown_rules_profile_falls_back_to_classic() -> None:
+    game = SorryGame(
+        options=SorryOptions(
+            rules_profile="unknown_profile",
+            auto_apply_single_move=False,
+            faster_setup_one_pawn_out=False,
+        )
+    )
+
+    profile = game.get_rules_profile()
+    assert profile.profile_id == "classic_00390"
+    assert game.rules_profile_id == "classic_00390"
+    assert game.options.rules_profile == "classic_00390"
+
+
+def test_a5065_core_rules_profile_is_selectable() -> None:
+    game = SorryGame(
+        options=SorryOptions(
+            rules_profile="a5065_core",
+            auto_apply_single_move=False,
+            faster_setup_one_pawn_out=False,
+        )
+    )
+
+    profile = game.get_rules_profile()
+    assert profile.profile_id == "a5065_core"
+    assert game.rules_profile_id == "a5065_core"
+    assert game.options.rules_profile == "a5065_core"
+
+
+def test_legacy_payload_without_rules_profile_defaults_to_classic() -> None:
+    game = SorryGame(
+        options=SorryOptions(
+            rules_profile="classic_00390",
+            auto_apply_single_move=True,
+            faster_setup_one_pawn_out=False,
+        )
+    )
+    user1 = MockUser("Alice")
+    user2 = MockUser("Bob")
+    game.add_player("Alice", user1)
+    game.add_player("Bob", user2)
+    game.on_start()
+
+    payload_dict = json.loads(game.to_json())
+    payload_dict["options"].pop("rules_profile", None)
+    payload_dict.pop("rules_profile_id", None)
+
+    loaded = SorryGame.from_json(json.dumps(payload_dict))
+    profile = loaded.get_rules_profile()
+    assert profile.profile_id == "classic_00390"
+    assert loaded.options.rules_profile == "classic_00390"
+    assert loaded.rules_profile_id == "classic_00390"
 
 
 def test_state_builder_assigns_seat_tracks() -> None:

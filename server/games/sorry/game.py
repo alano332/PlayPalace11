@@ -5,12 +5,17 @@ from dataclasses import dataclass, field
 from ..base import Game, Player
 from ..registry import register_game
 from ...game_utils.actions import Action, ActionSet, Visibility
-from ...game_utils.options import BoolOption, GameOptions, option_field
+from ...game_utils.options import BoolOption, GameOptions, MenuOption, option_field
 from ...messages.localization import Localization
 from server.core.ui.keybinds import KeybindState
 from .bot import choose_move
 from .moves import SorryMove, apply_move, generate_legal_moves
-from .rules import Classic00390Rules, SorryRulesProfile
+from .rules import (
+    Classic00390Rules,
+    SorryRulesProfile,
+    get_rules_profile_by_id,
+    get_supported_profile_ids,
+)
 from .state import (
     SorryGameState,
     SorryPlayerState,
@@ -32,6 +37,20 @@ class SorryPlayer(Player):
 class SorryOptions(GameOptions):
     """Configurable options for Sorry."""
 
+    rules_profile: str = option_field(
+        MenuOption(
+            default="classic_00390",
+            value_key="rules_profile",
+            choices=list(get_supported_profile_ids()),
+            choice_labels={
+                "classic_00390": "sorry-rules-profile-classic-00390",
+                "a5065_core": "sorry-rules-profile-a5065-core",
+            },
+            label="sorry-option-rules-profile",
+            prompt="sorry-option-select-rules-profile",
+            change_msg="sorry-option-changed-rules-profile",
+        )
+    )
     auto_apply_single_move: bool = option_field(
         BoolOption(
             default=False,
@@ -88,8 +107,20 @@ class SorryGame(Game):
         """Create a new Sorry player."""
         return SorryPlayer(id=player_id, name=name, is_bot=is_bot)
 
+    def _resolve_rules_profile_id(self) -> str:
+        requested = self.options.rules_profile or self.rules_profile_id
+        if get_rules_profile_by_id(requested) is None:
+            requested = Classic00390Rules().profile_id
+        self.rules_profile_id = requested
+        self.options.rules_profile = requested
+        return requested
+
     def get_rules_profile(self) -> SorryRulesProfile:
         """Return active rules profile object."""
+        profile_id = self._resolve_rules_profile_id()
+        profile = get_rules_profile_by_id(profile_id)
+        if profile is not None:
+            return profile
         return Classic00390Rules()
 
     def _parse_move_slot(self, action_id: str) -> int | None:
@@ -284,6 +315,7 @@ class SorryGame(Game):
         self.rebuild_all_menus()
 
     def _start_turn(self, *, announce: bool = True) -> None:
+        self._resolve_rules_profile_id()
         self.game_state.turn_phase = "draw"
         self.game_state.current_card = None
         if announce:
@@ -472,6 +504,7 @@ class SorryGame(Game):
 
         Milestone 1 scaffold: initialize serializable player/deck state and turn order.
         """
+        self._resolve_rules_profile_id()
         self.status = "playing"
         self.game_active = True
         self.round = 0

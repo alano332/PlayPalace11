@@ -94,3 +94,58 @@ class Classic00390Rules:
 
     def card_two_grants_extra_turn(self) -> bool:
         return True
+
+
+@dataclass(frozen=True)
+class A5065CoreRules:
+    """A5065 core profile scaffold.
+
+    Milestone 2 wiring uses classic-equivalent behavior until profile deltas
+    are implemented in later milestones.
+    """
+
+    profile_id: str = "a5065_core"
+    display_name: str = "A5065 Core"
+    pawns_per_player: int = 4
+
+    def card_faces(self) -> tuple[str, ...]:
+        return Classic00390Rules().card_faces()
+
+    def can_leave_start_with_card(self, card_face: str) -> bool:
+        return Classic00390Rules().can_leave_start_with_card(card_face)
+
+    def forward_steps_for_card(self, card_face: str) -> tuple[int, ...]:
+        return Classic00390Rules().forward_steps_for_card(card_face)
+
+    def backward_steps_for_card(self, card_face: str) -> tuple[int, ...]:
+        return Classic00390Rules().backward_steps_for_card(card_face)
+
+    def allows_split_seven(self, card_face: str) -> bool:
+        return Classic00390Rules().allows_split_seven(card_face)
+
+    def allows_swap(self, card_face: str) -> bool:
+        return Classic00390Rules().allows_swap(card_face)
+
+    def allows_sorry(self, card_face: str) -> bool:
+        return Classic00390Rules().allows_sorry(card_face)
+
+    def card_two_grants_extra_turn(self) -> bool:
+        return Classic00390Rules().card_two_grants_extra_turn()
+
+
+RULES_PROFILES: dict[str, SorryRulesProfile] = {
+    "classic_00390": Classic00390Rules(),
+    "a5065_core": A5065CoreRules(),
+}
+
+
+def get_rules_profile_by_id(profile_id: str | None) -> SorryRulesProfile | None:
+    """Return profile object for a known profile id."""
+    if profile_id is None:
+        return None
+    return RULES_PROFILES.get(profile_id)
+
+
+def get_supported_profile_ids() -> tuple[str, ...]:
+    """Return known profile ids in stable option order."""
+    return tuple(RULES_PROFILES.keys())

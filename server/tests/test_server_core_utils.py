@@ -349,7 +349,11 @@ async def test_preload_locales_if_requested_runs_in_thread(monkeypatch, make_ser
         nonlocal called
         called = True
 
+    async def fake_to_thread(func, *args, **kwargs):
+        return func(*args, **kwargs)
+
     monkeypatch.setattr(server_module.Localization, "preload_bundles", fake_preload)
+    monkeypatch.setattr(asyncio, "to_thread", fake_to_thread)
 
     await srv._preload_locales_if_requested()
 
@@ -368,7 +372,11 @@ async def test_warm_locales_async_resolves_gate(monkeypatch, make_server):
         nonlocal resolved
         resolved = True
 
+    async def fake_to_thread(func, *args, **kwargs):
+        return func(*args, **kwargs)
+
     monkeypatch.setattr(server_module.Localization, "preload_bundles", fake_preload)
+    monkeypatch.setattr(asyncio, "to_thread", fake_to_thread)
 
     await srv._warm_locales_async()
 
@@ -386,7 +394,11 @@ async def test_warm_locales_async_failure_enters_maintenance(monkeypatch, make_s
     def fake_preload():
         raise RuntimeError("boom")
 
+    async def fake_to_thread(func, *args, **kwargs):
+        return func(*args, **kwargs)
+
     monkeypatch.setattr(server_module.Localization, "preload_bundles", fake_preload)
+    monkeypatch.setattr(asyncio, "to_thread", fake_to_thread)
 
     captured: list[ModeSnapshot] = []
 

@@ -233,6 +233,7 @@ predict-unavailable = Rating predictions are not available.
 predict-need-players = Need at least 2 human players for predictions.
 action-need-more-humans = Need more human players.
 confirm-leave-game = Are you sure you want to leave the table?
+confirm-logout = Are you sure you want to log out?
 confirm-yes = Yes
 confirm-no = No
 

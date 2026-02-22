@@ -104,6 +104,7 @@ class MainWindow(wx.Frame):
         # Initialize network manager
         self.network = NetworkManager(self)
         self.connected = False
+        self._force_close = False  # Skip close confirmation for server-initiated closes
         self.expecting_reconnect = False  # Track if we're expecting to reconnect
         self.returning_to_login = False  # Track if we're returning to login dialog
         self.reconnect_attempts = 0  # Track reconnection attempts
@@ -161,6 +162,9 @@ class MainWindow(wx.Frame):
         self._create_ui()
         self._setup_accelerators()
         self._populate_test_data()
+
+        # Bind close event (Alt+F4, window close button)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
 
         # Auto-connect to localhost
         self._auto_connect()
@@ -348,6 +352,21 @@ class MainWindow(wx.Frame):
         # Menu will be populated by server after connection
         # History starts empty - first message will be "Connecting..."
         pass
+
+    def on_close(self, event):
+        """Handle window close (Alt+F4, close button) with confirmation."""
+        if self.connected and not self._force_close:
+            dlg = wx.MessageDialog(
+                self,
+                "Are you sure you want to exit?",
+                "Confirm Exit",
+                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+            )
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result != wx.ID_YES:
+                return
+        event.Skip()
 
     def on_focus_menu(self, event):
         """Handle Alt+M shortcut to focus menu list."""
@@ -1288,6 +1307,7 @@ class MainWindow(wx.Frame):
             self._show_connection_error(message, return_to_login=return_to_login)
         else:
             # Explicit disconnect, close quietly (e.g., user logout)
+            self._force_close = True
             self.speaker.speak("Disconnected.", interrupt=False)
             wx.CallLater(500, self.Close)
 

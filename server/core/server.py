@@ -1862,6 +1862,7 @@ class Server(AdministrationMixin):
         """Dispatch menu selections based on current menu context."""
         handlers: dict[str, tuple[callable, tuple]] = {
             "main_menu": (self._handle_main_menu_selection, (user, selection_id)),
+            "logout_confirm_menu": (self._handle_logout_confirm_selection, (user, selection_id)),
             "categories_menu": (self._handle_categories_selection, (user, selection_id, state)),
             "games_menu": (self._handle_games_selection, (user, selection_id, state)),
             "tables_menu": (self._handle_tables_selection, (user, selection_id, state)),
@@ -1957,8 +1958,32 @@ class Server(AdministrationMixin):
             if user.trust_level.value >= TrustLevel.ADMIN.value:
                 self._show_admin_menu(user)
         elif selection_id == "logout":
+            self._show_logout_confirm_menu(user)
+
+    def _show_logout_confirm_menu(self, user: NetworkUser) -> None:
+        """Show confirmation menu for logging out."""
+        user.speak_l("confirm-logout", buffer="activity")
+        items = [
+            MenuItem(text=Localization.get(user.locale, "confirm-yes"), id="yes"),
+            MenuItem(text=Localization.get(user.locale, "confirm-no"), id="no"),
+        ]
+        user.show_menu(
+            "logout_confirm_menu",
+            items,
+            multiletter=True,
+            escape_behavior=EscapeBehavior.SELECT_LAST,
+        )
+        self._user_states[user.username] = {"menu": "logout_confirm_menu"}
+
+    async def _handle_logout_confirm_selection(
+        self, user: NetworkUser, selection_id: str
+    ) -> None:
+        """Handle logout confirmation menu selection."""
+        if selection_id == "yes":
             user.speak_l("goodbye", buffer="activity")
             await user.connection.send({"type": "disconnect", "reconnect": False})
+        else:
+            self._show_main_menu(user)
 
     async def _handle_options_selection(
         self, user: NetworkUser, selection_id: str

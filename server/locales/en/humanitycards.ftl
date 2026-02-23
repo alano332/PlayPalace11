@@ -66,7 +66,7 @@ hc-select-winner-prompt = Select the winning submission
 hc-submission-option = { $text }
 
 # Results
-hc-winner-announcement = { $player } wins the round!
+hc-winner-announcement = { $player } wins the round! Score: { $score }.
 hc-winner-card = Winning answer: { $text }
 hc-round-scores = Scores after round { $round }:
 hc-score-line = { $player }: { $score } { $score ->
@@ -98,3 +98,8 @@ hc-view-hand = View hand
 # Scores
 hc-view-scores = View scores
 hc-no-scores = No scores yet.
+
+# Whose turn / whose judge
+hc-whose-judge = Who is judging
+hc-waiting-for = Waiting for: { $names }.
+hc-all-submitted-waiting-judge = All players have submitted. Waiting for { $judge } to judge.

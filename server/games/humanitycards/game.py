@@ -216,7 +216,7 @@ class HumanityCardsGame(Game):
     options: HumanityCardsOptions = field(default_factory=HumanityCardsOptions)
 
     # Game state
-    phase: str = "waiting"  # waiting, submitting, judging
+    phase: str = "waiting"  # waiting, submitting, judging, round_end
     white_deck: list[dict] = field(default_factory=list)
     black_deck: list[dict] = field(default_factory=list)
     white_discard: list[dict] = field(default_factory=list)
@@ -226,6 +226,7 @@ class HumanityCardsGame(Game):
     last_winner_index: int = -1  # For "Most Recent Winner" czar selection
     submissions: list[dict] = field(default_factory=list)  # [{"player_id": str, "cards": [str]}]
     submission_order: list[int] = field(default_factory=list)  # Shuffled indices into submissions
+    round_end_ticks: int = 0  # Countdown ticks before next round starts
 
     @classmethod
     def get_name(cls) -> str:
@@ -511,6 +512,17 @@ class HumanityCardsGame(Game):
             )
         )
 
+        # Whose judge (keybind-only, J key)
+        action_set.add(
+            Action(
+                id="whose_judge",
+                label=Localization.get(locale, "hc-whose-judge"),
+                handler="_action_whose_judge",
+                is_enabled="_is_view_scores_enabled",
+                is_hidden="_is_whose_judge_hidden",
+            )
+        )
+
         return action_set
 
     def setup_keybinds(self) -> None:
@@ -557,6 +569,15 @@ class HumanityCardsGame(Game):
             "s",
             "View scores",
             ["view_scores"],
+            state=KeybindState.ACTIVE,
+            include_spectators=True,
+        )
+
+        # J to announce judges
+        self.define_keybind(
+            "j",
+            "Who is judging",
+            ["whose_judge"],
             state=KeybindState.ACTIVE,
             include_spectators=True,
         )
@@ -738,6 +759,50 @@ class HumanityCardsGame(Game):
         )
         parts = [f"{p.name}: {p.score}" for p in sorted_players]  # type: ignore
         user.speak(". ".join(parts) + ".")
+
+    # ==========================================================================
+    # Whose judge / whose turn overrides
+    # ==========================================================================
+
+    def _is_whose_judge_hidden(self, player: Player) -> Visibility:
+        # Keybind-only — always hidden from menu
+        return Visibility.HIDDEN
+
+    def _action_whose_judge(self, player: Player, action_id: str) -> None:
+        """Announce who the current judge(s) are."""
+        user = self.get_user(player)
+        if not user:
+            return
+        judges = self._get_judges()
+        if len(judges) == 1:
+            user.speak_l("hc-judge-is", player=judges[0].name, count=1, others="")
+        elif judges:
+            others = ", ".join(j.name for j in judges[1:])
+            user.speak_l("hc-judge-is", player=judges[0].name, count=len(judges), others=others)
+
+    def _action_whose_turn(self, player: Player, action_id: str) -> None:
+        """Override default whose_turn to show submission status."""
+        user = self.get_user(player)
+        if not user:
+            return
+
+        judges = self._get_judges()
+        judge_names = ", ".join(j.name for j in judges)
+
+        if self.phase == "submitting":
+            # List who hasn't submitted
+            waiting = [
+                p.name for p in self._get_non_judges()
+                if p.submitted_cards is None
+            ]
+            if waiting:
+                user.speak_l("hc-waiting-for", names=", ".join(waiting))
+            else:
+                user.speak_l("hc-all-submitted-waiting-judge", judge=judge_names)
+        elif self.phase == "judging":
+            user.speak_l("hc-all-submitted-waiting-judge", judge=judge_names)
+        else:
+            user.speak_l("game-no-turn")
 
     def _is_view_enabled(self, player: Player) -> str | None:
         if self.status != "playing":
@@ -1015,7 +1080,11 @@ class HumanityCardsGame(Game):
             f"game_humanitycards/judgechoice{random.randint(1, 3)}.ogg"  # nosec B311
         )
 
-        self.broadcast_l("hc-winner-announcement", player=winner.name)
+        self.broadcast_l(
+            "hc-winner-announcement",
+            player=winner.name,
+            score=hc_winner.score,
+        )
         self.broadcast_l("hc-winner-card", text=winning_text)
 
         # Show all submissions with names
@@ -1033,23 +1102,20 @@ class HumanityCardsGame(Game):
                     text=filled,
                 )
 
-        # Show scores
-        self.broadcast_l("hc-round-scores", round=self.round)
-        for p in active:
-            hp: HumanityCardsPlayer = p  # type: ignore
-            self.broadcast_l("hc-score-line", player=p.name, score=hp.score)
-
         # Check win condition
         if hc_winner.score >= self.options.winning_score:
             self._end_game(hc_winner)
         else:
+            # Transition to round_end with delay before next round
+            self.phase = "round_end"
+            self.round_end_ticks = 100  # ~5 seconds at 20 ticks/sec
+
             # Discard current black card
             if self.current_black_card:
                 self.black_discard.append(self.current_black_card)
                 self.current_black_card = None
 
-            # Start next round
-            self._start_round()
+            self.rebuild_all_menus()
 
     def _action_view_black_card(self, player: Player, action_id: str) -> None:
         """View the current black card prompt."""
@@ -1162,7 +1228,7 @@ class HumanityCardsGame(Game):
             self._deal_to_hand_size(hp)
 
         # Play music
-        self.play_music("game_pig/mus.ogg")
+        self.play_music("game_3cardpoker/mus.ogg")
 
         # Start first round
         self._start_round()
@@ -1296,6 +1362,13 @@ class HumanityCardsGame(Game):
         super().on_tick()
 
         if not self.game_active:
+            return
+
+        # Round end delay before starting next round
+        if self.phase == "round_end":
+            self.round_end_ticks -= 1
+            if self.round_end_ticks <= 0:
+                self._start_round()
             return
 
         # Process bot actions

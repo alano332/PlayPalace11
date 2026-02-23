@@ -40,7 +40,7 @@ hc-you-are-not-judge = You are not the Card Czar this round.
 # Black card
 hc-black-card = The prompt is: { $text }
 hc-black-card-pick = Pick { $count }.
-hc-view-black-card = View prompt
+hc-view-black-card = View the question card
 
 # Submission phase
 hc-select-cards = Select { $count } { $count ->
@@ -73,7 +73,7 @@ hc-score-line = { $player }: { $score } { $score ->
     [one] point
    *[other] points
 }
-hc-all-submissions = All submissions:
+hc-all-submissions = Other submissions:
 hc-submission-reveal = { $player }: { $text }
 
 # View
@@ -101,5 +101,5 @@ hc-no-scores = No scores yet.
 
 # Whose turn / whose judge
 hc-whose-judge = Who is judging
-hc-waiting-for = Waiting for: { $names }.
+hc-waiting-for = Waiting for { $names } to submit.
 hc-all-submitted-waiting-judge = All players have submitted. Waiting for { $judge } to judge.

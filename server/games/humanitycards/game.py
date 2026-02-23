@@ -449,6 +449,19 @@ class HumanityCardsGame(Game):
                 )
             )
 
+        # Judge prompt header (static, non-actionable) — shown at top of judge menu
+        action_set.add(
+            Action(
+                id="judge_prompt_header",
+                label="Choose the best card",
+                handler="_action_noop",
+                is_enabled="_is_judge_prompt_header_enabled",
+                is_hidden="_is_judge_prompt_header_hidden",
+                get_label="_get_judge_prompt_header_label",
+                show_in_actions_menu=False,
+            )
+        )
+
         # Judge pick actions (0-19) — judges during judging, inline in menu
         for i in range(20):
             action_set.add(
@@ -637,7 +650,7 @@ class HumanityCardsGame(Game):
             return "game_humanitycards/cardselect.ogg"
         return None
 
-    def _is_submit_enabled(self, player: Player) -> str | None:
+    def _is_submit_enabled(self, player: Player) -> str | tuple[str, dict] | None:
         if self.status != "playing":
             return "action-not-playing"
         if player.is_spectator:
@@ -651,7 +664,7 @@ class HumanityCardsGame(Game):
             return "action-not-playing"
         required = self.current_black_card["pick"] if self.current_black_card else 1
         if len(hcp.selected_indices) != required:
-            return "hc-wrong-card-count"
+            return ("hc-wrong-card-count", {"count": required})
         return None
 
     def _is_submit_hidden(self, player: Player) -> Visibility:
@@ -717,6 +730,31 @@ class HumanityCardsGame(Game):
                     )
                 return ", ".join(sub["cards"])
         return f"Submission {idx + 1}"
+
+    # ==========================================================================
+    # Judge prompt header callbacks (static text)
+    # ==========================================================================
+
+    def _action_noop(self, player: Player, action_id: str) -> None:
+        """No-op handler for static text actions."""
+        pass
+
+    def _is_judge_prompt_header_enabled(self, player: Player, action_id: str) -> str | None:
+        return None
+
+    def _is_judge_prompt_header_hidden(self, player: Player, action_id: str) -> Visibility:
+        if self.status != "playing" or self.phase != "judging":
+            return Visibility.HIDDEN
+        hcp: HumanityCardsPlayer = player  # type: ignore
+        if not self._is_judge(hcp):
+            return Visibility.HIDDEN
+        return Visibility.VISIBLE
+
+    def _get_judge_prompt_header_label(self, player: Player, action_id: str) -> str:
+        if self.current_black_card:
+            prompt_text = self._speech_friendly_black(self.current_black_card["text"])
+            return f"Choose the best card that matches: {prompt_text}"
+        return "Choose the best card"
 
     def _get_submission_options(self, player: Player) -> list[str]:
         """Get submission options for judge's menu."""
@@ -811,6 +849,10 @@ class HumanityCardsGame(Game):
 
     def _is_view_hidden(self, player: Player) -> Visibility:
         if self.status != "playing" or self.current_black_card is None:
+            return Visibility.HIDDEN
+        # Hide for judges during judging — prompt is shown in the header
+        hcp: HumanityCardsPlayer = player  # type: ignore
+        if self.phase == "judging" and self._is_judge(hcp):
             return Visibility.HIDDEN
         return Visibility.VISIBLE
 
@@ -1085,11 +1127,19 @@ class HumanityCardsGame(Game):
             player=winner.name,
             score=hc_winner.score,
         )
-        self.broadcast_l("hc-winner-card", text=winning_text)
 
-        # Show all submissions with names
+        # Announce winner's submission first
+        self.broadcast_l(
+            "hc-submission-reveal",
+            player=winner.name,
+            text=winning_text,
+        )
+
+        # Then announce other submissions
         self.broadcast_l("hc-all-submissions")
         for sub in self.submissions:
+            if sub["player_id"] == winner.id:
+                continue
             sub_player = self.get_player_by_id(sub["player_id"])
             if sub_player:
                 filled = self._fill_in_blanks(
@@ -1101,6 +1151,9 @@ class HumanityCardsGame(Game):
                     player=sub_player.name,
                     text=filled,
                 )
+
+        # Play draw card sound as players receive new cards
+        self.play_sound(f"game_cards/draw{random.randint(1, 4)}.ogg")  # nosec B311
 
         # Check win condition
         if hc_winner.score >= self.options.winning_score:
@@ -1239,6 +1292,9 @@ class HumanityCardsGame(Game):
         self.phase = "submitting"
         self.submissions = []
         self.submission_order = []
+
+        # Play card shuffle sound at round start
+        self.play_sound("game_3cardpoker/roundstart.ogg")
 
         active_players = self.get_active_players()
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from ..base import Game, Player, GameOptions
 from ..registry import register_game
-from ...game_utils.actions import Action, ActionSet, Visibility, MenuInput
+from ...game_utils.actions import Action, ActionSet, Visibility
 from ...game_utils.bot_helper import BotHelper
 from ...game_utils.game_result import GameResult, PlayerResult
 from ...game_utils.options import (
@@ -433,7 +433,7 @@ class HumanityCardsGame(Game):
 
         action_set = ActionSet(name="turn")
 
-        # Card toggle actions (0-14)
+        # Card toggle actions (0-14) — non-judges during submitting
         for i in range(15):
             action_set.add(
                 Action(
@@ -448,6 +448,33 @@ class HumanityCardsGame(Game):
                 )
             )
 
+        # Judge pick actions (0-19) — judges during judging, inline in menu
+        for i in range(20):
+            action_set.add(
+                Action(
+                    id=f"judge_pick_{i}",
+                    label=f"Submission {i + 1}",
+                    handler=f"_action_judge_pick_{i}",
+                    is_enabled="_is_judge_pick_enabled",
+                    is_hidden="_is_judge_pick_hidden",
+                    get_label="_get_judge_pick_label",
+                    show_in_actions_menu=False,
+                )
+            )
+
+        # View submission (above submit for non-judges)
+        action_set.add(
+            Action(
+                id="view_submission",
+                label=Localization.get(locale, "hc-preview-submission"),
+                handler="_action_view_submission",
+                is_enabled="_is_view_submission_enabled",
+                is_hidden="_is_view_submission_hidden",
+                get_label="_get_view_submission_label",
+                show_in_actions_menu=True,
+            )
+        )
+
         # Submit cards
         action_set.add(
             Action(
@@ -457,22 +484,6 @@ class HumanityCardsGame(Game):
                 is_enabled="_is_submit_enabled",
                 is_hidden="_is_submit_hidden",
                 get_label="_get_submit_label",
-            )
-        )
-
-        # Select winner (judge only)
-        action_set.add(
-            Action(
-                id="select_winner",
-                label=Localization.get(locale, "hc-select-winner-prompt"),
-                handler="_action_select_winner",
-                is_enabled="_is_select_winner_enabled",
-                is_hidden="_is_select_winner_hidden",
-                input_request=MenuInput(
-                    prompt="hc-select-winner-prompt",
-                    options="_get_submission_options",
-                    bot_select="_bot_select_winner",
-                ),
             )
         )
 
@@ -488,14 +499,14 @@ class HumanityCardsGame(Game):
             )
         )
 
-        # View submission
+        # View scores (always visible at bottom)
         action_set.add(
             Action(
-                id="view_submission",
-                label=Localization.get(locale, "hc-view-submission"),
-                handler="_action_view_submission",
-                is_enabled="_is_view_submission_enabled",
-                is_hidden="_is_view_submission_hidden",
+                id="view_scores",
+                label=Localization.get(locale, "hc-view-scores"),
+                handler="_action_view_scores",
+                is_enabled="_is_view_scores_enabled",
+                is_hidden="_is_view_scores_hidden",
                 show_in_actions_menu=True,
             )
         )
@@ -533,12 +544,21 @@ class HumanityCardsGame(Game):
             include_spectators=True,
         )
 
-        # V to view submission
+        # V to view/preview submission
         self.define_keybind(
             "v",
             "View submission",
             ["view_submission"],
             state=KeybindState.ACTIVE,
+        )
+
+        # S to view scores
+        self.define_keybind(
+            "s",
+            "View scores",
+            ["view_scores"],
+            state=KeybindState.ACTIVE,
+            include_spectators=True,
         )
 
     # ==========================================================================
@@ -636,7 +656,11 @@ class HumanityCardsGame(Game):
             required=required,
         )
 
-    def _is_select_winner_enabled(self, player: Player) -> str | None:
+    # ==========================================================================
+    # Judge pick callbacks (inline submission selection)
+    # ==========================================================================
+
+    def _is_judge_pick_enabled(self, player: Player, action_id: str) -> str | None:
         if self.status != "playing":
             return "action-not-playing"
         hcp: HumanityCardsPlayer = player  # type: ignore
@@ -644,15 +668,34 @@ class HumanityCardsGame(Game):
             return "action-spectator"
         if self.phase != "judging":
             return "action-not-playing"
+        idx = int(action_id.removeprefix("judge_pick_"))
+        if idx >= len(self.submission_order):
+            return "action-not-playing"
         return None
 
-    def _is_select_winner_hidden(self, player: Player) -> Visibility:
+    def _is_judge_pick_hidden(self, player: Player, action_id: str) -> Visibility:
         if self.status != "playing" or self.phase != "judging":
             return Visibility.HIDDEN
         hcp: HumanityCardsPlayer = player  # type: ignore
         if not self._is_judge(hcp):
             return Visibility.HIDDEN
+        idx = int(action_id.removeprefix("judge_pick_"))
+        if idx >= len(self.submission_order):
+            return Visibility.HIDDEN
         return Visibility.VISIBLE
+
+    def _get_judge_pick_label(self, player: Player, action_id: str) -> str:
+        idx = int(action_id.removeprefix("judge_pick_"))
+        if idx < len(self.submission_order):
+            sub_idx = self.submission_order[idx]
+            if sub_idx < len(self.submissions):
+                sub = self.submissions[sub_idx]
+                if self.current_black_card:
+                    return self._fill_in_blanks(
+                        self.current_black_card["text"], sub["cards"]
+                    )
+                return ", ".join(sub["cards"])
+        return f"Submission {idx + 1}"
 
     def _get_submission_options(self, player: Player) -> list[str]:
         """Get submission options for judge's menu."""
@@ -669,12 +712,32 @@ class HumanityCardsGame(Game):
                 options.append(filled)
         return options
 
-    def _bot_select_winner(self, player: Player) -> str:
-        """Bot randomly selects a winner."""
-        options = self._get_submission_options(player)
-        if options:
-            return random.choice(options)  # nosec B311
-        return ""
+    # ==========================================================================
+    # View scores callbacks
+    # ==========================================================================
+
+    def _is_view_scores_enabled(self, player: Player) -> str | None:
+        if self.status != "playing":
+            return "action-not-playing"
+        return None
+
+    def _is_view_scores_hidden(self, player: Player) -> Visibility:
+        if self.status != "playing":
+            return Visibility.HIDDEN
+        return Visibility.VISIBLE
+
+    def _action_view_scores(self, player: Player, action_id: str) -> None:
+        """View the current scores."""
+        user = self.get_user(player)
+        if not user:
+            return
+        sorted_players = sorted(
+            self.get_active_players(),
+            key=lambda p: p.score,  # type: ignore
+            reverse=True,
+        )
+        parts = [f"{p.name}: {p.score}" for p in sorted_players]  # type: ignore
+        user.speak(". ".join(parts) + ".")
 
     def _is_view_enabled(self, player: Player) -> str | None:
         if self.status != "playing":
@@ -692,19 +755,30 @@ class HumanityCardsGame(Game):
         hcp: HumanityCardsPlayer = player  # type: ignore
         if self._is_judge(hcp):
             return "action-spectator"
-        if hcp.submitted_cards is None:
-            return "hc-no-submission"
+        if self.phase != "submitting" and self.phase != "judging":
+            return "action-not-playing"
+        # During submitting: enabled if at least one card selected or already submitted
+        if hcp.submitted_cards is None and not hcp.selected_indices:
+            return "hc-select-cards-first"
         return None
 
     def _is_view_submission_hidden(self, player: Player) -> Visibility:
         if self.status != "playing":
             return Visibility.HIDDEN
+        if self.phase not in ("submitting", "judging"):
+            return Visibility.HIDDEN
         hcp: HumanityCardsPlayer = player  # type: ignore
         if self._is_judge(hcp):
             return Visibility.HIDDEN
-        if hcp.submitted_cards is None and self.phase == "submitting":
-            return Visibility.HIDDEN
         return Visibility.VISIBLE
+
+    def _get_view_submission_label(self, player: Player, action_id: str) -> str:
+        hcp: HumanityCardsPlayer = player  # type: ignore
+        user = self.get_user(player)
+        locale = user.locale if user else "en"
+        if hcp.submitted_cards is not None:
+            return Localization.get(locale, "hc-view-submission")
+        return Localization.get(locale, "hc-preview-submission")
 
     # ==========================================================================
     # Toggle card action handlers (0-14)
@@ -783,6 +857,67 @@ class HumanityCardsGame(Game):
     def _action_toggle_card_14(self, player: Player, action_id: str) -> None:
         self._toggle_card(player, 14)
 
+    # Per-index judge pick handlers
+    def _action_judge_pick_0(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 0)
+
+    def _action_judge_pick_1(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 1)
+
+    def _action_judge_pick_2(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 2)
+
+    def _action_judge_pick_3(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 3)
+
+    def _action_judge_pick_4(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 4)
+
+    def _action_judge_pick_5(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 5)
+
+    def _action_judge_pick_6(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 6)
+
+    def _action_judge_pick_7(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 7)
+
+    def _action_judge_pick_8(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 8)
+
+    def _action_judge_pick_9(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 9)
+
+    def _action_judge_pick_10(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 10)
+
+    def _action_judge_pick_11(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 11)
+
+    def _action_judge_pick_12(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 12)
+
+    def _action_judge_pick_13(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 13)
+
+    def _action_judge_pick_14(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 14)
+
+    def _action_judge_pick_15(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 15)
+
+    def _action_judge_pick_16(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 16)
+
+    def _action_judge_pick_17(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 17)
+
+    def _action_judge_pick_18(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 18)
+
+    def _action_judge_pick_19(self, player: Player, action_id: str) -> None:
+        self._judge_pick(player, 19)
+
     # ==========================================================================
     # Submit / Judge action handlers
     # ==========================================================================
@@ -842,24 +977,16 @@ class HumanityCardsGame(Game):
         if submitted_count >= total:
             self._start_judging()
 
-    def _action_select_winner(self, player: Player, value: str, action_id: str) -> None:
-        """Judge selects the winning submission."""
+    def _judge_pick(self, player: Player, pick_index: int) -> None:
+        """Judge picks a submission by its display index."""
         if self.phase != "judging":
             return
         hcp: HumanityCardsPlayer = player  # type: ignore
         if not self._is_judge(hcp):
             return
-
-        # Find which submission was selected
-        options = self._get_submission_options(player)
-        if value not in options:
+        if pick_index >= len(self.submission_order):
             return
-
-        winner_display_idx = options.index(value)
-        # Map back to actual submission index
-        if winner_display_idx >= len(self.submission_order):
-            return
-        actual_idx = self.submission_order[winner_display_idx]
+        actual_idx = self.submission_order[pick_index]
         if actual_idx >= len(self.submissions):
             return
 
@@ -952,9 +1079,9 @@ class HumanityCardsGame(Game):
                 if i < len(hcp.hand)
             ]
             filled = self._fill_in_blanks(self.current_black_card["text"], cards)
-            user.speak_l("hc-your-submission", text=filled)
+            user.speak_l("hc-preview-submission-text", text=filled)
         else:
-            user.speak_l("hc-no-submission")
+            user.speak_l("hc-select-cards-first")
 
     # ==========================================================================
     # Score overrides
@@ -1208,9 +1335,10 @@ class HumanityCardsGame(Game):
                 self.execute_action(judge, action_id)
                 continue
 
-            # Bot judge triggers select_winner via menu input
-            # The bot_select on the MenuInput handles this
-            judge.bot_pending_action = "select_winner"
+            # Bot judge picks a random submission
+            if self.submission_order:
+                pick = random.randint(0, len(self.submission_order) - 1)  # nosec B311
+                judge.bot_pending_action = f"judge_pick_{pick}"
 
     # ==========================================================================
     # Game result

@@ -77,9 +77,11 @@ hc-all-submissions = All submissions:
 hc-submission-reveal = { $player }: { $text }
 
 # View
+hc-preview-submission = Preview your submission
 hc-view-submission = View your submission
+hc-preview-submission-text = Preview: { $text }
 hc-your-submission = Your submission: { $text }
-hc-no-submission = You haven't submitted yet.
+hc-select-cards-first = Select at least 1 card first.
 
 # Win
 hc-game-winner = { $player } wins with { $score } points!
@@ -94,4 +96,5 @@ hc-not-enough-cards = Not enough cards. Try enabling more packs.
 hc-view-hand = View hand
 
 # Scores
+hc-view-scores = View scores
 hc-no-scores = No scores yet.

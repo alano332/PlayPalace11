@@ -1,49 +1,49 @@
 # Main UI messages for PlayPalace
 
 # Game categories
-category-card-games = Karcianki
-category-dice-games = gry z kośćmi
+category-card-games = Gry karciane
+category-dice-games = Gry kościane
 category-board-games = Gry planszowe
 category-rb-play-center = RB Play Center
 category-poker = Poker
-category-uncategorized = niezkategoryzowane
+category-uncategorized = Niezkategoryzowane
 
 # Menu titles
 main-menu-title = menu głuwne.
-play-menu-title = graj
-categories-menu-title = kategorje gier
-tables-menu-title = dostępne stoły
+play-menu-title = Rozpocznij grę
+categories-menu-title = Kategorje gier
+tables-menu-title = Dostępne stoły
 play = Play
 view-active-tables = Pokaż aktywne stoły
 options = Opcje
 logout = Wylogój się
-back = wróć
-context-menu = menu kontekstowe
+back = Wróć
+context-menu = Menu kontekstowe
 no-actions-available = Brak dostępnych akcji.
-create-table = utwórz nowy stół
-join-as-player = dołącz, jako gracz.
-join-as-spectator = śledź
-leave-table = opuść stół.
-start-game = rozpocznij grę
+create-table = Utwórz nowy stół
+join-as-player = Dołącz, jako gracz.
+join-as-spectator = Dołącz jako obserwator
+leave-table = Opuść stół
+start-game = Rozpocznij grę
 add-bot = Dodaj bota
 remove-bot = Usuń bota
 actions-menu = Menu akcji
-save-table = zapisz stół
-whose-turn = czyja tura?
-whos-at-table = kto jest przy stole
-check-scores = sprawdź wyniki
-check-scores-detailed = Szczegułowe wyniki
+save-table = Zapisz stół
+whose-turn = Czyja tura?
+whos-at-table = Kto jest przy stole?
+check-scores = Sprawdź wyniki
+check-scores-detailed = Szczegółowe wyniki
 
 # Turn messages
 game-player-skipped = { $player } został pominięty.
 
 # Table messages
-table-created = { $host } utworzył stół z grą   { $game }.
+table-created = { $host } utworzył stół gry { $game }.
 table-joined = { $player } dołączył do stołu
 table-left = { $player } opuścił stół.
 new-host = { $player } jest teraz hostem.
-waiting-for-players = Stół czeka na graczy, { $min } graczy, minimum, { $max } max
-game-starting = gra się zaczyna!
+waiting-for-players = Stół czeka na graczy. Minimalnie { $min }, maksymalnie { $max } graczy.
+game-starting = Gra się rozpoczyna!
 table-listing = { stół od $host }' ({ $count } użytkowników)
 table-listing-one = { stół od $host }' ({ $count } użytkownik)
 table-listing-with = { stół od $host }' ({ $count } użytkowników) z { $members }
@@ -52,23 +52,23 @@ table-listing-game-one = { $game }: { stół od $host }' ({ $count } użytkownik
 table-listing-game-with = { $game }: { stół od $host }' ({ $count } użytkowników) z { $members }
 table-not-exists = Ten stół jóż nie istnieje
 table-full = Stół jest pełny.
-player-replaced-by-bot = { $player } opuścił grę, i został zastąpiony botem.
+player-replaced-by-bot = { $player } opuścił grę, i został zastąpiony przez bota.
 player-took-over = { $player } przejął kontrole od bota
-spectator-joined = dołączył stół { $host } table jako spektator.
+spectator-joined = Dołączyłeś do stołu { $host } jako obserwator.
 
 # Spectator mode
-spectate = śledź
+spectate = obserwuj
 now-playing = { $player } dołącza do rozgrywki
-now-spectating = { $player } teraz śledzi rozgrywkę
-spectator-left = { $player } przestał śledzić.
+now-spectating = { $player } teraz obserwuje rozgrywkę
+spectator-left = { $player } przestał obserwować.
 
 # General
 welcome = witaj w Play Palace!
-goodbye = pa!
+goodbye = Do zobaczenia!
 
 # User presence announcements
-user-online = { $player } jest online.
-user-offline = { $player } poszedł offline
+user-online = { $player } się zalogowało.
+user-offline = { $player } się wylogował.
 online-users-none = Brak użytkowników online.
 online-users-one = 1 użytkownik: { $users }
 online-users-many = { $count } użytkowników: { $users }
@@ -92,14 +92,14 @@ turn-sound-option = Dźwięk tury { $status }
 # Dice options
 clear-kept-option = odznacz kostki po rzucie: { $status }
 dice-keeping-style-option = Styl zatrzymania kostek: { $style }
-dice-keeping-style-changed = styl zatrzymania kostek po rzucie zmieniony na { $style }.
+dice-keeping-style-changed = styl zatrzymania kostek po rzucie został zmieniony na { $style }.
 dice-keeping-style-indexes = Indeksy kości
 dice-keeping-style-values = Wartości kości
 
 # Bot names
 cancel = Anuluj
 no-bot-names-available = Brak nazw botów
-select-bot-name = Nazwij bota
+select-bot-name = Wybierz nazwę dla bota
 enter-bot-name = Wpisz nazwę bota
 no-options-available = Brak obcji
 no-scores-available = brak wyników
@@ -118,7 +118,7 @@ no-active-tables = Brak aktywnych stołów.
 restore-table = przywróć
 delete-saved-table = Usuń
 saved-table-deleted = usunięto zapisany stół
-missing-players = nie można przywrucić brakujący gracze: { $players }
+missing-players = nie można przywrucić stołu z uwagi na brak następujących graczy: { $players }
 table-restored = Przywrócono stół! wszyscy gracze zostali przeniesieni
 table-saved-destroying = Zapisano stół, wracasz do głównego menu.
 game-type-not-found = Ten typ gry jóż nie istnieje.
@@ -126,13 +126,13 @@ game-type-not-found = Ten typ gry jóż nie istnieje.
 # Action disabled reasons
 action-not-your-turn = To nie twoja tura
 action-not-playing = gra jeszcze się nie zaczęła
-action-spectator = spektatorzy nie mogą tego robić!
-action-not-host = Tylko host to może zrobić!
+action-spectator = obserwatorzy nie mogą tego robić!
+action-not-host = Tylko host może to zrobić!
 action-game-in-progress = nie można tego zrobić, gdy gra trwa.
-action-need-more-players = Potrzeba co najmniej { $min_players } graczy, aby zacząć.
+action-need-more-players = Potrzeba co najmniej { $min_players } graczy, aby rozpocząć..
 action-table-full = Stół jest pełny
 action-no-bots = Nie ma żadnych botów do usunięcia.
-action-bots-cannot = boty nie mogą tego robić.
+action-bots-cannot = boty nie mogą tego wykonać.
 action-no-scores = Jeszcze nie ma wyników.
 
 # Dice actions

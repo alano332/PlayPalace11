@@ -108,6 +108,7 @@ class MonopolyPlayer(Player):
     position: int = 0
     cash: int = STARTING_CASH
     owned_space_ids: list[str] = field(default_factory=list)
+    bankrupt: bool = False
 
 
 @dataclass
@@ -338,11 +339,61 @@ class MonopolyGame(ActionGuardMixin, Game):
             team.total_score = player.cash if player else 0
             team.round_score = 0
 
+    def _declare_bankrupt(
+        self, player: MonopolyPlayer, *, creditor_name: str | None = None
+    ) -> None:
+        """Mark a player bankrupt, release their holdings, and check winner."""
+        if player.bankrupt:
+            return
+
+        player.bankrupt = True
+        for space_id in list(player.owned_space_ids):
+            if self.property_owners.get(space_id) == player.id:
+                del self.property_owners[space_id]
+        player.owned_space_ids.clear()
+
+        self.broadcast_l(
+            "monopoly-player-bankrupt",
+            player=player.name,
+            creditor=creditor_name or "Bank",
+        )
+
+        ordered_before = self.turn_players
+        try:
+            old_index = ordered_before.index(player)
+        except ValueError:
+            old_index = 0
+
+        remaining = [turn_player for turn_player in ordered_before if not turn_player.bankrupt]
+        if len(remaining) <= 1:
+            self.status = "finished"
+            self.game_active = False
+            self.set_turn_players(remaining)
+            if remaining:
+                winner = remaining[0]
+                self.broadcast_l(
+                    "monopoly-winner-by-bankruptcy",
+                    player=winner.name,
+                    cash=winner.cash,
+                )
+            return
+
+        self.set_turn_players(remaining, reset_index=False)
+        self.turn_index = old_index % len(remaining)
+        self._reset_turn_state()
+        self.announce_turn(turn_sound="game_pig/turn.ogg")
+        current = self.current_player
+        if current and current.is_bot:
+            BotHelper.jolt_bot(current, ticks=random.randint(8, 14))
+
     def _is_roll_dice_enabled(self, player: Player) -> str | None:
         """Enable roll action for active player before rolling."""
         error = self.guard_turn_action_enabled(player)
         if error:
             return error
+        mono_player: MonopolyPlayer = player  # type: ignore
+        if mono_player.bankrupt:
+            return "monopoly-bankrupt-player"
         if self.turn_has_rolled:
             return "monopoly-already-rolled"
         return None
@@ -392,7 +443,7 @@ class MonopolyGame(ActionGuardMixin, Game):
         """Handle rolling and landing logic for classic scaffold."""
         mono_player: MonopolyPlayer = player  # type: ignore
 
-        if self.turn_has_rolled:
+        if self.turn_has_rolled or mono_player.bankrupt:
             return
 
         die_1 = random.randint(1, 6)
@@ -457,6 +508,12 @@ class MonopolyGame(ActionGuardMixin, Game):
                     amount=paid,
                     property=landed_space.name,
                 )
+                if paid < rent_due:
+                    creditor_name = owner.name if owner else "Bank"
+                    self._declare_bankrupt(mono_player, creditor_name=creditor_name)
+                    self._sync_cash_scores()
+                    self.rebuild_all_menus()
+                    return
         elif landed_space.space_id in TAX_AMOUNTS:
             tax_due = TAX_AMOUNTS[landed_space.space_id]
             paid = min(mono_player.cash, tax_due)
@@ -468,6 +525,11 @@ class MonopolyGame(ActionGuardMixin, Game):
                 tax=landed_space.name,
                 cash=mono_player.cash,
             )
+            if paid < tax_due:
+                self._declare_bankrupt(mono_player)
+                self._sync_cash_scores()
+                self.rebuild_all_menus()
+                return
         elif landed_space.kind == "go_to_jail":
             jail_space = self._space_at(10)
             mono_player.position = jail_space.index
@@ -558,6 +620,7 @@ class MonopolyGame(ActionGuardMixin, Game):
                 player.position = 0
                 player.cash = STARTING_CASH
                 player.owned_space_ids.clear()
+                player.bankrupt = False
 
         self._sync_cash_scores()
 

@@ -228,3 +228,32 @@ def test_monopoly_go_to_jail_space_moves_player_to_jail(monkeypatch):
 
     assert host.position == 10
     assert game.turn_pending_purchase_space_id == ""
+
+
+def test_monopoly_partial_rent_payment_causes_bankruptcy_and_ends_game(monkeypatch):
+    game = _start_two_player_game()
+    host = game.players[0]
+    guest = game.players[1]
+
+    host.owned_space_ids.append("boardwalk")
+    game.property_owners["boardwalk"] = host.id
+    guest.owned_space_ids.append("baltic_avenue")
+    game.property_owners["baltic_avenue"] = guest.id
+    guest.cash = 30
+    guest.position = 37
+    game.current_player = guest
+    game.turn_has_rolled = False
+    game.turn_pending_purchase_space_id = ""
+
+    rolls = iter([1, 1])  # total = 2 -> Boardwalk (rent 50)
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(guest, "roll_dice")
+
+    assert guest.bankrupt is True
+    assert game.status == "finished"
+    assert game.game_active is False
+    assert game.current_player is not None
+    assert game.current_player.name == "Host"
+    assert host.cash == STARTING_CASH + 30
+    assert "baltic_avenue" not in game.property_owners

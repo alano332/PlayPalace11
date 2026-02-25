@@ -49,3 +49,6 @@ monopoly-rent-paid = { $player } paid { $amount } in rent to { $owner } for { $p
 monopoly-landed-owned = { $player } landed on their own property: { $property }.
 monopoly-tax-paid = { $player } paid { $amount } for { $tax } (cash: { $cash }).
 monopoly-go-to-jail = { $player } goes to jail (moved to { $space }).
+monopoly-bankrupt-player = You are bankrupt and out of the game.
+monopoly-player-bankrupt = { $player } is bankrupt. Creditor: { $creditor }.
+monopoly-winner-by-bankruptcy = { $player } wins by bankruptcy with { $cash } cash remaining.

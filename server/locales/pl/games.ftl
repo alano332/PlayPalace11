@@ -11,7 +11,7 @@ category-party-games = Gry imprezowe
 # Round and turn flow
 game-round-start = Runda { $round }.
 game-round-end = Runda { $round } zakończona.
-game-turn-start = Tura { $player }.
+game-turn-start = Kolej { $player }.
 game-your-turn = Twoja kolej.
 game-no-turn = Obecnie brak czyjejkolwiek tury.
 

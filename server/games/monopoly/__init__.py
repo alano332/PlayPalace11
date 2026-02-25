@@ -1,0 +1,2 @@
+"""Monopoly game package."""
+

@@ -11,7 +11,7 @@ pig-bank = Bankuj { $points } PKT.
 
 # Game events (Pig-specific)
 pig-rolls = { $player } rzuca kostką...
-pig-roll-result = Wyrzucono { $roll }, łącznie ma { $total }
+pig-roll-result = Wyrzuca { $roll }, łącznie ma { $total }
 pig-bust = O nie! 1! { $player } traci { $points } punktów.
 pig-bank-action = { $player } bankuje { $points }, łącznie ma teraz { $total }
 pig-winner = Mamy zwycięzcę, jest nim { $player }!

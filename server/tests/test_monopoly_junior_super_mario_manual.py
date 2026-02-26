@@ -89,3 +89,37 @@ def test_junior_super_mario_timeout_exit_by_one_coin_then_roll(monkeypatch):
     assert host.in_jail is False
     assert host.cash == 2
     assert host.position == 12
+
+
+def test_junior_super_mario_auto_buys_affordable_property(monkeypatch):
+    game = _start_manual_board_game(2)
+    host = game.current_player
+    assert host is not None
+
+    host.position = 0
+    host.cash = 500
+    rolls = iter([1, 1])  # Mediterranean Avenue
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    assert "mediterranean_avenue" in host.owned_space_ids
+    assert game.property_owners["mediterranean_avenue"] == host.id
+    assert game.turn_pending_purchase_space_id == ""
+
+
+def test_junior_super_mario_no_auction_when_unaffordable(monkeypatch):
+    game = _start_manual_board_game(2)
+    host = game.current_player
+    assert host is not None
+
+    host.position = 0
+    host.cash = 1
+    rolls = iter([1, 1])  # Mediterranean Avenue
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    assert "mediterranean_avenue" not in host.owned_space_ids
+    assert "mediterranean_avenue" not in game.property_owners
+    assert game.turn_pending_purchase_space_id == ""

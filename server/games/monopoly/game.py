@@ -2081,6 +2081,35 @@ class MonopolyGame(ActionGuardMixin, Game):
             return False
         return self._current_liquid_balance(player) >= space.price > 0
 
+    def _buy_property_for_player(self, player: MonopolyPlayer, space: MonopolySpace) -> bool:
+        """Buy one unowned property for a player and broadcast the result."""
+        if space.space_id in self.property_owners:
+            return False
+        if space.price <= 0:
+            return False
+        if self._current_liquid_balance(player) < space.price:
+            return False
+
+        paid = self._debit_player_to_bank(player, space.price, f"buy_property:{space.space_id}")
+        if paid < space.price:
+            return False
+
+        if space.space_id not in player.owned_space_ids:
+            player.owned_space_ids.append(space.space_id)
+        self.property_owners[space.space_id] = player.id
+        if space.space_id in self.mortgaged_space_ids:
+            self.mortgaged_space_ids.remove(space.space_id)
+
+        self.broadcast_l(
+            "monopoly-property-bought",
+            player=player.name,
+            property=space.name,
+            price=paid,
+            cash=player.cash,
+        )
+        self._award_builder_blocks(player)
+        return True
+
     def _reset_turn_state(self, *, reset_doubles: bool = True) -> None:
         """Reset transient per-turn state."""
         self.turn_has_rolled = False
@@ -2761,6 +2790,10 @@ class MonopolyGame(ActionGuardMixin, Game):
         if landed_space.kind in PURCHASABLE_KINDS:
             owner_id = self.property_owners.get(landed_space.space_id)
             if owner_id is None:
+                if self._is_junior_super_mario_manual_core_active():
+                    self.turn_pending_purchase_space_id = ""
+                    self._buy_property_for_player(player, landed_space)
+                    return "resolved"
                 if self.rule_profile.auto_auction_unowned_property:
                     self.broadcast_l(
                         "monopoly-property-available",
@@ -3793,26 +3826,9 @@ class MonopolyGame(ActionGuardMixin, Game):
         if space.space_id in self.property_owners:
             self.turn_pending_purchase_space_id = ""
             return
-        if self._current_liquid_balance(mono_player) < space.price:
+        if not self._buy_property_for_player(mono_player, space):
             return
-
-        paid = self._debit_player_to_bank(mono_player, space.price, f"buy_property:{space.space_id}")
-        if paid < space.price:
-            return
-        mono_player.owned_space_ids.append(space.space_id)
-        self.property_owners[space.space_id] = mono_player.id
-        if space.space_id in self.mortgaged_space_ids:
-            self.mortgaged_space_ids.remove(space.space_id)
         self.turn_pending_purchase_space_id = ""
-
-        self.broadcast_l(
-            "monopoly-property-bought",
-            player=mono_player.name,
-            property=space.name,
-            price=paid,
-            cash=mono_player.cash,
-        )
-        self._award_builder_blocks(mono_player)
 
         if self.turn_can_roll_again:
             self._prepare_next_roll_after_doubles(mono_player)

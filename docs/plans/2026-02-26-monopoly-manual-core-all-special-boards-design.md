@@ -2,6 +2,13 @@
 
 Date: 2026-02-26
 
+## Status Update (2026-02-26)
+- Manual-rule artifacts now exist for every special board ID under `server/games/monopoly/manual_rules/data/`.
+- Citation validation gates are active for manual-core promotion checks.
+- Mario-family boards are promoted to `manual_core`.
+- Remaining special boards are promoted to `near_full` as an intermediate state while replacing placeholder board/economy/card payloads with manual-authentic data.
+- Pac-Man game-unit behavior remains excluded by policy.
+
 ## Objective
 Implement strict manual-cited parity for Monopoly special boards with a Mario-first execution strategy, then migrate all remaining special boards. Target full rules fidelity, including board layout/economy, card content/effects, board-specific mechanics, and win conditions.
 

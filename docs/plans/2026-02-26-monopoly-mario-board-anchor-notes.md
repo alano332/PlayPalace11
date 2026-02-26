@@ -53,6 +53,15 @@
 - Added `junior_manual_core` and `junior_powerup_sound_ready` capabilities for `junior_super_mario`.
 - Added deterministic no-sound power-up die mapping and a sound-outcome runtime stub for future phase expansion.
 
+## Current Status
+- Parity status is now `manual_core` for all Mario-family boards:
+  - `mario_collectors`
+  - `mario_kart`
+  - `mario_celebration`
+  - `mario_movie`
+  - `junior_super_mario`
+- Remaining special-board families are promoted to `near_full` pending deeper manual-authentic board/economy/card payload replacement.
+
 ## Next Mario Targets
 1. Implement Phase 2 sound-enabled power-up die behavior using `junior_powerup_sound_ready` hooks.
 2. Optionally deepen existing Mario boards beyond card remaps/cash overrides.

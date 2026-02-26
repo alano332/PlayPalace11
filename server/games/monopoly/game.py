@@ -2200,6 +2200,21 @@ class MonopolyGame(ActionGuardMixin, Game):
             return card_id
         return get_card_id_remap(rule_pack_id, deck_type, card_id)
 
+    def _resolve_board_card_cash(self, card_id: str, default_amount: int) -> int:
+        """Resolve board-specific card cash override when active."""
+        amount = max(0, default_amount)
+        if self.active_board_effective_mode != "board_rules":
+            return amount
+        rule_pack_id = self.active_board_rule_pack_id
+        if not rule_pack_id:
+            return amount
+        if not supports_capability(rule_pack_id, "card_cash_override"):
+            return amount
+        override = get_card_cash_override(rule_pack_id, card_id)
+        if override is None:
+            return amount
+        return max(0, override)
+
     def _move_player(
         self, player: MonopolyPlayer, steps: int, *, collect_pass_go: bool
     ) -> MonopolySpace:
@@ -2608,7 +2623,8 @@ class MonopolyGame(ActionGuardMixin, Game):
             return "resolved"
 
         if card_id == "bank_dividend_50":
-            credited = self._credit_player(player, 50, "chance_bank_dividend_50")
+            amount = self._resolve_board_card_cash(card_id, 50)
+            credited = self._credit_player(player, amount, "chance_bank_dividend_50")
             self.broadcast_l(
                 "monopoly-card-collect",
                 player=player.name,
@@ -2634,16 +2650,18 @@ class MonopolyGame(ActionGuardMixin, Game):
             return "forced_end"
 
         if card_id == "poor_tax_15":
+            amount = self._resolve_board_card_cash(card_id, 15)
             if not self._apply_bank_payment(
                 player,
-                15,
+                amount,
                 card_reason_key="monopoly-card-pay",
             ):
                 return "bankrupt"
             return "resolved"
 
         if card_id == "bank_error_collect_200":
-            credited = self._credit_player(player, 200, "community_chest_bank_error_collect_200")
+            amount = self._resolve_board_card_cash(card_id, 200)
+            credited = self._credit_player(player, amount, "community_chest_bank_error_collect_200")
             self.broadcast_l(
                 "monopoly-card-collect",
                 player=player.name,
@@ -2653,16 +2671,18 @@ class MonopolyGame(ActionGuardMixin, Game):
             return "resolved"
 
         if card_id == "doctor_fee_pay_50":
+            amount = self._resolve_board_card_cash(card_id, 50)
             if not self._apply_bank_payment(
                 player,
-                50,
+                amount,
                 card_reason_key="monopoly-card-pay",
             ):
                 return "bankrupt"
             return "resolved"
 
         if card_id == "income_tax_refund_20":
-            credited = self._credit_player(player, 20, "community_chest_income_tax_refund_20")
+            amount = self._resolve_board_card_cash(card_id, 20)
+            credited = self._credit_player(player, amount, "community_chest_income_tax_refund_20")
             self.broadcast_l(
                 "monopoly-card-collect",
                 player=player.name,

@@ -75,7 +75,7 @@ Additional enemy-inspired change cards:
 - `2`: Stand
 - `3`: Play change card
 - `4`: Check 21 status
-- `M`: Change card guide
+- `C`: Change card guide
 - `O`: Read opponent face-up cards
 - `R`: Read current hand
 - `B`: Read current bets

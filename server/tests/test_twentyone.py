@@ -319,6 +319,32 @@ def test_twentyone_mind_tax_discards_half_at_round_end() -> None:
     assert len(p2.modifiers) == 2
 
 
+def test_twentyone_mind_tax_break_requires_two_cards_in_one_turn() -> None:
+    game, p1, p2 = setup_game()
+    game.status = "playing"
+    game.game_active = True
+    game.phase = "turns"
+    game.set_turn_players([p2, p1], reset_index=True)
+    p1.hp = 10
+    p2.hp = 10
+    p1.table_modifiers = [MODIFIER_MIND_TAX]
+    p1.hand = [make_card(10, 5), make_card(11, 6)]
+    p2.hand = [make_card(20, 7), make_card(21, 8)]
+    p2.modifiers = [MODIFIER_RAISE_1, MODIFIER_RAISE_2]
+    game.deck = Deck(cards=[make_card(99, 4)])
+
+    game.execute_action(p2, "play_modifier", f"1:{MODIFIER_LABELS[MODIFIER_RAISE_1]}")
+    assert MODIFIER_MIND_TAX in p1.table_modifiers
+
+    game.execute_action(p2, "stand")
+    game.execute_action(p1, "hit")
+    game.execute_action(p1, "stand")
+
+    # New turn for p2: first modifier play this turn should not break mind tax.
+    game.execute_action(p2, "play_modifier", f"1:{MODIFIER_LABELS[MODIFIER_RAISE_2]}")
+    assert MODIFIER_MIND_TAX in p1.table_modifiers
+
+
 def test_twentyone_glitched_draw_requires_one_discardable_change_card() -> None:
     game, p1, p2 = setup_game()
     game.status = "playing"
@@ -573,6 +599,8 @@ def test_twentyone_keybinds_use_numbers_and_remove_h_s_t_for_turn_actions() -> N
     assert "stand" in actions_for("2")
     assert "play_modifier" in actions_for("3")
     assert "check_21_status" in actions_for("4")
+    assert actions_for("c") == ["modifier_guide"]
+    assert actions_for("m") == []
     assert "read_21_bets" in actions_for("b")
     assert "read_21_active_effects" in actions_for("e")
     assert "hit" not in actions_for("h")

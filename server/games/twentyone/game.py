@@ -448,7 +448,7 @@ class TwentyOneGame(ActionGuardMixin, Game):
             state=KeybindState.ACTIVE,
         )
         self.define_keybind(
-            "m",
+            "c",
             Localization.get("en", "twentyone-change-card-guide"),
             ["modifier_guide"],
             state=KeybindState.ACTIVE,
@@ -970,6 +970,8 @@ class TwentyOneGame(ActionGuardMixin, Game):
         self.advance_turn(announce=False)
         current = self.current_player
         if current:
+            # Mind-tax break thresholds are per turn, so reset when a new turn begins.
+            current.turn_modifier_plays = 0
             self.announce_turn(turn_sound=SOUND_TURN)
             self._play_target_reminder_sound(current)
             if self._modifiers_locked_for(current):

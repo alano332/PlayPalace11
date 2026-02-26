@@ -1071,7 +1071,14 @@
   "mechanics": {
     "mode": "star_wars_family_manual_payload_v1",
     "rule_pack_id": "disney_star_wars_dark_side",
-    "hardware_capability_ids": []
+    "hardware_capability_ids": [],
+    "manual_source": {
+      "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-disney-star-wars-dark-side-edition-board-game-for-families-games-for-kids-star-wars-gift",
+      "pdf_url": "https://assets-us-01.kc-usercontent.com:443/500e0a65-283d-00ef-33b2-7f1f20488fe2/3d6636e6-fdb4-4b48-9303-d3d02ba9765a/F6167UE21_INST_MN_Darkside_FAR.pdf",
+      "locale": "en-us",
+      "filename": "F6167UE21_INST_MN_Darkside_FAR.pdf",
+      "source": "catalog_manual_variant"
+    }
   },
   "win_condition": {
     "type": "bankruptcy"
@@ -1105,6 +1112,12 @@
       "rule_path": "win_condition",
       "edition_id": "monopoly-f6167",
       "page_ref": "p.11",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_source",
+      "edition_id": "monopoly-f6167",
+      "page_ref": "catalog:en-us",
       "confidence": "high"
     }
   ]

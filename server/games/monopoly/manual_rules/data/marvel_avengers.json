@@ -1088,8 +1088,13 @@
     },
     "manual_source": {
       "instruction_url": "https://instructions.hasbro.com/en-us/instruction/Monopoly--Marvel-Avengers-Edition-Board-Game",
-      "converted_pdf_url": "https://manuals.plus/m/6914cdcafb7997fcc5078c22c1c1d828e52f2603563a148984a1c6e78d785dd8"
-    }
+      "converted_pdf_url": "https://manuals.plus/m/6914cdcafb7997fcc5078c22c1c1d828e52f2603563a148984a1c6e78d785dd8",
+      "pdf_url": "https://assets-us-01.kc-usercontent.com:443/500e0a65-283d-00ef-33b2-7f1f20488fe2/4aac2075-d55d-480a-ac6e-a12d20d43eea/5e16b4739f4b719fa2efb43871de904d.pdf",
+      "locale": "en-us",
+      "filename": "5e16b4739f4b719fa2efb43871de904d.pdf",
+      "source": "catalog_manual_variant"
+    },
+    "hardware_capability_ids": []
   },
   "win_condition": {
     "type": "bankruptcy",
@@ -1155,6 +1160,12 @@
       "edition_id": "monopoly-e6504",
       "page_ref": "converted_manual:l89-l90",
       "confidence": "medium"
+    },
+    {
+      "rule_path": "mechanics.manual_source",
+      "edition_id": "monopoly-e6504",
+      "page_ref": "catalog:en-us",
+      "confidence": "high"
     }
   ]
 }

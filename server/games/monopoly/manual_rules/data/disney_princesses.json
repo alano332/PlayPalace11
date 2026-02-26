@@ -1071,7 +1071,14 @@
   "mechanics": {
     "mode": "disney_marvel_family_manual_payload_v1",
     "rule_pack_id": "disney_princesses",
-    "hardware_capability_ids": []
+    "hardware_capability_ids": [],
+    "manual_source": {
+      "instruction_url": "https://instructions.hasbro.com/pt-br/instruction/jogo-monopoly-edicao-princesas-da-disney",
+      "pdf_url": "https://assets-us-01.kc-usercontent.com:443/500e0a65-283d-00ef-33b2-7f1f20488fe2/27063549-2914-4b50-90fa-7682010a8668/B46441900%20Disney%20Princess%20INST_16.pdf",
+      "locale": "pt-br",
+      "filename": "B46441900%20Disney%20Princess%20INST_16.pdf",
+      "source": "catalog_manual_variant"
+    }
   },
   "win_condition": {
     "type": "bankruptcy"
@@ -1106,6 +1113,12 @@
       "edition_id": "monopoly-b4644",
       "page_ref": "p.11",
       "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_source",
+      "edition_id": "monopoly-b4644",
+      "page_ref": "catalog:pt-br",
+      "confidence": "medium"
     }
   ]
 }

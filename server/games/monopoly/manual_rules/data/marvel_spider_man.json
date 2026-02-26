@@ -1071,7 +1071,14 @@
   "mechanics": {
     "mode": "disney_marvel_family_manual_payload_v1",
     "rule_pack_id": "marvel_spider_man",
-    "hardware_capability_ids": []
+    "hardware_capability_ids": [],
+    "manual_source": {
+      "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-spider-man-edition-board-game-play-as-a-spider-hero-fun-game-to-play-for-kids-ages-8-and-up",
+      "pdf_url": "https://assets-us-01.kc-usercontent.com:443/500e0a65-283d-00ef-33b2-7f1f20488fe2/adde3774-7e15-4cb4-85f7-29b5f3615753/F39680000_INST_MONOPOLY_SPIDERMAN_F21%282%29.pdf",
+      "locale": "en-us",
+      "filename": "F39680000_INST_MONOPOLY_SPIDERMAN_F21%282%29.pdf",
+      "source": "catalog_manual_variant"
+    }
   },
   "win_condition": {
     "type": "bankruptcy"
@@ -1105,6 +1112,12 @@
       "rule_path": "win_condition",
       "edition_id": "monopoly-f3968",
       "page_ref": "p.11",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_source",
+      "edition_id": "monopoly-f3968",
+      "page_ref": "catalog:en-us",
       "confidence": "high"
     }
   ]

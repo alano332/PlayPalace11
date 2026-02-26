@@ -169,3 +169,91 @@ def test_mario_movie_skin_only_uses_default_card_cash(monkeypatch):
     game.execute_action(host, "roll_dice")
 
     assert host.cash == 1550
+
+
+def test_mario_collectors_board_rules_remaps_go_back_three_to_dividend(monkeypatch):
+    game = _start_two_player_game(
+        MonopolyOptions(
+            preset_id="classic_standard",
+            board_id="mario_collectors",
+            board_rules_mode="auto",
+        )
+    )
+    host = game.current_player
+    assert host is not None
+
+    host.position = 5
+    monkeypatch.setattr(game, "_draw_card", lambda deck_type: "go_back_three")
+    rolls = iter([1, 1])
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    assert host.position == 7
+    assert host.cash == 1550
+
+
+def test_mario_collectors_skin_only_keeps_go_back_three(monkeypatch):
+    game = _start_two_player_game(
+        MonopolyOptions(
+            preset_id="classic_standard",
+            board_id="mario_collectors",
+            board_rules_mode="skin_only",
+        )
+    )
+    host = game.current_player
+    assert host is not None
+
+    host.position = 5
+    monkeypatch.setattr(game, "_draw_card", lambda deck_type: "go_back_three")
+    rolls = iter([1, 1])
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    assert host.position == 4
+    assert host.cash == 1300
+
+
+def test_mario_collectors_board_rules_applies_bank_error_cash_override(monkeypatch):
+    game = _start_two_player_game(
+        MonopolyOptions(
+            preset_id="classic_standard",
+            board_id="mario_collectors",
+            board_rules_mode="auto",
+        )
+    )
+    host = game.current_player
+    assert host is not None
+
+    host.position = 0
+    monkeypatch.setattr(game, "_draw_card", lambda deck_type: "bank_error_collect_200")
+    rolls = iter([1, 1])
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    assert host.position == 2
+    assert host.cash == 1750
+
+
+def test_mario_collectors_skin_only_uses_default_bank_error_cash(monkeypatch):
+    game = _start_two_player_game(
+        MonopolyOptions(
+            preset_id="classic_standard",
+            board_id="mario_collectors",
+            board_rules_mode="skin_only",
+        )
+    )
+    host = game.current_player
+    assert host is not None
+
+    host.position = 0
+    monkeypatch.setattr(game, "_draw_card", lambda deck_type: "bank_error_collect_200")
+    rolls = iter([1, 1])
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    assert host.position == 2
+    assert host.cash == 1700

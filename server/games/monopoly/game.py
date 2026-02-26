@@ -1244,6 +1244,26 @@ class MonopolyGame(ActionGuardMixin, Game):
             color_groups.setdefault(space.color_group, []).append(space.space_id)
         return spaces, space_by_id, color_groups
 
+    def _manual_deck_ids(self, deck_type: str) -> list[str]:
+        """Return ordered manual deck ids for one deck type when available."""
+        if self.active_manual_rule_set is None:
+            return []
+        cards_payload = self.active_manual_rule_set.cards
+        deck_rows = cards_payload.get(deck_type, [])
+        if not isinstance(deck_rows, list):
+            return []
+        deck_ids: list[str] = []
+        for row in deck_rows:
+            if not isinstance(row, dict):
+                continue
+            card_id = row.get("id")
+            if not isinstance(card_id, str):
+                continue
+            if not card_id:
+                continue
+            deck_ids.append(card_id)
+        return deck_ids
+
     def _space_at(self, position: int) -> MonopolySpace:
         """Get board space by board index."""
         return self.active_board_spaces[position % self.active_board_size]
@@ -2533,15 +2553,19 @@ class MonopolyGame(ActionGuardMixin, Game):
         """Draw the next card from a deck in cyclic order."""
         if deck_type == "chance":
             if not self.chance_deck_order:
-                self.chance_deck_order = CHANCE_CARD_IDS.copy()
-                random.shuffle(self.chance_deck_order)
+                self.chance_deck_order = self._manual_deck_ids("chance") or CHANCE_CARD_IDS.copy()
+                if self.chance_deck_order == CHANCE_CARD_IDS:
+                    random.shuffle(self.chance_deck_order)
             card = self.chance_deck_order[self.chance_deck_index % len(self.chance_deck_order)]
             self.chance_deck_index += 1
             return card
 
         if not self.community_chest_deck_order:
-            self.community_chest_deck_order = COMMUNITY_CHEST_CARD_IDS.copy()
-            random.shuffle(self.community_chest_deck_order)
+            self.community_chest_deck_order = (
+                self._manual_deck_ids("community_chest") or COMMUNITY_CHEST_CARD_IDS.copy()
+            )
+            if self.community_chest_deck_order == COMMUNITY_CHEST_CARD_IDS:
+                random.shuffle(self.community_chest_deck_order)
         card = self.community_chest_deck_order[
             self.community_chest_deck_index % len(self.community_chest_deck_order)
         ]
@@ -4921,10 +4945,14 @@ class MonopolyGame(ActionGuardMixin, Game):
         self._reset_turn_state()
         self.turn_doubles_count = 0
 
-        self.chance_deck_order = CHANCE_CARD_IDS.copy()
-        self.community_chest_deck_order = COMMUNITY_CHEST_CARD_IDS.copy()
-        random.shuffle(self.chance_deck_order)
-        random.shuffle(self.community_chest_deck_order)
+        self.chance_deck_order = self._manual_deck_ids("chance") or CHANCE_CARD_IDS.copy()
+        self.community_chest_deck_order = (
+            self._manual_deck_ids("community_chest") or COMMUNITY_CHEST_CARD_IDS.copy()
+        )
+        if self.chance_deck_order == CHANCE_CARD_IDS:
+            random.shuffle(self.chance_deck_order)
+        if self.community_chest_deck_order == COMMUNITY_CHEST_CARD_IDS:
+            random.shuffle(self.community_chest_deck_order)
         self.chance_deck_index = 0
         self.community_chest_deck_index = 0
 

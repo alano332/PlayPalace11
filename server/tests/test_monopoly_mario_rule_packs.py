@@ -1,6 +1,7 @@
 """Tests for Wave 1 Monopoly Mario board rule-pack modules."""
 
 from server.games.monopoly.board_rules import (
+    junior_super_mario,
     mario_celebration,
     mario_collectors,
     mario_kart,
@@ -40,3 +41,11 @@ def test_mario_celebration_exports_card_id_remap_mapping():
 
 def test_mario_celebration_exports_card_cash_override_mapping():
     assert mario_celebration.CARD_CASH_OVERRIDES["income_tax_refund_20"] == 60
+
+
+def test_junior_super_mario_exports_manual_core_capability():
+    assert "junior_manual_core" in junior_super_mario.CAPABILITY_IDS
+
+
+def test_junior_super_mario_exports_sound_ready_capability():
+    assert "junior_powerup_sound_ready" in junior_super_mario.CAPABILITY_IDS

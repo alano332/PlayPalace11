@@ -47,3 +47,11 @@ def test_mario_celebration_card_id_remap_contract():
 
 def test_mario_celebration_card_cash_override_contract():
     assert get_card_cash_override("mario_celebration", "income_tax_refund_20") == 60
+
+
+def test_junior_super_mario_manual_core_capability_contract():
+    assert supports_capability("junior_super_mario", "junior_manual_core") is True
+
+
+def test_junior_super_mario_sound_ready_capability_contract():
+    assert supports_capability("junior_super_mario", "junior_powerup_sound_ready") is True

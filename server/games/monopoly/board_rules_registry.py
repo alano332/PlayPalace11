@@ -116,6 +116,8 @@ RULE_PACKS: dict[str, BoardRulePack] = {
         capability_ids=(
             "pass_go_credit_override",
             "startup_board_announcement",
+            "junior_manual_core",
+            "junior_powerup_sound_ready",
         ),
     ),
     "disney_princesses": BoardRulePack(

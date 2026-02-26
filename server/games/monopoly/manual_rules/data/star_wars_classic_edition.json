@@ -1147,6 +1147,12 @@
       "edition_id": "monopoly-b8613",
       "page_ref": "manual-extract:action-space-labels",
       "confidence": "medium"
+    },
+    {
+      "rule_path": "board.spaces.tax.name",
+      "edition_id": "monopoly-b8613",
+      "page_ref": "manual-extract:action-space-labels",
+      "confidence": "medium"
     }
   ]
 }

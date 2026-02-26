@@ -19,7 +19,7 @@ Head: `3db0285`
 - `cd server && ../.venv/bin/pytest tests/test_monopoly_manual_rule_payload_completeness.py -v`
   - Result: `55 passed`
 - `cd server && ../.venv/bin/pytest -k monopoly -q`
-  - Result: `1090 passed, 598 deselected`
+  - Result: `1097 passed, 598 deselected`
 
 ## New Progress: Manual Source Extraction (Marvel + Star Wars)
 
@@ -48,9 +48,22 @@ Head: `3db0285`
   - `star_wars_mandalorian`, `star_wars_mandalorian_s2`: `Signet`, `Hyperspace Jump`, `Imperial Credits`, `Imperial Advance`
 - Added seed verification tests:
   - `server/tests/test_monopoly_manual_extraction_seed.py`
-  - Includes Marvel action/deck label assertions for:
-    - `marvel_spider_man` (`Daily Bugle`, `Spider-Sense`)
-    - `marvel_super_villains` (`Chance`, `Reshape the Universe`)
+  - Includes full current Marvel action/deck label assertions.
+
+## New Progress: Marvel Set Coverage
+
+- Manual-extraction seed now covers the full Marvel board set with explicit action/deck labels where extract confidence is high:
+  - `marvel_80_years`: `Catalog` + tax labels `Infinity Gauntlet`, `Cable & Deadpool`
+  - `marvel_avengers`: `Stark Industries`, `Infinity Gauntlet`, tax labels `Ultron`, `Hela`
+  - `marvel_black_panther_wf`: `Wakandan`, `Talokanil`
+  - `marvel_deadpool`: `Dumb Luck`, `Pouches`
+  - `marvel_eternals`: `Uni-Mind`, `Arishem's Judgement`
+  - `marvel_falcon_winter_soldier`: `The Shield`, `The Flag Smashers`
+  - `marvel_spider_man`: `Daily Bugle`, `Spider-Sense`
+  - `marvel_super_villains`: `Chance`, `Reshape the Universe`
+- Known extraction-limited exceptions that remain on baseline labels pending stronger source parsing:
+  - `marvel_avengers_legacy`
+  - `marvel_flip` (currently `strings_fallback` extraction mode)
 
 ## What Has Been Done (Whole Rollout to Date)
 

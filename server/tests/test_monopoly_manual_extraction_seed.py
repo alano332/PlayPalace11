@@ -122,6 +122,100 @@ def test_star_wars_seed_applies_manual_action_space_labels(
     ("board_id", "expected_names", "expected_decks"),
     [
         (
+            "marvel_80_years",
+            {
+                "chance_1": "Catalog",
+                "chance_2": "Catalog",
+                "chance_3": "Catalog",
+                "community_chest_1": "Catalog",
+                "community_chest_2": "Catalog",
+                "community_chest_3": "Catalog",
+                "income_tax": "Infinity Gauntlet",
+                "luxury_tax": "Cable & Deadpool",
+            },
+            {
+                "chance": "Catalog",
+                "community_chest": "Catalog",
+            },
+        ),
+        (
+            "marvel_avengers",
+            {
+                "chance_1": "Stark Industries",
+                "chance_2": "Stark Industries",
+                "chance_3": "Stark Industries",
+                "community_chest_1": "Infinity Gauntlet",
+                "community_chest_2": "Infinity Gauntlet",
+                "community_chest_3": "Infinity Gauntlet",
+                "income_tax": "Ultron",
+                "luxury_tax": "Hela",
+            },
+            {
+                "chance": "Stark Industries",
+                "community_chest": "Infinity Gauntlet",
+            },
+        ),
+        (
+            "marvel_black_panther_wf",
+            {
+                "chance_1": "Wakandan",
+                "chance_2": "Wakandan",
+                "chance_3": "Wakandan",
+                "community_chest_1": "Talokanil",
+                "community_chest_2": "Talokanil",
+                "community_chest_3": "Talokanil",
+            },
+            {
+                "chance": "Wakandan",
+                "community_chest": "Talokanil",
+            },
+        ),
+        (
+            "marvel_deadpool",
+            {
+                "chance_1": "Dumb Luck",
+                "chance_2": "Dumb Luck",
+                "chance_3": "Dumb Luck",
+                "community_chest_1": "Pouches",
+                "community_chest_2": "Pouches",
+                "community_chest_3": "Pouches",
+            },
+            {
+                "chance": "Dumb Luck",
+                "community_chest": "Pouches",
+            },
+        ),
+        (
+            "marvel_eternals",
+            {
+                "chance_1": "Uni-Mind",
+                "chance_2": "Uni-Mind",
+                "chance_3": "Uni-Mind",
+                "community_chest_1": "Arishem's Judgement",
+                "community_chest_2": "Arishem's Judgement",
+                "community_chest_3": "Arishem's Judgement",
+            },
+            {
+                "chance": "Uni-Mind",
+                "community_chest": "Arishem's Judgement",
+            },
+        ),
+        (
+            "marvel_falcon_winter_soldier",
+            {
+                "chance_1": "The Shield",
+                "chance_2": "The Shield",
+                "chance_3": "The Shield",
+                "community_chest_1": "The Flag Smashers",
+                "community_chest_2": "The Flag Smashers",
+                "community_chest_3": "The Flag Smashers",
+            },
+            {
+                "chance": "The Shield",
+                "community_chest": "The Flag Smashers",
+            },
+        ),
+        (
             "marvel_spider_man",
             {
                 "chance_1": "Daily Bugle",
@@ -167,3 +261,18 @@ def test_marvel_seed_applies_manual_action_labels_and_deck_metadata(
         assert by_space_id.get(space_id) == expected_name
 
     assert rule_set.mechanics.get("decks") == expected_decks
+
+
+def test_remaining_marvel_boards_without_deck_labels_are_known_exceptions() -> None:
+    anchor_rows = _load_json(ANCHOR_INDEX_PATH)
+    marvel_board_ids = sorted(
+        row["board_id"]
+        for row in anchor_rows
+        if str(row.get("board_id", "")).startswith("marvel_")
+    )
+    missing_deck_ids: list[str] = []
+    for board_id in marvel_board_ids:
+        rule_set = load_manual_rule_set(board_id)
+        if not isinstance(rule_set.mechanics.get("decks"), dict):
+            missing_deck_ids.append(board_id)
+    assert missing_deck_ids == ["marvel_avengers_legacy", "marvel_flip"]

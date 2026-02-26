@@ -11,6 +11,48 @@ from typing import Any
 TARGET_FAMILIES = {"marvel", "star"}
 
 MARVEL_ACTION_SPACE_NAME_OVERRIDES: dict[str, dict[str, str]] = {
+    "marvel_80_years": {
+        "chance_1": "Catalog",
+        "chance_2": "Catalog",
+        "chance_3": "Catalog",
+        "community_chest_1": "Catalog",
+        "community_chest_2": "Catalog",
+        "community_chest_3": "Catalog",
+        "income_tax": "Infinity Gauntlet",
+        "luxury_tax": "Cable & Deadpool",
+    },
+    "marvel_black_panther_wf": {
+        "chance_1": "Wakandan",
+        "chance_2": "Wakandan",
+        "chance_3": "Wakandan",
+        "community_chest_1": "Talokanil",
+        "community_chest_2": "Talokanil",
+        "community_chest_3": "Talokanil",
+    },
+    "marvel_deadpool": {
+        "chance_1": "Dumb Luck",
+        "chance_2": "Dumb Luck",
+        "chance_3": "Dumb Luck",
+        "community_chest_1": "Pouches",
+        "community_chest_2": "Pouches",
+        "community_chest_3": "Pouches",
+    },
+    "marvel_eternals": {
+        "chance_1": "Uni-Mind",
+        "chance_2": "Uni-Mind",
+        "chance_3": "Uni-Mind",
+        "community_chest_1": "Arishem's Judgement",
+        "community_chest_2": "Arishem's Judgement",
+        "community_chest_3": "Arishem's Judgement",
+    },
+    "marvel_falcon_winter_soldier": {
+        "chance_1": "The Shield",
+        "chance_2": "The Shield",
+        "chance_3": "The Shield",
+        "community_chest_1": "The Flag Smashers",
+        "community_chest_2": "The Flag Smashers",
+        "community_chest_3": "The Flag Smashers",
+    },
     "marvel_spider_man": {
         "chance_1": "Daily Bugle",
         "chance_2": "Daily Bugle",
@@ -30,6 +72,26 @@ MARVEL_ACTION_SPACE_NAME_OVERRIDES: dict[str, dict[str, str]] = {
 }
 
 MARVEL_DECK_METADATA_OVERRIDES: dict[str, dict[str, str]] = {
+    "marvel_80_years": {
+        "chance": "Catalog",
+        "community_chest": "Catalog",
+    },
+    "marvel_black_panther_wf": {
+        "chance": "Wakandan",
+        "community_chest": "Talokanil",
+    },
+    "marvel_deadpool": {
+        "chance": "Dumb Luck",
+        "community_chest": "Pouches",
+    },
+    "marvel_eternals": {
+        "chance": "Uni-Mind",
+        "community_chest": "Arishem's Judgement",
+    },
+    "marvel_falcon_winter_soldier": {
+        "chance": "The Shield",
+        "community_chest": "The Flag Smashers",
+    },
     "marvel_spider_man": {
         "chance": "Daily Bugle",
         "community_chest": "Spider-Sense",
@@ -262,6 +324,19 @@ def run_seed(
             _upsert_simple_citation(
                 payload,
                 rule_path="board.spaces.community_chest.name",
+                edition_id=edition_id,
+                page_ref="manual-extract:action-space-labels",
+                confidence="medium",
+            )
+        overrides = (
+            MARVEL_ACTION_SPACE_NAME_OVERRIDES.get(board_id)
+            or STAR_WARS_ACTION_SPACE_NAME_OVERRIDES.get(board_id)
+            or {}
+        )
+        if "income_tax" in overrides or "luxury_tax" in overrides:
+            _upsert_simple_citation(
+                payload,
+                rule_path="board.spaces.tax.name",
                 edition_id=edition_id,
                 page_ref="manual-extract:action-space-labels",
                 confidence="medium",

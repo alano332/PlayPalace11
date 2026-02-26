@@ -6,6 +6,8 @@ from dataclasses import dataclass
 
 from .board_profile import BOARD_PROFILES, DEFAULT_BOARD_ID
 from .board_rules_registry import get_rule_pack
+from .manual_rules.loader import load_manual_rule_set
+from .manual_rules.validator import validate_manual_rule_set
 
 
 @dataclass(frozen=True)
@@ -141,3 +143,12 @@ def get_board_parity_profile(board_id: str) -> BoardParityProfile | None:
 def get_parity_board_ids() -> list[str]:
     """Return sorted board ids represented by parity manifest."""
     return sorted(BOARD_PARITY_PROFILES)
+
+
+def can_promote_manual_core(board_id: str) -> bool:
+    """Return True when a board has a citation-valid manual ruleset."""
+    try:
+        rule_set = load_manual_rule_set(board_id)
+    except (FileNotFoundError, ValueError):
+        return False
+    return len(validate_manual_rule_set(rule_set)) == 0

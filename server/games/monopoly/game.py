@@ -32,6 +32,7 @@ from .board_profile import (
     get_available_board_rules_modes as _board_rules_modes,
     resolve_board_plan,
 )
+from .board_parity import get_board_parity_profile
 from .board_rules_registry import (
     get_card_cash_override,
     get_card_id_remap,
@@ -560,6 +561,9 @@ class MonopolyGame(ActionGuardMixin, Game):
     active_board_rule_pack_id: str = ""
     active_board_rule_pack_status: str = "none"
     active_board_auto_fixed_from_preset_id: str = ""
+    active_board_deck_mode: str = "classic"
+    active_board_parity_fidelity_status: str = "none"
+    active_board_hardware_capability_ids: tuple[str, ...] = ()
     junior_ruleset: JuniorRuleset | None = None
     cheaters_profile: CheatersProfile | None = None
     cheaters_engine: CheatersEngine | None = None
@@ -4663,6 +4667,15 @@ class MonopolyGame(ActionGuardMixin, Game):
         self.active_board_auto_fixed_from_preset_id = (
             board_plan.auto_fixed_from_preset_id or ""
         )
+        parity_profile = get_board_parity_profile(self.active_board_id)
+        if parity_profile is not None:
+            self.active_board_deck_mode = parity_profile.deck_mode
+            self.active_board_parity_fidelity_status = parity_profile.fidelity_status
+            self.active_board_hardware_capability_ids = parity_profile.hardware_capability_ids
+        else:
+            self.active_board_deck_mode = "classic"
+            self.active_board_parity_fidelity_status = "none"
+            self.active_board_hardware_capability_ids = ()
         self.junior_ruleset = (
             get_junior_ruleset(self.active_preset_id)
             if is_junior_ruleset_preset(self.active_preset_id)

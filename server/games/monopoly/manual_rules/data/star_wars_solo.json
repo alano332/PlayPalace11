@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "E17020000_SW_Han_Solo_MN_18_INST.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_solo.txt",
+      "text_sha256": "e081f4fd5fb41493b10c30d9eb1195858a6f4a8b597c1c435bf2398e56b2b34f",
+      "pdf_sha256": "fe05f08f8915687091ae0dcb0250c7a71b9adfb2ea0351c687397149ec65afab",
+      "pdf_size_bytes": 8165156,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-e1702",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-e1702",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

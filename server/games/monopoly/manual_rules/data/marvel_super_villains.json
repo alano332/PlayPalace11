@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "F52700000_INST_MONOPOLY_MARVEL_VILLAINS_F22.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_super_villains.txt",
+      "text_sha256": "d9c33aa3e5b788af4dafffa441ffbc0570bb9e5cbd2927f2992cc6ab3fd767ee",
+      "pdf_sha256": "5557222bfd03e11c92399c5382af16c75b90872086ea5573d73bf199321d86fb",
+      "pdf_size_bytes": 101489368,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-f5270",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-f5270",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

@@ -17,7 +17,7 @@ Generated via:
 ./.venv/bin/python server/scripts/monopoly/extract_manual_text.py --family marvel --family star
 ```
 
-## Known Exception
+`marvel_flip` is handled by a fallback mode:
 
-- `marvel_flip` currently fails with a decompression-limit error in `pypdf`.
-- It remains listed in `manifest.json` with `status: "failed"` and the error message.
+- Primary mode: `pypdf` extraction.
+- Fallback mode: `strings_fallback` after bounded decompression retries.

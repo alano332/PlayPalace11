@@ -35,7 +35,7 @@
       {
         "position": 2,
         "space_id": "community_chest_1",
-        "name": "Community Chest",
+        "name": "Hyperspace Jump",
         "kind": "community_chest",
         "price": 0,
         "rent": 0,
@@ -64,7 +64,7 @@
       {
         "position": 4,
         "space_id": "income_tax",
-        "name": "Income Tax",
+        "name": "Imperial Credits",
         "kind": "tax",
         "price": 0,
         "rent": 0,
@@ -104,7 +104,7 @@
       {
         "position": 7,
         "space_id": "chance_1",
-        "name": "Chance",
+        "name": "Signet",
         "kind": "chance",
         "price": 0,
         "rent": 0,
@@ -256,7 +256,7 @@
       {
         "position": 17,
         "space_id": "community_chest_2",
-        "name": "Community Chest",
+        "name": "Hyperspace Jump",
         "kind": "community_chest",
         "price": 0,
         "rent": 0,
@@ -332,7 +332,7 @@
       {
         "position": 22,
         "space_id": "chance_2",
-        "name": "Chance",
+        "name": "Signet",
         "kind": "chance",
         "price": 0,
         "rent": 0,
@@ -502,7 +502,7 @@
       {
         "position": 33,
         "space_id": "community_chest_3",
-        "name": "Community Chest",
+        "name": "Hyperspace Jump",
         "kind": "community_chest",
         "price": 0,
         "rent": 0,
@@ -542,7 +542,7 @@
       {
         "position": 36,
         "space_id": "chance_3",
-        "name": "Chance",
+        "name": "Signet",
         "kind": "chance",
         "price": 0,
         "rent": 0,
@@ -571,7 +571,7 @@
       {
         "position": 38,
         "space_id": "luxury_tax",
-        "name": "Luxury Tax",
+        "name": "Imperial Advance",
         "kind": "tax",
         "price": 0,
         "rent": 0,
@@ -1080,6 +1080,16 @@
       "locale": "en-us",
       "filename": "F12761020_INST_MONOPOLY%20MANDALORIAN_S20_FAR.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_mandalorian.txt",
+      "text_sha256": "bf0e29faeff090ac3e34f4ce0faa3db78785affd973c2f628377e862e1b5a3cf",
+      "pdf_sha256": "3a992db7ecf7fa25d1de9cf327a582c3f4bdfb613c0973104a8921f4900b2922",
+      "pdf_size_bytes": 24520996,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1120,6 +1130,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-f1276",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-f1276",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

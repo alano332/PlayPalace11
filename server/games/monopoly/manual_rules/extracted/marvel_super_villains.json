@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-f5270",
   "board_id": "marvel_super_villains",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "F52700000_INST_MONOPOLY_MARVEL_VILLAINS_F22.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-super-villains-edition-board-game-for-families-and-kids-ages-8-and-up",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 18669,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_super_villains.txt",
-  "text_sha256": "d9c33aa3e5b788af4dafffa441ffbc0570bb9e5cbd2927f2992cc6ab3fd767ee"
+  "text_sha256": "d9c33aa3e5b788af4dafffa441ffbc0570bb9e5cbd2927f2992cc6ab3fd767ee",
+  "zlib_limit_used": 120000000
 }

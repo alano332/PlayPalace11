@@ -9,7 +9,9 @@ EXTRACTED_DIR = REPO_ROOT / "server/games/monopoly/manual_rules/extracted"
 MANIFEST_PATH = EXTRACTED_DIR / "manifest.json"
 ANCHOR_INDEX_PATH = REPO_ROOT / "server/games/monopoly/catalog/special_board_anchor_index.json"
 TARGET_FAMILIES = {"marvel", "star"}
-KNOWN_EXTRACTION_EXCEPTIONS = {"marvel_flip"}
+EXPECTED_FALLBACK_MODES = {
+    "marvel_flip": "strings_fallback",
+}
 
 
 def _load_json(path: Path):
@@ -30,22 +32,20 @@ def test_manifest_covers_marvel_and_star_board_ids() -> None:
 
 def test_manifest_entries_are_valid_or_known_exceptions() -> None:
     manifest_rows = _load_json(MANIFEST_PATH)
-    failed_board_ids = {
-        row["board_id"] for row in manifest_rows if row.get("status") != "ok"
-    }
-    assert failed_board_ids <= KNOWN_EXTRACTION_EXCEPTIONS
+    failed_board_ids = [row["board_id"] for row in manifest_rows if row.get("status") != "ok"]
+    assert failed_board_ids == []
 
     for row in manifest_rows:
         board_id = row["board_id"]
-        if row.get("status") != "ok":
-            assert row.get("pdf_url")
-            assert row.get("error")
-            continue
+        assert row.get("status") == "ok"
 
         assert row.get("page_count", 0) > 0
         assert row.get("text_char_count", 0) > 0
         assert row.get("pdf_sha256")
         assert row.get("text_sha256")
+        extraction_mode = row.get("extraction_mode", "pypdf")
+        expected_mode = EXPECTED_FALLBACK_MODES.get(board_id, "pypdf")
+        assert extraction_mode == expected_mode
 
         text_path = Path(str(row["text_path"]))
         if not text_path.is_absolute():

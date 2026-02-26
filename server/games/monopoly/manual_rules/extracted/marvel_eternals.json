@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-f1659",
   "board_id": "marvel_eternals",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "F16592842_INST_Monopoly_Eternals_FAR.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-studios-eternals-edition-board-game-for-marvel-fans",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 13195,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_eternals.txt",
-  "text_sha256": "fdef7d0e587ce4826fc761a6c0566a8f949c687f0ccee71453f8971e07ed03f4"
+  "text_sha256": "fdef7d0e587ce4826fc761a6c0566a8f949c687f0ccee71453f8971e07ed03f4",
+  "zlib_limit_used": 120000000
 }

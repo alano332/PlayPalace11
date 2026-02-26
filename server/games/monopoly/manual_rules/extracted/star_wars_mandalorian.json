@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-f1276",
   "board_id": "star_wars_mandalorian",
+  "extraction_mode": "pypdf",
   "family": "star",
   "filename": "F12761020_INST_MONOPOLY%20MANDALORIAN_S20_FAR.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-the-mandalorian-edition-board-game-protect-the-child-baby-yoda",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 15262,
   "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_mandalorian.txt",
-  "text_sha256": "bf0e29faeff090ac3e34f4ce0faa3db78785affd973c2f628377e862e1b5a3cf"
+  "text_sha256": "bf0e29faeff090ac3e34f4ce0faa3db78785affd973c2f628377e862e1b5a3cf",
+  "zlib_limit_used": 120000000
 }

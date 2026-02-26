@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-b8613",
   "board_id": "star_wars_classic_edition",
+  "extraction_mode": "pypdf",
   "family": "star",
   "filename": "B86130000_SW_Monopoly_16_INST.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-game-star-wars-edition",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 7954,
   "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_classic_edition.txt",
-  "text_sha256": "ad0cc2e224ed37f8a195a99dccadf43d89f4448782a4a71614ca6c319ee8f114"
+  "text_sha256": "ad0cc2e224ed37f8a195a99dccadf43d89f4448782a4a71614ca6c319ee8f114",
+  "zlib_limit_used": 120000000
 }

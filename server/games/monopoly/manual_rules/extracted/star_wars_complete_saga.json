@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-e8066",
   "board_id": "star_wars_complete_saga",
+  "extraction_mode": "pypdf",
   "family": "star",
   "filename": "E80660000_413099_MN_StarWarsSaga_F19_INST.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-the-complete-saga-edition-board-game",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 9090,
   "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_complete_saga.txt",
-  "text_sha256": "f51c3ac1fd41c9ceb49faf2ecb99f268097f051105a20b49b92f918da4fd0d6c"
+  "text_sha256": "f51c3ac1fd41c9ceb49faf2ecb99f268097f051105a20b49b92f918da4fd0d6c",
+  "zlib_limit_used": 120000000
 }

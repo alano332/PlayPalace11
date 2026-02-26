@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-e6504",
   "board_id": "marvel_avengers",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "5e16b4739f4b719fa2efb43871de904d.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/Monopoly--Marvel-Avengers-Edition-Board-Game",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 10538,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_avengers.txt",
-  "text_sha256": "cf0f70402e133e676bee4dfe3878d22b1e542e9629f68e8dadca85f458808dc9"
+  "text_sha256": "cf0f70402e133e676bee4dfe3878d22b1e542e9629f68e8dadca85f458808dc9",
+  "zlib_limit_used": 120000000
 }

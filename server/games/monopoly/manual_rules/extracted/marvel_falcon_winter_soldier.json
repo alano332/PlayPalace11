@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-f5851",
   "board_id": "marvel_falcon_winter_soldier",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "F58511021_INST_MN_FALCON_WINTER%20SOLDIER_F21_FAR.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-studios-the-falcon-and-the-winter-soldier-edition-board-game",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 11055,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_falcon_winter_soldier.txt",
-  "text_sha256": "ec66aa39d9e93140467f376c94576503d60dc9f89e4507bcce65975197e857c3"
+  "text_sha256": "ec66aa39d9e93140467f376c94576503d60dc9f89e4507bcce65975197e857c3",
+  "zlib_limit_used": 120000000
 }

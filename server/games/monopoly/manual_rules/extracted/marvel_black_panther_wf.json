@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-f5405",
   "board_id": "marvel_black_panther_wf",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "F54050000_INST_MN_BlackPanther2_F22.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-studios-black-panther-wakanda-forever-edition-board-game-for-families-and-kids-ages-8-game-for-2-6-players",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 17481,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_black_panther_wf.txt",
-  "text_sha256": "77a3a0d3ffd22d26af239646db7915210fb78a8d72bad3b7743e119d6236cead"
+  "text_sha256": "77a3a0d3ffd22d26af239646db7915210fb78a8d72bad3b7743e119d6236cead",
+  "zlib_limit_used": 120000000
 }

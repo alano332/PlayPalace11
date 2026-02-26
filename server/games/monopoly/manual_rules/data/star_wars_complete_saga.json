@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "E80660000_413099_MN_StarWarsSaga_F19_INST.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_complete_saga.txt",
+      "text_sha256": "f51c3ac1fd41c9ceb49faf2ecb99f268097f051105a20b49b92f918da4fd0d6c",
+      "pdf_sha256": "54a772eac2cf3fcb30522912a8b6c795da42628a870622a8dde6c1b0a89d318b",
+      "pdf_size_bytes": 35348418,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-e8066",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-e8066",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

@@ -1094,7 +1094,17 @@
       "filename": "5e16b4739f4b719fa2efb43871de904d.pdf",
       "source": "catalog_manual_variant"
     },
-    "hardware_capability_ids": []
+    "hardware_capability_ids": [],
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_avengers.txt",
+      "text_sha256": "cf0f70402e133e676bee4dfe3878d22b1e542e9629f68e8dadca85f458808dc9",
+      "pdf_sha256": "fd9d5213371993b18a9b05898695343418e1b16a9393c0f00bd4f23557eeb486",
+      "pdf_size_bytes": 31254830,
+      "page_count": 2
+    }
   },
   "win_condition": {
     "type": "bankruptcy",
@@ -1165,6 +1175,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-e6504",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-e6504",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

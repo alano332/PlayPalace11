@@ -2,6 +2,7 @@
   {
     "anchor_edition_id": "monopoly-e7866",
     "board_id": "marvel_80_years",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "E78660000_412423_MN_MARVEL_80TH_F19_INST.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-80-years-edition-board-game",
@@ -12,11 +13,13 @@
     "status": "ok",
     "text_char_count": 9114,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_80_years.txt",
-    "text_sha256": "0001d8724ef9b889e4b9095294e2ccdd3a279727447f1cfbdf531d2f1111a9dd"
+    "text_sha256": "0001d8724ef9b889e4b9095294e2ccdd3a279727447f1cfbdf531d2f1111a9dd",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-e6504",
     "board_id": "marvel_avengers",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "5e16b4739f4b719fa2efb43871de904d.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/Monopoly--Marvel-Avengers-Edition-Board-Game",
@@ -27,11 +30,13 @@
     "status": "ok",
     "text_char_count": 10538,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_avengers.txt",
-    "text_sha256": "cf0f70402e133e676bee4dfe3878d22b1e542e9629f68e8dadca85f458808dc9"
+    "text_sha256": "cf0f70402e133e676bee4dfe3878d22b1e542e9629f68e8dadca85f458808dc9",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-b0323",
     "board_id": "marvel_avengers_legacy",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "B03232840_MonopolyAvengers_14_instr.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-avengers-edition-board-game",
@@ -42,11 +47,13 @@
     "status": "ok",
     "text_char_count": 32,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_avengers_legacy.txt",
-    "text_sha256": "1fbe1dbef89d794f689825b19860afb4ebef22103a5202c0be8c300f89f90793"
+    "text_sha256": "1fbe1dbef89d794f689825b19860afb4ebef22103a5202c0be8c300f89f90793",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f5405",
     "board_id": "marvel_black_panther_wf",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "F54050000_INST_MN_BlackPanther2_F22.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-studios-black-panther-wakanda-forever-edition-board-game-for-families-and-kids-ages-8-game-for-2-6-players",
@@ -57,11 +64,13 @@
     "status": "ok",
     "text_char_count": 17481,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_black_panther_wf.txt",
-    "text_sha256": "77a3a0d3ffd22d26af239646db7915210fb78a8d72bad3b7743e119d6236cead"
+    "text_sha256": "77a3a0d3ffd22d26af239646db7915210fb78a8d72bad3b7743e119d6236cead",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-e2033",
     "board_id": "marvel_deadpool",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "ead2fa609cfb904c8e40be5eda95adb2.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/Monopoly-Game--Marvel-Deadpool-Edition",
@@ -72,11 +81,13 @@
     "status": "ok",
     "text_char_count": 12738,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_deadpool.txt",
-    "text_sha256": "1c51c0d74ff4b14cac91a9365f511ed2fac641955504f23b68f4e12516272535"
+    "text_sha256": "1c51c0d74ff4b14cac91a9365f511ed2fac641955504f23b68f4e12516272535",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f1659",
     "board_id": "marvel_eternals",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "F16592842_INST_Monopoly_Eternals_FAR.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-studios-eternals-edition-board-game-for-marvel-fans",
@@ -87,11 +98,13 @@
     "status": "ok",
     "text_char_count": 13195,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_eternals.txt",
-    "text_sha256": "fdef7d0e587ce4826fc761a6c0566a8f949c687f0ccee71453f8971e07ed03f4"
+    "text_sha256": "fdef7d0e587ce4826fc761a6c0566a8f949c687f0ccee71453f8971e07ed03f4",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f5851",
     "board_id": "marvel_falcon_winter_soldier",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "F58511021_INST_MN_FALCON_WINTER%20SOLDIER_F21_FAR.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-studios-the-falcon-and-the-winter-soldier-edition-board-game",
@@ -102,19 +115,30 @@
     "status": "ok",
     "text_char_count": 11055,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_falcon_winter_soldier.txt",
-    "text_sha256": "ec66aa39d9e93140467f376c94576503d60dc9f89e4507bcce65975197e857c3"
+    "text_sha256": "ec66aa39d9e93140467f376c94576503d60dc9f89e4507bcce65975197e857c3",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f9931",
     "board_id": "marvel_flip",
-    "error": "Limit reached while decompressing. 87170 bytes remaining.",
+    "extraction_mode": "strings_fallback",
     "family": "marvel",
+    "filename": "F99310000_INST_528408_MN_Marvel_Flip_S24_FAR.pdf",
+    "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-flip-edition-marvel-board-game-for-2-to-4-players-ages-8",
+    "page_count": 1,
+    "pdf_sha256": "0ffff478e92c280e97aba40cd6d1d8cb06f90b1e61fc61bb4733c41e1c3e0dcb",
+    "pdf_size_bytes": 204352952,
     "pdf_url": "https://assets-us-01.kc-usercontent.com:443/500e0a65-283d-00ef-33b2-7f1f20488fe2/e1f3a8ca-44fa-47da-9146-34de9a463819/F99310000_INST_528408_MN_Marvel_Flip_S24_FAR.pdf",
-    "status": "failed"
+    "status": "ok",
+    "text_char_count": 120704,
+    "text_path": "server/games/monopoly/manual_rules/extracted/marvel_flip.txt",
+    "text_sha256": "1d11e2523f13d34afbf7ab2855489ea504bf5dce6d99ae1bbe557943018a3a52",
+    "zlib_limit_used": 252000000
   },
   {
     "anchor_edition_id": "monopoly-f3968",
     "board_id": "marvel_spider_man",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "F39680000_INST_MONOPOLY_SPIDERMAN_F21%282%29.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-spider-man-edition-board-game-play-as-a-spider-hero-fun-game-to-play-for-kids-ages-8-and-up",
@@ -125,11 +149,13 @@
     "status": "ok",
     "text_char_count": 11212,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_spider_man.txt",
-    "text_sha256": "9da3582fb9bcb74212a698f53408b1230f4d25b6b6050a78a867645493b294ee"
+    "text_sha256": "9da3582fb9bcb74212a698f53408b1230f4d25b6b6050a78a867645493b294ee",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f5270",
     "board_id": "marvel_super_villains",
+    "extraction_mode": "pypdf",
     "family": "marvel",
     "filename": "F52700000_INST_MONOPOLY_MARVEL_VILLAINS_F22.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-super-villains-edition-board-game-for-families-and-kids-ages-8-and-up",
@@ -140,11 +166,13 @@
     "status": "ok",
     "text_char_count": 18669,
     "text_path": "server/games/monopoly/manual_rules/extracted/marvel_super_villains.txt",
-    "text_sha256": "d9c33aa3e5b788af4dafffa441ffbc0570bb9e5cbd2927f2992cc6ab3fd767ee"
+    "text_sha256": "d9c33aa3e5b788af4dafffa441ffbc0570bb9e5cbd2927f2992cc6ab3fd767ee",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-c1990",
     "board_id": "star_wars_40th",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "d6f44573d8c8028f5a8c27d574728f2f.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/Monopoly-Game--Star-Wars-40th-Anniversary-Special-Edition",
@@ -155,11 +183,13 @@
     "status": "ok",
     "text_char_count": 14316,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_40th.txt",
-    "text_sha256": "e3c1d936c2b7637d0049036499343fe032a1d10294376cef580c76650c145315"
+    "text_sha256": "e3c1d936c2b7637d0049036499343fe032a1d10294376cef580c76650c145315",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f5394",
     "board_id": "star_wars_boba_fett",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "F53940000_INST_MN_BobaFett_S22.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-boba-fett-edition-board-game-for-kids-ages-8-and-up",
@@ -170,11 +200,13 @@
     "status": "ok",
     "text_char_count": 18930,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_boba_fett.txt",
-    "text_sha256": "671bc14ef31ff27dca0aeeebab9992ef2c50543482b0fc754400bec6a2795cf8"
+    "text_sha256": "671bc14ef31ff27dca0aeeebab9992ef2c50543482b0fc754400bec6a2795cf8",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-b8613",
     "board_id": "star_wars_classic_edition",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "B86130000_SW_Monopoly_16_INST.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-game-star-wars-edition",
@@ -185,11 +217,13 @@
     "status": "ok",
     "text_char_count": 7954,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_classic_edition.txt",
-    "text_sha256": "ad0cc2e224ed37f8a195a99dccadf43d89f4448782a4a71614ca6c319ee8f114"
+    "text_sha256": "ad0cc2e224ed37f8a195a99dccadf43d89f4448782a4a71614ca6c319ee8f114",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-e8066",
     "board_id": "star_wars_complete_saga",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "E80660000_413099_MN_StarWarsSaga_F19_INST.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-the-complete-saga-edition-board-game",
@@ -200,11 +234,13 @@
     "status": "ok",
     "text_char_count": 9090,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_complete_saga.txt",
-    "text_sha256": "f51c3ac1fd41c9ceb49faf2ecb99f268097f051105a20b49b92f918da4fd0d6c"
+    "text_sha256": "f51c3ac1fd41c9ceb49faf2ecb99f268097f051105a20b49b92f918da4fd0d6c",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-b0324",
     "board_id": "star_wars_legacy",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "B03240790_SW_Monopoly_16_INST.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-game-star-wars",
@@ -215,11 +251,13 @@
     "status": "ok",
     "text_char_count": 13140,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_legacy.txt",
-    "text_sha256": "c2d2af5d241e81abd00a633a01783c9501be4400d2707174c068fe9c45b54eda"
+    "text_sha256": "c2d2af5d241e81abd00a633a01783c9501be4400d2707174c068fe9c45b54eda",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f8383",
     "board_id": "star_wars_light_side",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "F83830000_INST_MN_LightSide_F23.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-light-side-edition-board-game-for-families-games-for-kids-8",
@@ -230,11 +268,13 @@
     "status": "ok",
     "text_char_count": 20226,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_light_side.txt",
-    "text_sha256": "d3209d74e5afc0dadb55cdcd744d9f1ee6de5db891dfbdfbf898daf5015392d3"
+    "text_sha256": "d3209d74e5afc0dadb55cdcd744d9f1ee6de5db891dfbdfbf898daf5015392d3",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f1276",
     "board_id": "star_wars_mandalorian",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "F12761020_INST_MONOPOLY%20MANDALORIAN_S20_FAR.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-the-mandalorian-edition-board-game-protect-the-child-baby-yoda",
@@ -245,11 +285,13 @@
     "status": "ok",
     "text_char_count": 15262,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_mandalorian.txt",
-    "text_sha256": "bf0e29faeff090ac3e34f4ce0faa3db78785affd973c2f628377e862e1b5a3cf"
+    "text_sha256": "bf0e29faeff090ac3e34f4ce0faa3db78785affd973c2f628377e862e1b5a3cf",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f4257",
     "board_id": "star_wars_mandalorian_s2",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "F42570000_INST_MN_Mandolorian_F21.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-the-mandalorian-edition-board-game",
@@ -260,11 +302,13 @@
     "status": "ok",
     "text_char_count": 15322,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_mandalorian_s2.txt",
-    "text_sha256": "6fa793889fe009a7a790f1922555209f504185adc40ac81022fdf0cf951004d5"
+    "text_sha256": "6fa793889fe009a7a790f1922555209f504185adc40ac81022fdf0cf951004d5",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-42452",
     "board_id": "star_wars_saga",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "c6a293e5f61fdd4d9d02b70e9ed07c3c.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-game-star-wars-the-saga-edition",
@@ -275,11 +319,13 @@
     "status": "ok",
     "text_char_count": 100,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_saga.txt",
-    "text_sha256": "740801d044a533d5f66d69c2b93a00dc26ba33bf4ac4f50da251d7910d9db1ab"
+    "text_sha256": "740801d044a533d5f66d69c2b93a00dc26ba33bf4ac4f50da251d7910d9db1ab",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-e1702",
     "board_id": "star_wars_solo",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "E17020000_SW_Han_Solo_MN_18_INST.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-game-star-wars-edition",
@@ -290,11 +336,13 @@
     "status": "ok",
     "text_char_count": 11035,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_solo.txt",
-    "text_sha256": "e081f4fd5fb41493b10c30d9eb1195858a6f4a8b597c1c435bf2398e56b2b34f"
+    "text_sha256": "e081f4fd5fb41493b10c30d9eb1195858a6f4a8b597c1c435bf2398e56b2b34f",
+    "zlib_limit_used": 120000000
   },
   {
     "anchor_edition_id": "monopoly-f2013",
     "board_id": "star_wars_the_child",
+    "extraction_mode": "pypdf",
     "family": "star",
     "filename": "F20130001_INST_MONOPOLY_THE_CHILD_RC_FAR.pdf",
     "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-star-wars-the-child-edition-board-game",
@@ -305,6 +353,7 @@
     "status": "ok",
     "text_char_count": 9628,
     "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_the_child.txt",
-    "text_sha256": "963e71db89e7a00fde93a3b8b16f3ede4be15d597515866a3ec513e23515edd8"
+    "text_sha256": "963e71db89e7a00fde93a3b8b16f3ede4be15d597515866a3ec513e23515edd8",
+    "zlib_limit_used": 120000000
   }
 ]

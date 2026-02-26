@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-e2033",
   "board_id": "marvel_deadpool",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "ead2fa609cfb904c8e40be5eda95adb2.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/Monopoly-Game--Marvel-Deadpool-Edition",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 12738,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_deadpool.txt",
-  "text_sha256": "1c51c0d74ff4b14cac91a9365f511ed2fac641955504f23b68f4e12516272535"
+  "text_sha256": "1c51c0d74ff4b14cac91a9365f511ed2fac641955504f23b68f4e12516272535",
+  "zlib_limit_used": 120000000
 }

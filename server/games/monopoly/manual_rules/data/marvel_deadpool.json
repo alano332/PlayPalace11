@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "ead2fa609cfb904c8e40be5eda95adb2.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_deadpool.txt",
+      "text_sha256": "1c51c0d74ff4b14cac91a9365f511ed2fac641955504f23b68f4e12516272535",
+      "pdf_sha256": "930c80c7d6ff2caf2e15d6c1a2f8b2006c9c2bf3bc2c1d6a5926faf6d6df4ec1",
+      "pdf_size_bytes": 1437325,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-e2033",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-e2033",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

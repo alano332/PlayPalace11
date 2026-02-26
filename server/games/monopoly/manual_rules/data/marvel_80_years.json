@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "E78660000_412423_MN_MARVEL_80TH_F19_INST.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_80_years.txt",
+      "text_sha256": "0001d8724ef9b889e4b9095294e2ccdd3a279727447f1cfbdf531d2f1111a9dd",
+      "pdf_sha256": "e728ec0e4828e3d806cd9e9ce82fe54a002824a0ac279ab517700fc83ca93b0f",
+      "pdf_size_bytes": 19639810,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-e7866",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-e7866",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

@@ -2,7 +2,7 @@
 
 Date: 2026-02-26  
 Branch: `monopoly`  
-Head: `20fb60f`
+Head: `3db0285`
 
 ## Current Snapshot
 
@@ -19,7 +19,7 @@ Head: `20fb60f`
 - `cd server && ../.venv/bin/pytest tests/test_monopoly_manual_rule_payload_completeness.py -v`
   - Result: `55 passed`
 - `cd server && ../.venv/bin/pytest -k monopoly -q`
-  - Result: `1083 passed, 598 deselected`
+  - Result: `1088 passed, 598 deselected`
 
 ## New Progress: Manual Source Extraction (Marvel + Star Wars)
 
@@ -32,10 +32,22 @@ Head: `20fb60f`
   - `server/tests/test_monopoly_manual_source_extraction_artifacts.py`
 - Extraction run status:
   - selected boards: `21`
-  - extracted successfully: `20`
-  - known failure: `marvel_flip` (`pypdf` decompression-limit failure)
+  - extracted successfully: `21`
+  - `marvel_flip` uses `strings_fallback` mode after bounded `pypdf` retry.
 - Rerun command:
   - `./.venv/bin/python server/scripts/monopoly/extract_manual_text.py --family marvel --family star`
+
+## New Progress: Payload Seeding from Extracted Manuals
+
+- Added seed applier: `server/scripts/monopoly/apply_manual_extraction_seed.py`
+- Applied extraction-backed metadata into `21` Marvel/Star board payloads:
+  - `mechanics.manual_extraction` now records extraction mode, checksums, page count, and text artifact path.
+  - `citations` now include `mechanics.manual_extraction`.
+- Applied manual-derived Star Wars action labels:
+  - `star_wars_classic_edition`, `star_wars_legacy`: `Use the Force`, `Hyperspace`, `Galactic Empire Tax`
+  - `star_wars_mandalorian`, `star_wars_mandalorian_s2`: `Signet`, `Hyperspace Jump`, `Imperial Credits`, `Imperial Advance`
+- Added seed verification tests:
+  - `server/tests/test_monopoly_manual_extraction_seed.py`
 
 ## What Has Been Done (Whole Rollout to Date)
 
@@ -92,10 +104,8 @@ Move the remaining `50` `near_full` boards to true `manual_core` by replacing sy
 
 ## Current Blockers
 
-- Manual-host network resolution is unavailable in this shell environment as of 2026-02-26:
-  - `curl -I https://instructions.hasbro.com` -> `Could not resolve host`
-  - `curl -I https://manuals.plus` -> `Could not resolve host`
-- Without network/DNS access (or a local PDF corpus), full manual-auth extraction cannot be completed.
+- `strings_fallback` extraction quality for `marvel_flip` is lower fidelity than structured PDF extraction.
+- Several extracted manuals are image-heavy or layout-noisy, so card-by-card deterministic parsing still needs OCR/normalization work.
 
 ## Definition of Done for the Final Part
 

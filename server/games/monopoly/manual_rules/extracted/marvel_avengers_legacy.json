@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-b0323",
   "board_id": "marvel_avengers_legacy",
+  "extraction_mode": "pypdf",
   "family": "marvel",
   "filename": "B03232840_MonopolyAvengers_14_instr.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-marvel-avengers-edition-board-game",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 32,
   "text_path": "server/games/monopoly/manual_rules/extracted/marvel_avengers_legacy.txt",
-  "text_sha256": "1fbe1dbef89d794f689825b19860afb4ebef22103a5202c0be8c300f89f90793"
+  "text_sha256": "1fbe1dbef89d794f689825b19860afb4ebef22103a5202c0be8c300f89f90793",
+  "zlib_limit_used": 120000000
 }

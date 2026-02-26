@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "F99310000_INST_528408_MN_Marvel_Flip_S24_FAR.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "strings_fallback",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_flip.txt",
+      "text_sha256": "1d11e2523f13d34afbf7ab2855489ea504bf5dce6d99ae1bbe557943018a3a52",
+      "pdf_sha256": "0ffff478e92c280e97aba40cd6d1d8cb06f90b1e61fc61bb4733c41e1c3e0dcb",
+      "pdf_size_bytes": 204352952,
+      "page_count": 1
     }
   },
   "win_condition": {
@@ -1119,6 +1129,12 @@
       "edition_id": "monopoly-f9931",
       "page_ref": "catalog:en-us",
       "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-f9931",
+      "page_ref": "manual-extract:strings-fallback",
+      "confidence": "medium"
     }
   ]
 }

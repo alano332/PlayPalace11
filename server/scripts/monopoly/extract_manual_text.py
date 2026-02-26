@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import re
 import sys
 from typing import Any
 from urllib.request import Request, urlopen
@@ -24,6 +25,13 @@ except ModuleNotFoundError as error:  # pragma: no cover - runtime dependency gu
         "Missing optional dependency 'pypdf'. Install with: "
         "./.venv/bin/python -m pip install pypdf"
     ) from error
+
+
+BOARD_ZLIB_RETRY_LIMITS: dict[str, int] = {
+    # This manual includes a very large compressed stream that exceeds
+    # the default extraction cap.
+    "marvel_flip": 252_000_000,
+}
 
 
 def _stable_dump(path: Path, data: Any) -> None:
@@ -51,6 +59,62 @@ def _extract_pages(pdf_bytes: bytes) -> list[str]:
         text = page.extract_text() or ""
         pages.append(text.strip())
     return pages
+
+
+def _extract_text_strings_fallback(pdf_bytes: bytes, *, max_lines: int = 12_000) -> str:
+    decoded = pdf_bytes.decode("latin-1", errors="ignore")
+    pattern = re.compile(r"[A-Za-z0-9][A-Za-z0-9 .,;:!?()\-/'\"&%+=_]{5,}")
+    lines: list[str] = []
+    seen: set[str] = set()
+    for match in pattern.findall(decoded):
+        normalized = " ".join(match.split())
+        if len(normalized) < 6:
+            continue
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        lines.append(normalized)
+        if len(lines) >= max_lines:
+            break
+    return "\n".join(lines).strip()
+
+
+def _extract_pages_with_fallback(
+    board_id: str,
+    pdf_bytes: bytes,
+    base_zlib_limit: int,
+) -> tuple[list[str], int, str]:
+    attempted_limits: list[int] = [base_zlib_limit]
+    board_retry_limit = BOARD_ZLIB_RETRY_LIMITS.get(board_id)
+    if (
+        board_retry_limit is not None
+        and board_retry_limit > base_zlib_limit
+        and board_retry_limit not in attempted_limits
+    ):
+        attempted_limits.append(board_retry_limit)
+
+    last_error: Exception | None = None
+    for index, zlib_limit in enumerate(attempted_limits):
+        pypdf_filters.ZLIB_MAX_OUTPUT_LENGTH = zlib_limit
+        try:
+            if index > 0:
+                print(f"[retry] {board_id}: trying zlib limit {zlib_limit}")
+            pages = _extract_pages(pdf_bytes)
+            return pages, zlib_limit, "pypdf"
+        except Exception as error:  # pragma: no cover - runtime decoding path
+            last_error = error
+            message = str(error)
+            if "Limit reached while decompressing." not in message:
+                raise
+            if index == len(attempted_limits) - 1:
+                fallback_text = _extract_text_strings_fallback(pdf_bytes)
+                if fallback_text:
+                    print(f"[fallback] {board_id}: using strings extraction fallback")
+                    return [fallback_text], zlib_limit, "strings_fallback"
+                raise
+
+    assert last_error is not None
+    raise last_error
 
 
 def _load_json(path: Path) -> Any:
@@ -86,9 +150,6 @@ def run_extraction(
     zlib_max_output_length: int,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    # Some modern instruction PDFs use large compressed streams.
-    # Inputs are trusted official manual URLs resolved from catalog metadata.
-    pypdf_filters.ZLIB_MAX_OUTPUT_LENGTH = zlib_max_output_length
     anchor_rows = _load_json(anchor_index_path)
     targets = _select_targets(anchor_rows, families=families, board_ids=board_ids)
     if not targets:
@@ -131,7 +192,11 @@ def run_extraction(
 
         try:
             pdf_bytes = _fetch_pdf_bytes(pdf_url, timeout=timeout)
-            pages = _extract_pages(pdf_bytes)
+            pages, used_zlib_limit, extraction_mode = _extract_pages_with_fallback(
+                board_id=board_id,
+                pdf_bytes=pdf_bytes,
+                base_zlib_limit=zlib_max_output_length,
+            )
         except Exception as error:  # pragma: no cover - network/runtime failure path
             print(f"[fail] {board_id}: {error}")
             manifest_rows.append(
@@ -142,6 +207,7 @@ def run_extraction(
                     "pdf_url": pdf_url,
                     "status": "failed",
                     "error": str(error),
+                    "zlib_limit_attempted": zlib_max_output_length,
                 }
             )
             continue
@@ -170,6 +236,8 @@ def run_extraction(
             "text_char_count": text_char_count,
             "text_sha256": text_sha256,
             "text_path": str(text_path),
+            "zlib_limit_used": used_zlib_limit,
+            "extraction_mode": extraction_mode,
         }
         _stable_dump(output_dir / f"{board_id}.json", meta)
         manifest_rows.append(meta)

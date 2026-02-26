@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "F39680000_INST_MONOPOLY_SPIDERMAN_F21%282%29.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_spider_man.txt",
+      "text_sha256": "9da3582fb9bcb74212a698f53408b1230f4d25b6b6050a78a867645493b294ee",
+      "pdf_sha256": "9a2a039ede525761dad0feef66b3c21552cc50972eec95c3c1ba9af8320fdf82",
+      "pdf_size_bytes": 3800839,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-f3968",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-f3968",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

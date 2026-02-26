@@ -1,6 +1,7 @@
 {
   "anchor_edition_id": "monopoly-b0324",
   "board_id": "star_wars_legacy",
+  "extraction_mode": "pypdf",
   "family": "star",
   "filename": "B03240790_SW_Monopoly_16_INST.pdf",
   "instruction_url": "https://instructions.hasbro.com/en-us/instruction/monopoly-game-star-wars",
@@ -11,5 +12,6 @@
   "status": "ok",
   "text_char_count": 13140,
   "text_path": "server/games/monopoly/manual_rules/extracted/star_wars_legacy.txt",
-  "text_sha256": "c2d2af5d241e81abd00a633a01783c9501be4400d2707174c068fe9c45b54eda"
+  "text_sha256": "c2d2af5d241e81abd00a633a01783c9501be4400d2707174c068fe9c45b54eda",
+  "zlib_limit_used": 120000000
 }

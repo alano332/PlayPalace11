@@ -1078,6 +1078,16 @@
       "locale": "en-us",
       "filename": "F16592842_INST_Monopoly_Eternals_FAR.pdf",
       "source": "catalog_manual_variant"
+    },
+    "manual_extraction": {
+      "status": "seeded_from_extracted_manual_text",
+      "extraction_mode": "pypdf",
+      "manifest_path": "server/games/monopoly/manual_rules/extracted/manifest.json",
+      "text_path": "server/games/monopoly/manual_rules/extracted/marvel_eternals.txt",
+      "text_sha256": "fdef7d0e587ce4826fc761a6c0566a8f949c687f0ccee71453f8971e07ed03f4",
+      "pdf_sha256": "812613ffd2cd6e530a6c9a855ea2d2ea9f704948fc7c4c45762bdace1c53ef33",
+      "pdf_size_bytes": 704380052,
+      "page_count": 2
     }
   },
   "win_condition": {
@@ -1118,6 +1128,12 @@
       "rule_path": "mechanics.manual_source",
       "edition_id": "monopoly-f1659",
       "page_ref": "catalog:en-us",
+      "confidence": "high"
+    },
+    {
+      "rule_path": "mechanics.manual_extraction",
+      "edition_id": "monopoly-f1659",
+      "page_ref": "manual-extract:pypdf",
       "confidence": "high"
     }
   ]

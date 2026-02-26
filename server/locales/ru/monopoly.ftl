@@ -139,6 +139,7 @@ monopoly-banking-ledger-report = Recent banking activity: { $entries }.
 monopoly-banking-ledger-empty = No banking transactions yet.
 monopoly-voice-command-error = Voice command error: { $reason }.
 monopoly-voice-command-accepted = Voice command accepted: { $intent }.
+monopoly-voice-command-repeat = Repeating last banking response code: { $response }.
 
 # Card engine
 monopoly-card-drawn = { $player } drew a { $deck } card: { $card }.

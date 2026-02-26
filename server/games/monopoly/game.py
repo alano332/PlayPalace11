@@ -3792,15 +3792,39 @@ class MonopolyGame(ActionGuardMixin, Game):
             return
         mono_player: MonopolyPlayer = player  # type: ignore
         parsed = parse_voice_command(text)
-        response_code = parsed.error or parsed.intent or "unknown_command"
-        self.voice_last_response_by_player_id[mono_player.id] = response_code
 
         user = self.get_user(player)
-        if user:
-            if parsed.error:
+        if parsed.error:
+            self.voice_last_response_by_player_id[mono_player.id] = parsed.error
+            if user:
                 user.speak_l("monopoly-voice-command-error", reason=parsed.error)
-            else:
-                user.speak_l("monopoly-voice-command-accepted", intent=parsed.intent)
+            return
+
+        if parsed.intent == "check_balance":
+            self.voice_last_response_by_player_id[mono_player.id] = parsed.intent
+            if user:
+                user.speak_l(
+                    "monopoly-banking-balance-report",
+                    player=mono_player.name,
+                    cash=self._bank_balance(mono_player),
+                )
+            return
+
+        if parsed.intent == "show_recent_ledger":
+            self.voice_last_response_by_player_id[mono_player.id] = parsed.intent
+            self._action_banking_ledger(player, action_id)
+            return
+
+        if parsed.intent == "repeat_last_bank_result":
+            previous = self.voice_last_response_by_player_id.get(mono_player.id, "none")
+            self.voice_last_response_by_player_id[mono_player.id] = parsed.intent
+            if user:
+                user.speak_l("monopoly-voice-command-repeat", response=previous)
+            return
+
+        self.voice_last_response_by_player_id[mono_player.id] = parsed.intent
+        if user:
+            user.speak_l("monopoly-voice-command-accepted", intent=parsed.intent)
 
     def _action_end_turn(self, player: Player, action_id: str) -> None:
         """End current player's turn and advance."""

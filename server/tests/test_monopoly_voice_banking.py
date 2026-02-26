@@ -38,3 +38,18 @@ def test_voice_commands_require_exact_voice_prefix():
 
     game.execute_action(host, "voice_command", input_value="voice: balance")
     assert game.voice_last_response_by_player_id.get(host.id) == "check_balance"
+
+
+def test_voice_balance_and_ledger_and_repeat_flow():
+    game = _start_two_player_game(MonopolyOptions(preset_id="voice_banking"))
+    host = game.current_player
+    assert host is not None
+
+    game.execute_action(host, "voice_command", input_value="voice: balance")
+    assert game.voice_last_response_by_player_id[host.id] == "check_balance"
+
+    game.execute_action(host, "voice_command", input_value="voice: ledger")
+    assert game.voice_last_response_by_player_id[host.id] == "show_recent_ledger"
+
+    game.execute_action(host, "voice_command", input_value="voice: repeat")
+    assert game.voice_last_response_by_player_id[host.id] == "repeat_last_bank_result"

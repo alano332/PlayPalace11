@@ -25,3 +25,15 @@ def test_cheaters_on_start_initializes_profile_and_engine():
     assert game.cheaters_profile is not None
     assert game.cheaters_engine is not None
     assert game.cheaters_profile.anchor_edition_id == "monopoly-e4888"
+
+
+def test_cheaters_blocks_end_turn_before_roll_and_applies_penalty():
+    game = _start_two_player_game(MonopolyOptions(preset_id="cheaters"))
+    host = game.current_player
+    assert host is not None
+    starting = host.cash
+
+    game.execute_action(host, "end_turn")
+
+    assert game.current_player is host
+    assert host.cash < starting

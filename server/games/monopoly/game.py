@@ -2015,6 +2015,19 @@ class MonopolyGame(ActionGuardMixin, Game):
         if reset_doubles:
             self.turn_doubles_count = 0
 
+    def _start_cheaters_turn(self, player: Player | None = None) -> None:
+        """Initialize per-turn cheaters detector state for the active player."""
+        if self.cheaters_engine is None:
+            return
+        turn_player: MonopolyPlayer | None = None
+        if isinstance(player, MonopolyPlayer):
+            turn_player = player
+        elif isinstance(self.current_player, MonopolyPlayer):
+            turn_player = self.current_player
+        if turn_player is None or turn_player.bankrupt:
+            return
+        self.cheaters_engine.on_turn_start(turn_player.id, turn_index=self.turn_index)
+
     def _prepare_next_roll_after_doubles(self, player: MonopolyPlayer) -> None:
         """Unlock another roll for doubles chain turns."""
         self.turn_has_rolled = False
@@ -2270,6 +2283,7 @@ class MonopolyGame(ActionGuardMixin, Game):
         self.set_turn_players(remaining, reset_index=False)
         self.turn_index = old_index % len(remaining)
         self._reset_turn_state()
+        self._start_cheaters_turn(self.current_player)
         self.announce_turn(turn_sound="game_pig/turn.ogg")
         current = self.current_player
         if current and current.is_bot:
@@ -3172,16 +3186,22 @@ class MonopolyGame(ActionGuardMixin, Game):
         error = self.guard_turn_action_enabled(player)
         if error:
             return error
-        if not self.turn_has_rolled:
-            return "monopoly-roll-first"
         if self.turn_pending_purchase_space_id:
             return "monopoly-resolve-property-first"
         if self.turn_can_roll_again:
             return "monopoly-roll-again-required"
+        if self.active_preset_id != "cheaters" and not self.turn_has_rolled:
+            return "monopoly-roll-first"
         return None
 
     def _is_end_turn_hidden(self, player: Player) -> Visibility:
-        """Hide end-turn until player has rolled."""
+        """Hide end-turn when turn state cannot accept an end-turn attempt."""
+        if self.active_preset_id == "cheaters":
+            show_action = not self.turn_pending_purchase_space_id and not self.turn_can_roll_again
+            return self.turn_action_visibility(
+                player,
+                extra_condition=show_action,
+            )
         return self.turn_action_visibility(
             player,
             extra_condition=self.turn_has_rolled
@@ -3900,12 +3920,43 @@ class MonopolyGame(ActionGuardMixin, Game):
 
     def _action_end_turn(self, player: Player, action_id: str) -> None:
         """End current player's turn and advance."""
+        mono_player: MonopolyPlayer = player  # type: ignore
         self.voice_pending_transfer_by_player_id.pop(player.id, None)
+        if self.cheaters_engine is not None and not mono_player.bankrupt:
+            outcome = self.cheaters_engine.on_turn_end_attempt(
+                mono_player.id,
+                context={"turn_has_rolled": self.turn_has_rolled},
+            )
+            if outcome.status in {"block", "penalty"}:
+                penalty_due = max(0, -outcome.cash_delta)
+                paid = 0
+                if penalty_due > 0:
+                    if self._current_liquid_balance(mono_player) < penalty_due:
+                        self._liquidate_assets_for_debt(mono_player, penalty_due)
+                    paid = self._debit_player_to_bank(
+                        mono_player,
+                        penalty_due,
+                        f"cheaters:{outcome.reason_code or 'turn_end'}",
+                        allow_partial=True,
+                    )
+                if outcome.message_key:
+                    self.broadcast_l(
+                        outcome.message_key,
+                        player=mono_player.name,
+                        amount=paid,
+                        cash=mono_player.cash,
+                    )
+                if penalty_due > 0 and paid < penalty_due:
+                    self._declare_bankrupt(mono_player)
+                self._sync_cash_scores()
+                self.rebuild_all_menus()
+                return
         if self._is_junior_preset() and self._check_junior_endgame():
             self.rebuild_all_menus()
             return
         self._reset_turn_state()
         next_player = self.advance_turn(announce=True)
+        self._start_cheaters_turn(next_player)
         if self._is_junior_preset() and self._check_junior_endgame():
             self.rebuild_all_menus()
             return
@@ -4102,6 +4153,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             self._sync_all_player_cash_from_banking()
 
         self._sync_cash_scores()
+        self._start_cheaters_turn(self.current_player)
 
         self.broadcast_l(
             "monopoly-scaffold-started",

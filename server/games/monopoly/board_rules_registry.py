@@ -62,6 +62,206 @@ RULE_PACKS: dict[str, BoardRulePack] = {
             "startup_board_announcement",
         ),
     ),
+    "disney_princesses": BoardRulePack(
+        rule_pack_id="disney_princesses",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "disney_animation": BoardRulePack(
+        rule_pack_id="disney_animation",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "disney_lion_king": BoardRulePack(
+        rule_pack_id="disney_lion_king",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "disney_mickey_friends": BoardRulePack(
+        rule_pack_id="disney_mickey_friends",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "disney_villains": BoardRulePack(
+        rule_pack_id="disney_villains",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "disney_lightyear": BoardRulePack(
+        rule_pack_id="disney_lightyear",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "marvel_80_years": BoardRulePack(
+        rule_pack_id="marvel_80_years",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "marvel_avengers": BoardRulePack(
+        rule_pack_id="marvel_avengers",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "marvel_spider_man": BoardRulePack(
+        rule_pack_id="marvel_spider_man",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "marvel_black_panther_wf": BoardRulePack(
+        rule_pack_id="marvel_black_panther_wf",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "marvel_super_villains": BoardRulePack(
+        rule_pack_id="marvel_super_villains",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "marvel_deadpool": BoardRulePack(
+        rule_pack_id="marvel_deadpool",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "star_wars_40th": BoardRulePack(
+        rule_pack_id="star_wars_40th",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "star_wars_boba_fett": BoardRulePack(
+        rule_pack_id="star_wars_boba_fett",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "star_wars_light_side": BoardRulePack(
+        rule_pack_id="star_wars_light_side",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "star_wars_the_child": BoardRulePack(
+        rule_pack_id="star_wars_the_child",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "star_wars_mandalorian": BoardRulePack(
+        rule_pack_id="star_wars_mandalorian",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "star_wars_complete_saga": BoardRulePack(
+        rule_pack_id="star_wars_complete_saga",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "harry_potter": BoardRulePack(
+        rule_pack_id="harry_potter",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "fortnite": BoardRulePack(
+        rule_pack_id="fortnite",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "stranger_things": BoardRulePack(
+        rule_pack_id="stranger_things",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "jurassic_park": BoardRulePack(
+        rule_pack_id="jurassic_park",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "lord_of_the_rings": BoardRulePack(
+        rule_pack_id="lord_of_the_rings",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "animal_crossing": BoardRulePack(
+        rule_pack_id="animal_crossing",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
+    "barbie": BoardRulePack(
+        rule_pack_id="barbie",
+        status="partial",
+        capability_ids=(
+            "pass_go_credit_override",
+            "startup_board_announcement",
+        ),
+    ),
 }
 RULE_PACK_MODULES = {
     "mario_collectors": mario_collectors,

@@ -9,7 +9,7 @@ from ..base import Game, Player, GameOptions
 from ..registry import register_game
 from ...game_utils.action_guard_mixin import ActionGuardMixin
 from ...game_utils.bot_helper import BotHelper
-from ...game_utils.actions import Action, ActionSet, Visibility, MenuInput
+from ...game_utils.actions import Action, ActionSet, EditboxInput, Visibility, MenuInput
 from ...game_utils.options import MenuOption, option_field
 from ...messages.localization import Localization
 from ...ui.keybinds import KeybindState
@@ -40,6 +40,7 @@ from .presets import (
     get_default_preset_id as _catalog_default_preset_id,
     get_preset as _catalog_get_preset,
 )
+from .voice_commands import parse_voice_command
 
 
 PRESET_LABEL_KEYS = {
@@ -759,6 +760,18 @@ class MonopolyGame(ActionGuardMixin, Game):
         )
         action_set.add(
             Action(
+                id="voice_command",
+                label=Localization.get(locale, "monopoly-voice-command"),
+                handler="_action_voice_command",
+                is_enabled="_is_voice_command_enabled",
+                is_hidden="_is_voice_command_hidden",
+                input_request=EditboxInput(
+                    prompt="monopoly-select-voice-command",
+                ),
+            )
+        )
+        action_set.add(
+            Action(
                 id="end_turn",
                 label=Localization.get(locale, "monopoly-end-turn"),
                 handler="_action_end_turn",
@@ -794,6 +807,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             "shift+b", "Bank transfer", ["banking_transfer"], state=KeybindState.ACTIVE
         )
         self.define_keybind("alt+b", "Bank ledger", ["banking_ledger"], state=KeybindState.ACTIVE)
+        self.define_keybind("v", "Voice command", ["voice_command"], state=KeybindState.ACTIVE)
         self.define_keybind("e", "End turn", ["end_turn"], state=KeybindState.ACTIVE)
         self.define_keybind(
             "p",
@@ -3130,6 +3144,25 @@ class MonopolyGame(ActionGuardMixin, Game):
             extra_condition=self._is_electronic_banking_preset(),
         )
 
+    def _is_voice_command_enabled(self, player: Player) -> str | None:
+        """Enable voice command entry only for voice banking preset."""
+        error = self.guard_turn_action_enabled(player)
+        if error:
+            return error
+        mono_player: MonopolyPlayer = player  # type: ignore
+        if mono_player.bankrupt:
+            return "monopoly-bankrupt-player"
+        if self.active_preset_id != "voice_banking":
+            return "monopoly-action-disabled-for-preset"
+        return None
+
+    def _is_voice_command_hidden(self, player: Player) -> Visibility:
+        """Show voice command entry only during voice banking games."""
+        return self.turn_action_visibility(
+            player,
+            extra_condition=self.active_preset_id == "voice_banking",
+        )
+
     def _is_end_turn_enabled(self, player: Player) -> str | None:
         """Enable end-turn after rolling."""
         error = self.guard_turn_action_enabled(player)
@@ -3752,6 +3785,22 @@ class MonopolyGame(ActionGuardMixin, Game):
             user.speak_l("monopoly-banking-ledger-empty")
             return
         user.speak_l("monopoly-banking-ledger-report", entries=" | ".join(entries))
+
+    def _action_voice_command(self, player: Player, text: str, action_id: str) -> None:
+        """Parse and execute one voice-style command in voice banking preset."""
+        if self.active_preset_id != "voice_banking":
+            return
+        mono_player: MonopolyPlayer = player  # type: ignore
+        parsed = parse_voice_command(text)
+        response_code = parsed.error or parsed.intent or "unknown_command"
+        self.voice_last_response_by_player_id[mono_player.id] = response_code
+
+        user = self.get_user(player)
+        if user:
+            if parsed.error:
+                user.speak_l("monopoly-voice-command-error", reason=parsed.error)
+            else:
+                user.speak_l("monopoly-voice-command-accepted", intent=parsed.intent)
 
     def _action_end_turn(self, player: Player, action_id: str) -> None:
         """End current player's turn and advance."""

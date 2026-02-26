@@ -26,3 +26,15 @@ def test_voice_banking_on_start_initializes_profile_and_accounts():
     assert game.voice_banking_profile.anchor_edition_id == "monopoly-e4816"
     assert game.banking_state is not None
     assert game._bank_balance(game.players[0]) > 0
+
+
+def test_voice_commands_require_exact_voice_prefix():
+    game = _start_two_player_game(MonopolyOptions(preset_id="voice_banking"))
+    host = game.current_player
+    assert host is not None
+
+    game.execute_action(host, "voice_command", input_value="Voice: balance")
+    assert game.voice_last_response_by_player_id.get(host.id) == "missing_prefix"
+
+    game.execute_action(host, "voice_command", input_value="voice: balance")
+    assert game.voice_last_response_by_player_id.get(host.id) == "check_balance"

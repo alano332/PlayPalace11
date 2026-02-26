@@ -36,6 +36,7 @@ monopoly-buy-property = Buy property
 monopoly-banking-balance = Check bank balance
 monopoly-banking-transfer = Transfer funds
 monopoly-banking-ledger = Review bank ledger
+monopoly-voice-command = Voice command
 monopoly-end-turn = End turn
 
 # Turn validation
@@ -83,6 +84,7 @@ monopoly-select-property-sell = Select a property to sell from
 monopoly-select-trade-offer = Select a trade offer
 monopoly-select-auction-bid = Select your auction bid
 monopoly-select-banking-transfer = Select a transfer
+monopoly-select-voice-command = Enter a voice command beginning with voice:
 
 # Additional validation
 monopoly-no-property-to-auction = There is no property to auction right now.
@@ -135,6 +137,8 @@ monopoly-banking-transfer-failed = { $player } bank transfer failed ({ $reason }
 monopoly-banking-balance-report = { $player } bank balance: { $cash }.
 monopoly-banking-ledger-report = Recent banking activity: { $entries }.
 monopoly-banking-ledger-empty = No banking transactions yet.
+monopoly-voice-command-error = Voice command error: { $reason }.
+monopoly-voice-command-accepted = Voice command accepted: { $intent }.
 
 # Card engine
 monopoly-card-drawn = { $player } drew a { $deck } card: { $card }.

@@ -16,6 +16,7 @@ def test_hardware_event_is_inert_when_sound_mode_none():
     result = resolve_hardware_event(event, sound_mode="none")
 
     assert result.status == "ignored"
+    assert result.sound_asset == ""
 
 
 def test_hardware_event_is_emulatable_when_sound_mode_emulated():
@@ -28,6 +29,7 @@ def test_hardware_event_is_emulatable_when_sound_mode_emulated():
     result = resolve_hardware_event(event, sound_mode="emulated")
 
     assert result.status == "emulated"
+    assert result.sound_asset == "game_monopoly_hardware/play_theme_placeholder.ogg"
 
 
 def test_junior_coin_sound_event_is_emulatable_when_sound_mode_emulated():
@@ -41,6 +43,7 @@ def test_junior_coin_sound_event_is_emulatable_when_sound_mode_emulated():
 
     assert result.status == "emulated"
     assert result.details == "junior_coin_sound_powerup"
+    assert result.sound_asset == "game_monopoly_hardware/junior_coin_sound_placeholder.ogg"
 
 
 def test_hardware_event_excludes_pacman_game_unit_emulation():
@@ -53,3 +56,4 @@ def test_hardware_event_excludes_pacman_game_unit_emulation():
     result = resolve_hardware_event(event, sound_mode="emulated")
 
     assert result.status == "ignored"
+    assert result.sound_asset == ""

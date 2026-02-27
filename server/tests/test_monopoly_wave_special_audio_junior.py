@@ -33,26 +33,35 @@ def _force_roll(game: MonopolyGame, monkeypatch) -> None:
 
 def test_junior_board_emits_coin_sound_event_in_emulated_sound_mode(monkeypatch):
     game = _start_board("junior_super_mario", sound_mode="emulated")
+    played: list[str] = []
+    monkeypatch.setattr(game, "play_sound", lambda name, volume=100, pan=0, pitch=100: played.append(name))
 
     _force_roll(game, monkeypatch)
 
     assert game.last_hardware_event_id == "junior_coin_sound_powerup"
     assert game.last_hardware_event_status == "emulated"
+    assert played == ["game_monopoly_hardware/junior_coin_sound_placeholder.ogg"]
 
 
 def test_junior_board_coin_sound_event_is_ignored_in_none_sound_mode(monkeypatch):
     game = _start_board("junior_super_mario", sound_mode="none")
+    played: list[str] = []
+    monkeypatch.setattr(game, "play_sound", lambda name, volume=100, pan=0, pitch=100: played.append(name))
 
     _force_roll(game, monkeypatch)
 
     assert game.last_hardware_event_id == "junior_coin_sound_powerup"
     assert game.last_hardware_event_status == "ignored"
+    assert played == []
 
 
 def test_non_hardware_board_does_not_emit_junior_coin_sound_event(monkeypatch):
     game = _start_board("mario_kart", sound_mode="emulated")
+    played: list[str] = []
+    monkeypatch.setattr(game, "play_sound", lambda name, volume=100, pan=0, pitch=100: played.append(name))
 
     _force_roll(game, monkeypatch)
 
     assert game.last_hardware_event_id == ""
     assert game.last_hardware_event_status == "none"
+    assert played == []

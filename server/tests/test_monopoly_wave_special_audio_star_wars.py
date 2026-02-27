@@ -33,26 +33,35 @@ def _force_chance_draw(game: MonopolyGame, monkeypatch) -> None:
 
 def test_star_wars_board_emits_hardware_event_in_emulated_sound_mode(monkeypatch):
     game = _start_board("star_wars_mandalorian", sound_mode="emulated")
+    played: list[str] = []
+    monkeypatch.setattr(game, "play_sound", lambda name, volume=100, pan=0, pitch=100: played.append(name))
 
     _force_chance_draw(game, monkeypatch)
 
     assert game.last_hardware_event_id == "star_wars_theme"
     assert game.last_hardware_event_status == "emulated"
+    assert played == ["game_monopoly_hardware/star_wars_theme_placeholder.ogg"]
 
 
 def test_star_wars_board_hardware_event_is_ignored_in_none_sound_mode(monkeypatch):
     game = _start_board("star_wars_mandalorian", sound_mode="none")
+    played: list[str] = []
+    monkeypatch.setattr(game, "play_sound", lambda name, volume=100, pan=0, pitch=100: played.append(name))
 
     _force_chance_draw(game, monkeypatch)
 
     assert game.last_hardware_event_id == "star_wars_theme"
     assert game.last_hardware_event_status == "ignored"
+    assert played == []
 
 
 def test_non_hardware_board_does_not_emit_hardware_event(monkeypatch):
     game = _start_board("star_wars_40th", sound_mode="emulated")
+    played: list[str] = []
+    monkeypatch.setattr(game, "play_sound", lambda name, volume=100, pan=0, pitch=100: played.append(name))
 
     _force_chance_draw(game, monkeypatch)
 
     assert game.last_hardware_event_id == ""
     assert game.last_hardware_event_status == "none"
+    assert played == []

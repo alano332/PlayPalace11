@@ -32,6 +32,11 @@ Head: tracked via git history on `monopoly`
   - Event payload records `power_up_die` and resolved no-sound `outcome` for future emulated-sound parity work.
 - Expanded hardware resolver support:
   - `server/games/monopoly/hardware_emulation.py` now recognizes `junior_coin_sound_powerup`.
+  - Emulated events now include placeholder client sound asset paths:
+    - `play_theme` -> `game_monopoly_hardware/play_theme_placeholder.ogg`
+    - `star_wars_theme` -> `game_monopoly_hardware/star_wars_theme_placeholder.ogg`
+    - `junior_coin_sound_powerup` -> `game_monopoly_hardware/junior_coin_sound_placeholder.ogg`
+  - Placeholder provenance is tracked in `client/sounds/game_monopoly_hardware/README.md` and all entries are flagged for replacement with original captures later.
 - Added verification coverage:
   - `server/tests/test_monopoly_wave_special_audio_junior.py`
   - Expanded `server/tests/test_monopoly_hardware_emulation.py` with Junior event emulation assertions.

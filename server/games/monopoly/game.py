@@ -2570,6 +2570,8 @@ class MonopolyGame(ActionGuardMixin, Game):
         self.last_hardware_event_id = event_id
         self.last_hardware_event_status = result.status
         self.last_hardware_event_details = result.details
+        if result.status == "emulated" and result.sound_asset:
+            self.play_sound(result.sound_asset)
         return result
 
     def _resolve_card_hardware_event_id(self, deck_type: str) -> str | None:

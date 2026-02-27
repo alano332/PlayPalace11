@@ -10,6 +10,12 @@ SUPPORTED_EVENT_IDS = {
     "junior_coin_sound_powerup",
 }
 
+HARDWARE_EVENT_SOUND_ASSETS = {
+    "play_theme": "game_monopoly_hardware/play_theme_placeholder.ogg",
+    "star_wars_theme": "game_monopoly_hardware/star_wars_theme_placeholder.ogg",
+    "junior_coin_sound_powerup": "game_monopoly_hardware/junior_coin_sound_placeholder.ogg",
+}
+
 
 @dataclass(frozen=True)
 class HardwareEvent:
@@ -26,6 +32,7 @@ class HardwareResult:
 
     status: str
     details: str = ""
+    sound_asset: str = ""
 
 
 def resolve_hardware_event(event: HardwareEvent, sound_mode: str) -> HardwareResult:
@@ -40,4 +47,8 @@ def resolve_hardware_event(event: HardwareEvent, sound_mode: str) -> HardwareRes
     if event.event_id not in SUPPORTED_EVENT_IDS:
         return HardwareResult(status="ignored", details="unsupported_event")
 
-    return HardwareResult(status="emulated", details=event.event_id)
+    return HardwareResult(
+        status="emulated",
+        details=event.event_id,
+        sound_asset=HARDWARE_EVENT_SOUND_ASSETS.get(event.event_id, ""),
+    )

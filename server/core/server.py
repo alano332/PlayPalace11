@@ -39,6 +39,7 @@ from .users.base import MenuItem, EscapeBehavior, TrustLevel
 from .users.preferences import UserPreferences, DiceKeepingStyle
 from ..games.registry import GameRegistry, get_game_class
 from ..messages.localization import Localization
+from .ui.common_flows import show_yes_no_menu
 from ..network.packet_models import CLIENT_TO_SERVER_PACKET_ADAPTER
 
 
@@ -1945,17 +1946,9 @@ class Server(AdministrationMixin):
 
     def _show_logout_confirm_menu(self, user: NetworkUser) -> None:
         """Show confirmation menu for logging out."""
+        question = Localization.get(user.locale, "confirm-logout")
         user.speak_l("confirm-logout", buffer="activity")
-        items = [
-            MenuItem(text=Localization.get(user.locale, "confirm-yes"), id="yes"),
-            MenuItem(text=Localization.get(user.locale, "confirm-no"), id="no"),
-        ]
-        user.show_menu(
-            "logout_confirm_menu",
-            items,
-            multiletter=True,
-            escape_behavior=EscapeBehavior.SELECT_LAST,
-        )
+        show_yes_no_menu(user, "logout_confirm_menu", question)
         self._user_states[user.username] = {"menu": "logout_confirm_menu"}
 
     async def _handle_logout_confirm_selection(

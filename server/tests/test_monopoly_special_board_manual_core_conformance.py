@@ -12,8 +12,8 @@ ALL_SPECIAL_BOARD_IDS = sorted(
 
 
 @pytest.mark.parametrize("board_id", ALL_SPECIAL_BOARD_IDS)
-def test_special_board_manual_core_or_near_full(board_id: str):
+def test_special_board_reaches_manual_core(board_id: str):
     profile = get_board_parity_profile(board_id)
 
     assert profile is not None
-    assert profile.fidelity_status in {"manual_core", "near_full"}
+    assert profile.fidelity_status == "manual_core"

@@ -179,6 +179,23 @@ def test_special_board_rules_include_extraction_seed_metadata() -> None:
             },
         ),
         (
+            "star_wars_saga",
+            {
+                "chance_1": "Sith",
+                "chance_2": "Sith",
+                "chance_3": "Sith",
+                "community_chest_1": "Jedi",
+                "community_chest_2": "Jedi",
+                "community_chest_3": "Jedi",
+                "income_tax": "Trade Blockade",
+                "luxury_tax": "Bounty",
+            },
+            {
+                "chance": "Sith",
+                "community_chest": "Jedi",
+            },
+        ),
+        (
             "star_wars_solo",
             {
                 "chance_1": "Scoundrel",
@@ -320,6 +337,36 @@ def test_star_wars_seed_applies_manual_action_space_labels(
             {
                 "chance": "The Shield",
                 "community_chest": "The Flag Smashers",
+            },
+        ),
+        (
+            "marvel_avengers_legacy",
+            {
+                "chance_1": "S.H.I.E.L.D.",
+                "chance_2": "S.H.I.E.L.D.",
+                "chance_3": "S.H.I.E.L.D.",
+                "community_chest_1": "Villains",
+                "community_chest_2": "Villains",
+                "community_chest_3": "Villains",
+            },
+            {
+                "chance": "S.H.I.E.L.D.",
+                "community_chest": "Villains",
+            },
+        ),
+        (
+            "marvel_flip",
+            {
+                "chance_1": "Event",
+                "chance_2": "Event",
+                "chance_3": "Event",
+                "community_chest_1": "Team-Up",
+                "community_chest_2": "Team-Up",
+                "community_chest_3": "Team-Up",
+            },
+            {
+                "chance": "Event",
+                "community_chest": "Team-Up",
             },
         ),
         (
@@ -474,6 +521,23 @@ def test_marvel_seed_applies_manual_action_labels_and_deck_metadata(
             },
         ),
         (
+            "disney_the_edition",
+            {
+                "chance_1": "Show Time",
+                "chance_2": "Show Time",
+                "chance_3": "Show Time",
+                "community_chest_1": "Magic Moments",
+                "community_chest_2": "Magic Moments",
+                "community_chest_3": "Magic Moments",
+                "income_tax": "Scrooge McDuck's Tax",
+                "luxury_tax": "Prince John's Tax",
+            },
+            {
+                "chance": "Show Time",
+                "community_chest": "Magic Moments",
+            },
+        ),
+        (
             "disney_star_wars_dark_side",
             {
                 "chance_1": "The Empire",
@@ -621,6 +685,7 @@ def test_mario_seed_applies_manual_action_labels_and_deck_metadata(
         ("junior_super_mario", "Chance", "Chance"),
         ("jurassic_park", "Impact Tremor", "Cold Storage"),
         ("lord_of_the_rings", "Quest", "Quest"),
+        ("lord_of_the_rings_trilogy", "People", "Event"),
         ("pokemon", "Adventure", "Challenge"),
         ("stranger_things", "Walkie-Talkie", "Blinking Lights"),
         ("stranger_things_collectors", "Transmission", "Upside Down"),
@@ -671,7 +736,7 @@ def test_long_tail_seed_applies_manual_tax_labels(
     assert by_space_id.get("luxury_tax") == expected_luxury
 
 
-def test_remaining_marvel_boards_without_deck_labels_are_known_exceptions() -> None:
+def test_all_marvel_boards_have_seeded_deck_labels() -> None:
     anchor_rows = _load_json(ANCHOR_INDEX_PATH)
     marvel_board_ids = sorted(
         row["board_id"]
@@ -683,10 +748,10 @@ def test_remaining_marvel_boards_without_deck_labels_are_known_exceptions() -> N
         rule_set = load_manual_rule_set(board_id)
         if not isinstance(rule_set.mechanics.get("decks"), dict):
             missing_deck_ids.append(board_id)
-    assert missing_deck_ids == ["marvel_avengers_legacy", "marvel_flip"]
+    assert missing_deck_ids == []
 
 
-def test_remaining_disney_boards_without_deck_labels_are_known_exceptions() -> None:
+def test_all_disney_boards_have_seeded_deck_labels() -> None:
     anchor_rows = _load_json(ANCHOR_INDEX_PATH)
     disney_board_ids = sorted(
         row["board_id"]
@@ -698,7 +763,7 @@ def test_remaining_disney_boards_without_deck_labels_are_known_exceptions() -> N
         rule_set = load_manual_rule_set(board_id)
         if not isinstance(rule_set.mechanics.get("decks"), dict):
             missing_deck_ids.append(board_id)
-    assert missing_deck_ids == ["disney_the_edition"]
+    assert missing_deck_ids == []
 
 
 def test_all_mario_boards_have_seeded_deck_labels() -> None:
@@ -716,7 +781,7 @@ def test_all_mario_boards_have_seeded_deck_labels() -> None:
     assert missing_deck_ids == []
 
 
-def test_remaining_special_boards_without_deck_labels_are_known_exceptions() -> None:
+def test_all_special_boards_have_seeded_deck_labels() -> None:
     anchor_rows = _load_json(ANCHOR_INDEX_PATH)
     board_ids = sorted(
         row["board_id"]
@@ -728,10 +793,4 @@ def test_remaining_special_boards_without_deck_labels_are_known_exceptions() -> 
         rule_set = load_manual_rule_set(board_id)
         if not isinstance(rule_set.mechanics.get("decks"), dict):
             missing_deck_ids.append(board_id)
-    assert missing_deck_ids == [
-        "disney_the_edition",
-        "lord_of_the_rings_trilogy",
-        "marvel_avengers_legacy",
-        "marvel_flip",
-        "star_wars_saga",
-    ]
+    assert missing_deck_ids == []

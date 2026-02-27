@@ -51,6 +51,22 @@ MARVEL_ACTION_SPACE_NAME_OVERRIDES: dict[str, dict[str, str]] = {
         "community_chest_2": "The Flag Smashers",
         "community_chest_3": "The Flag Smashers",
     },
+    "marvel_avengers_legacy": {
+        "chance_1": "S.H.I.E.L.D.",
+        "chance_2": "S.H.I.E.L.D.",
+        "chance_3": "S.H.I.E.L.D.",
+        "community_chest_1": "Villains",
+        "community_chest_2": "Villains",
+        "community_chest_3": "Villains",
+    },
+    "marvel_flip": {
+        "chance_1": "Event",
+        "chance_2": "Event",
+        "chance_3": "Event",
+        "community_chest_1": "Team-Up",
+        "community_chest_2": "Team-Up",
+        "community_chest_3": "Team-Up",
+    },
     "marvel_spider_man": {
         "chance_1": "Daily Bugle",
         "chance_2": "Daily Bugle",
@@ -89,6 +105,14 @@ MARVEL_DECK_METADATA_OVERRIDES: dict[str, dict[str, str]] = {
     "marvel_falcon_winter_soldier": {
         "chance": "The Shield",
         "community_chest": "The Flag Smashers",
+    },
+    "marvel_avengers_legacy": {
+        "chance": "S.H.I.E.L.D.",
+        "community_chest": "Villains",
+    },
+    "marvel_flip": {
+        "chance": "Event",
+        "community_chest": "Team-Up",
     },
     "marvel_spider_man": {
         "chance": "Daily Bugle",
@@ -159,6 +183,16 @@ DISNEY_ACTION_SPACE_NAME_OVERRIDES: dict[str, dict[str, str]] = {
         "income_tax": "Imposto",
         "luxury_tax": "Imposto",
     },
+    "disney_the_edition": {
+        "chance_1": "Show Time",
+        "chance_2": "Show Time",
+        "chance_3": "Show Time",
+        "community_chest_1": "Magic Moments",
+        "community_chest_2": "Magic Moments",
+        "community_chest_3": "Magic Moments",
+        "income_tax": "Scrooge McDuck's Tax",
+        "luxury_tax": "Prince John's Tax",
+    },
     "disney_star_wars_dark_side": {
         "chance_1": "The Empire",
         "chance_2": "The Empire",
@@ -203,6 +237,10 @@ DISNEY_DECK_METADATA_OVERRIDES: dict[str, dict[str, str]] = {
     "disney_princesses": {
         "chance": "Sorte",
         "community_chest": "Magia",
+    },
+    "disney_the_edition": {
+        "chance": "Show Time",
+        "community_chest": "Magic Moments",
     },
     "disney_star_wars_dark_side": {
         "chance": "The Empire",
@@ -287,6 +325,16 @@ STAR_WARS_ACTION_SPACE_NAME_OVERRIDES: dict[str, dict[str, str]] = {
         "income_tax": "Imperial Credits",
         "luxury_tax": "Imperial Advance",
     },
+    "star_wars_saga": {
+        "chance_1": "Sith",
+        "chance_2": "Sith",
+        "chance_3": "Sith",
+        "community_chest_1": "Jedi",
+        "community_chest_2": "Jedi",
+        "community_chest_3": "Jedi",
+        "income_tax": "Trade Blockade",
+        "luxury_tax": "Bounty",
+    },
     "star_wars_solo": {
         "chance_1": "Scoundrel",
         "chance_2": "Scoundrel",
@@ -337,6 +385,10 @@ STAR_WARS_DECK_METADATA_OVERRIDES: dict[str, dict[str, str]] = {
     "star_wars_mandalorian_s2": {
         "chance": "Signet",
         "community_chest": "Hyperspace Jump",
+    },
+    "star_wars_saga": {
+        "chance": "Sith",
+        "community_chest": "Jedi",
     },
     "star_wars_solo": {
         "chance": "Scoundrel",
@@ -513,6 +565,14 @@ LONG_TAIL_ACTION_SPACE_NAME_OVERRIDES: dict[str, dict[str, str]] = {
         "community_chest_2": "Quest",
         "community_chest_3": "Quest",
     },
+    "lord_of_the_rings_trilogy": {
+        "chance_1": "People",
+        "chance_2": "People",
+        "chance_3": "People",
+        "community_chest_1": "Event",
+        "community_chest_2": "Event",
+        "community_chest_3": "Event",
+    },
     "pokemon": {
         "chance_1": "Adventure",
         "chance_2": "Adventure",
@@ -623,6 +683,10 @@ LONG_TAIL_DECK_METADATA_OVERRIDES: dict[str, dict[str, str]] = {
     "lord_of_the_rings": {
         "chance": "Quest",
         "community_chest": "Quest",
+    },
+    "lord_of_the_rings_trilogy": {
+        "chance": "People",
+        "community_chest": "Event",
     },
     "pokemon": {
         "chance": "Adventure",

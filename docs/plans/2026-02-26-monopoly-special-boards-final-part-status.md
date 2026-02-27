@@ -1,8 +1,8 @@
 # Monopoly Special Boards Final-Part Status and Remaining Work
 
-Date: 2026-02-26  
+Date: 2026-02-27  
 Branch: `monopoly`  
-Head: `674178c`
+Head: `98c6150` (plus working-tree updates)
 
 ## Current Snapshot
 
@@ -14,12 +14,12 @@ Head: `674178c`
 - Boards with hardware capability flags: `junior_super_mario`, `star_wars_mandalorian`
 - Pac-Man game-unit behavior remains intentionally out of scope.
 
-## Verification Evidence (2026-02-26)
+## Verification Evidence (2026-02-27)
 
 - `cd server && ../.venv/bin/pytest tests/test_monopoly_manual_rule_payload_completeness.py -v`
   - Result: `55 passed`
 - `cd server && ../.venv/bin/pytest -k monopoly -q`
-  - Result: `1140 passed, 598 deselected`
+  - Result: `1145 passed, 598 deselected`
 
 ## New Progress: Manual Source Extraction (All Special Boards)
 
@@ -60,15 +60,14 @@ Head: `674178c`
 - Manual-extraction seed now covers the full Marvel board set with explicit action/deck labels where extract confidence is high:
   - `marvel_80_years`: `Catalog` + tax labels `Infinity Gauntlet`, `Cable & Deadpool`
   - `marvel_avengers`: `Stark Industries`, `Infinity Gauntlet`, tax labels `Ultron`, `Hela`
+  - `marvel_avengers_legacy`: `S.H.I.E.L.D.`, `Villains`
   - `marvel_black_panther_wf`: `Wakandan`, `Talokanil`
   - `marvel_deadpool`: `Dumb Luck`, `Pouches`
   - `marvel_eternals`: `Uni-Mind`, `Arishem's Judgement`
   - `marvel_falcon_winter_soldier`: `The Shield`, `The Flag Smashers`
+  - `marvel_flip`: `Event`, `Team-Up`
   - `marvel_spider_man`: `Daily Bugle`, `Spider-Sense`
   - `marvel_super_villains`: `Chance`, `Reshape the Universe`
-- Known extraction-limited exceptions that remain on baseline labels pending stronger source parsing:
-  - `marvel_avengers_legacy`
-  - `marvel_flip` (currently `strings_fallback` extraction mode)
 
 ## New Progress: Disney Set Coverage
 
@@ -79,10 +78,9 @@ Head: `674178c`
   - `disney_lion_king`: `Destiny`; tax labels `Water Fowl`, `Wild Fire`
   - `disney_mickey_friends`: `Friendship`, `Magic Moments`; tax labels `Hot Dog Snack Break`, `Popcorn Snack Break`
   - `disney_princesses`: `Sorte`, `Magia`; tax labels `Imposto`
+  - `disney_the_edition`: `Show Time`, `Magic Moments`; tax labels `Scrooge McDuck's Tax`, `Prince John's Tax`
   - `disney_star_wars_dark_side`: `The Empire`, `The Dark Side`; tax labels `Rebel Escape`, `Rebel Attack`
   - `disney_villains`: `Chance`, `Poison Apple`
-- Known extraction-limited Disney exception:
-  - `disney_the_edition`
 
 ## New Progress: Long-Tail Set Coverage
 
@@ -100,6 +98,7 @@ Head: `674178c`
   - `junior_super_mario`: `Chance`
   - `jurassic_park`: `Impact Tremor`, `Cold Storage`
   - `lord_of_the_rings`: `Quest`
+  - `lord_of_the_rings_trilogy`: `People`, `Event`
   - `pokemon`: `Adventure`, `Challenge`
   - `stranger_things`: `Walkie-Talkie`, `Blinking Lights`
   - `stranger_things_collectors`: `Transmission`, `Upside Down`
@@ -110,9 +109,9 @@ Head: `674178c`
 - Expanded Star Wars label/deck coverage beyond the original 4 boards:
   - `star_wars_40th`, `star_wars_boba_fett`, `star_wars_complete_saga`,
     `star_wars_light_side`, `star_wars_solo`, `star_wars_the_child`.
-- Remaining boards without deck-label seeding are now reduced to 5:
-  - `disney_the_edition`, `lord_of_the_rings_trilogy`,
-    `marvel_avengers_legacy`, `marvel_flip`, `star_wars_saga`
+- Final Star Wars Saga labels are seeded from manual OCR:
+  - `star_wars_saga`: `Sith`, `Jedi`; tax labels `Trade Blockade`, `Bounty`
+- Remaining boards without deck-label seeding: `0` (all `55` covered)
 
 ## What Has Been Done (Whole Rollout to Date)
 
@@ -146,7 +145,7 @@ Move the remaining `50` `near_full` boards to true `manual_core` by replacing sy
 ## Remaining Work
 
 1. Manual source acquisition and indexing
-   - Improve source quality for low-text extractions (`disney_the_edition`, `lord_of_the_rings_trilogy`, `marvel_avengers_legacy`, `star_wars_saga`) where current extracts are too sparse for reliable card-by-card promotion.
+   - Continue improving source quality for image-heavy manuals for card-by-card promotion and exact effect text extraction.
    - Continue tracking source path/checksum/edition mapping for reproducibility.
 2. PDF extraction pipeline
    - Add a reproducible parser/OCR flow for image-heavy manuals and board-art-heavy PDFs.
@@ -155,7 +154,7 @@ Move the remaining `50` `near_full` boards to true `manual_core` by replacing sy
 3. Family-by-family manual-auth pass
    - Priority:
      1. Long-tail families with newly seeded extraction metadata (animal, barbie, black, deadpool, fortnite, game, ghostbusters, harry, jurassic, lord, pokemon, stranger, toy, transformers)
-     2. Remaining extraction-limited exceptions in Marvel/Star/Disney
+     2. Marvel/Star/Disney card-by-card effect verification against manuals
    - For each board: replace placeholders, update citations, then promote to `manual_core`.
 4. Hardware and sound readiness continuity
    - Keep `hardware_capability_ids` aligned with manual evidence.
@@ -167,8 +166,8 @@ Move the remaining `50` `near_full` boards to true `manual_core` by replacing sy
 
 ## Current Blockers
 
-- `strings_fallback` extraction quality for `marvel_flip` is lower fidelity than structured PDF extraction.
-- Several extracted manuals are image-heavy or layout-noisy, so card-by-card deterministic parsing still needs OCR/normalization work.
+- No blockers remain for action/deck/tax label seeding coverage.
+- Remaining blocker is card-by-card deterministic extraction from image-heavy manuals.
 
 ## Definition of Done for the Final Part
 

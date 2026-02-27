@@ -218,3 +218,52 @@ def test_disney_marvel_manual_rule_payload_includes_partial_literal_card_text_fo
     literal_text = row.get("text")
     assert isinstance(literal_text, str)
     assert "Do not pass GO." in literal_text
+
+
+@pytest.mark.parametrize(
+    ("board_id", "deck_type", "card_id", "expected_evidence_substring"),
+    [
+        (
+            "marvel_avengers_legacy",
+            "chance",
+            "advance_to_go",
+            "Chance and Community Chest cards",
+        ),
+        (
+            "marvel_avengers_legacy",
+            "community_chest",
+            "get_out_of_jail_free",
+            "How do I get out of Jail?",
+        ),
+        (
+            "marvel_flip",
+            "chance",
+            "advance_to_go",
+            "Team-Up Cards",
+        ),
+        (
+            "marvel_flip",
+            "community_chest",
+            "get_out_of_jail_free",
+            "pay BP or roll",
+        ),
+    ],
+)
+def test_disney_marvel_manual_rule_payload_marks_unobserved_literal_card_text_for_remaining_marvel_boards(
+    board_id: str,
+    deck_type: str,
+    card_id: str,
+    expected_evidence_substring: str,
+) -> None:
+    rule_set = load_manual_rule_set(board_id)
+    deck_rows = rule_set.cards.get(deck_type, [])
+    row = next(row for row in deck_rows if row.get("id") == card_id)
+
+    assert row.get("text") is None
+    assert row.get("text_status") == "not_observed_in_available_manual_sources"
+    note = row.get("text_note")
+    assert isinstance(note, str)
+    assert "Canonical compatibility card id retained" in note
+    evidence = row.get("text_evidence")
+    assert isinstance(evidence, str)
+    assert expected_evidence_substring in evidence

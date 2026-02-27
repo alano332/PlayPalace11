@@ -995,7 +995,10 @@
           "type": "move_absolute",
           "position": 0,
           "collect_pass_go": true
-        }
+        },
+        "text_status": "not_observed_in_available_manual_sources",
+        "text_note": "Canonical compatibility card id retained for engine contracts; official F9931 manual text surfaces Event and Team-Up decks instead of a literal card line for this id.",
+        "text_evidence": "16 Location Cards * 16 Team-Up Cards * 16 Event Cards"
       },
       {
         "id": "bank_dividend_50",
@@ -1066,7 +1069,10 @@
       },
       {
         "id": "get_out_of_jail_free",
-        "text_key": "monopoly-card-get-out-of-jail"
+        "text_key": "monopoly-card-get-out-of-jail",
+        "text_status": "not_observed_in_available_manual_sources",
+        "text_note": "Canonical compatibility card id retained for engine contracts; official F9931 jail rules describe pay-or-roll release flow and do not list a get-out-of-jail-free card line.",
+        "text_evidence": "You have 2 options: pay BP or roll the numbered die to get out of Jail."
       }
     ]
   },

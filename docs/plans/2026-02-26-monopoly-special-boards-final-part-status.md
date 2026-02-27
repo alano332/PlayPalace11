@@ -131,6 +131,9 @@ Head: `98c6150` (plus working-tree updates)
   - Disney mirror/manual fallback seeding: `disney_the_edition` (`advance_to_go`, `go_to_jail`, `get_out_of_jail_free`)
     - Source mirror used for literal text recovery: `https://www.manualsdir.com/manuals/613579/hasbro-monopoly-disney-edition-2010.html`
   - Additional partial seeding: `marvel_avengers_legacy`, `marvel_flip` (`go_to_jail` canonical card text in both decks)
+  - Remaining canonical literal card ids on `marvel_avengers_legacy` and `marvel_flip` are now explicitly marked as `not_observed_in_available_manual_sources` with manual evidence notes:
+    - `chance.advance_to_go`
+    - `community_chest.get_out_of_jail_free`
 - Remaining boards without deck-label seeding: `0` (all `55` covered)
 
 ## What Has Been Done (Whole Rollout to Date)
@@ -190,9 +193,7 @@ Move the remaining `50` `near_full` boards to true `manual_core` by replacing sy
 - No blockers remain for action/deck/tax label seeding coverage.
 - Remaining blocker is card-by-card deterministic extraction from image-heavy manuals.
 - Targeted extractor retry for `disney_the_edition` currently returns `<urlopen error [Errno 16] Device or resource busy>` in this environment; literals were seeded from alternate manual mirror text pending improved direct extraction.
-- Literal card text seeding still pending deterministic/manual-auth capture for:
-  - Remaining canonical literals on `marvel_avengers_legacy` (`advance_to_go`, `get_out_of_jail_free`)
-  - Remaining canonical literals on `marvel_flip` (`advance_to_go`, `get_out_of_jail_free`)
+- Manual-source re-checks for `marvel_avengers_legacy` and `marvel_flip` (official PDFs plus OCR retries and alternate locale/manual pages) did not surface deterministic literal card text for canonical compatibility ids `advance_to_go` and `get_out_of_jail_free`; payloads now carry explicit `text_status` + evidence metadata for these ids instead of synthetic literal text.
 
 ## Definition of Done for the Final Part
 

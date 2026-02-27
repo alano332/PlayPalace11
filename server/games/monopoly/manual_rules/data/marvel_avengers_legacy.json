@@ -995,7 +995,10 @@
           "type": "move_absolute",
           "position": 0,
           "collect_pass_go": true
-        }
+        },
+        "text_status": "not_observed_in_available_manual_sources",
+        "text_note": "Canonical compatibility card id retained for engine contracts; no literal card line for this id was recovered from official B0323 manuals.",
+        "text_evidence": "Collect power by passing GO and from Chance and Community Chest cards."
       },
       {
         "id": "bank_dividend_50",
@@ -1066,7 +1069,10 @@
       },
       {
         "id": "get_out_of_jail_free",
-        "text_key": "monopoly-card-get-out-of-jail"
+        "text_key": "monopoly-card-get-out-of-jail",
+        "text_status": "not_observed_in_available_manual_sources",
+        "text_note": "Canonical compatibility card id retained for engine contracts; no literal card line for this id was recovered from official B0323 manuals.",
+        "text_evidence": "How do I get out of Jail?"
       }
     ]
   },

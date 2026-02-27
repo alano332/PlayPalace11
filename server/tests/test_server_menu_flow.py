@@ -259,6 +259,7 @@ async def test_menu_selection_is_remembered_for_return_focus(server, monkeypatch
     user = make_network_user("FocusUser", locale="en")
     server._users[user.username] = user
     server._tables = SimpleNamespace(find_user_table=lambda username: None)
+    server._db = SimpleNamespace(update_user_preferences=lambda *a: None)
     monkeypatch.setattr(
         "server.core.ui.common_flows.show_language_menu", lambda *a, **kw: True
     )

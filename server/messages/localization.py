@@ -288,6 +288,25 @@ class Localization:
         return format_list(items, style="or", locale=locale)
 
     @classmethod
+    @classmethod
+    def get_available_locale_codes(cls) -> list[str]:
+        """Return sorted language codes from the locales directory.
+
+        Unlike :meth:`get_available_languages`, this only scans the
+        filesystem and never triggers bundle compilation, so it is safe
+        to call during warmup.
+        """
+        if cls._locales_dir is None:
+            raise RuntimeError(
+                "Localization not initialized. Call Localization.init() first."
+            )
+        return sorted(
+            locale_dir.name
+            for locale_dir in cls._locales_dir.iterdir()
+            if locale_dir.is_dir()
+        )
+
+    @classmethod
     def get_available_languages(
         cls, display_language: str = "", *, fallback: str = "en"
     ) -> dict[str, str]:

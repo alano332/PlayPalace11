@@ -40,6 +40,7 @@ from .users.preferences import UserPreferences, DiceKeepingStyle
 from ..games.registry import GameRegistry, get_game_class
 from ..messages.localization import Localization
 from .ui.common_flows import show_yes_no_menu
+from .documents.manager import DocumentManager
 from ..network.packet_models import CLIENT_TO_SERVER_PACKET_ADAPTER
 
 
@@ -94,6 +95,7 @@ _MODULE_DIR = Path(__file__).parent.parent
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _VAR_SERVER_DIR = _REPO_ROOT / "var" / "server"
 _DEFAULT_LOCALES_DIR = _MODULE_DIR / "locales"
+_DOCUMENTS_DIR = _MODULE_DIR / "documents"
 
 
 def _ensure_var_server_dir() -> Path:
@@ -155,6 +157,9 @@ class Server(AdministrationMixin):
         # User tracking
         self._users: dict[str, NetworkUser] = {}  # username -> NetworkUser
         self._user_states: dict[str, dict] = {}  # username -> UI state
+
+        # Document manager
+        self._documents = DocumentManager(_DOCUMENTS_DIR)
 
         # Virtual bot manager
         self._virtual_bots = VirtualBotManager(self)
@@ -238,6 +243,10 @@ class Server(AdministrationMixin):
 
         # Load existing tables
         self._load_tables()
+
+        # Load documents
+        doc_count = self._documents.load()
+        print(f"Loaded {doc_count} documents.")
 
         # Initialize virtual bots
         try:
@@ -1069,6 +1078,7 @@ class Server(AdministrationMixin):
             existing_user.set_approved(is_approved)
             existing_user.set_client_type(client.client_type)
             existing_user.set_platform(client.platform)
+            existing_user.set_fluent_languages(user_record.fluent_languages)
             return existing_user, False
 
         client.username = username
@@ -1081,6 +1091,7 @@ class Server(AdministrationMixin):
             preferences=preferences,
             trust_level=trust_level,
             approved=is_approved,
+            fluent_languages=user_record.fluent_languages,
         )
         user.set_client_type(client.client_type)
         user.set_platform(client.platform)
@@ -1652,6 +1663,14 @@ class Server(AdministrationMixin):
             ),
             MenuItem(
                 text=Localization.get(
+                    user.locale,
+                    "fluent-languages-option",
+                    count=len(user.fluent_languages),
+                ),
+                id="fluent_languages",
+            ),
+            MenuItem(
+                text=Localization.get(
                     user.locale, "turn-sound-option", status=turn_sound_status
                 ),
                 id="turn_sound",
@@ -1980,6 +1999,8 @@ class Server(AdministrationMixin):
                 self._user_states[user.username] = {"menu": "language_menu"}
             else:
                 self._show_options_menu(user)
+        elif selection_id == "fluent_languages":
+            self._show_fluent_languages_menu(user)
         elif selection_id == "turn_sound":
             # Toggle turn sound
             prefs = user.preferences
@@ -2002,6 +2023,43 @@ class Server(AdministrationMixin):
             self._show_dice_keeping_style_menu(user)
         elif selection_id == "back":
             self._show_main_menu(user)
+
+    def _show_fluent_languages_menu(self, user: NetworkUser) -> None:
+        """Show fluent languages toggle menu."""
+        if self._is_localization_warmup_active():
+            self._notify_localization_in_progress(user)
+            self._show_options_menu(user)
+            return
+
+        from server.core.ui.common_flows import show_language_menu
+
+        on_label = Localization.get(user.locale, "option-on")
+        off_label = Localization.get(user.locale, "option-off")
+        status_labels = {
+            code: on_label if code in user.fluent_languages else off_label
+            for code in Localization.get_available_locale_codes()
+        }
+        if show_language_menu(
+            user,
+            highlight_active_locale=False,
+            status_labels=status_labels,
+            on_select=self._toggle_fluent_language,
+            on_back=lambda u: self._show_options_menu(u),
+        ):
+            self._user_states[user.username] = {"menu": "language_menu"}
+        else:
+            self._show_options_menu(user)
+
+    async def _toggle_fluent_language(self, user: NetworkUser, lang_code: str) -> None:
+        """Toggle a language in the user's fluent languages list."""
+        if lang_code in user.fluent_languages:
+            user.fluent_languages.remove(lang_code)
+            user.play_sound("checkbox_list_off.wav")
+        else:
+            user.fluent_languages.append(lang_code)
+            user.play_sound("checkbox_list_on.wav")
+        self._db.set_user_fluent_languages(user.username, user.fluent_languages)
+        self._show_fluent_languages_menu(user)
 
     def _show_dice_keeping_style_menu(self, user: NetworkUser) -> None:
         """Show dice keeping style selection menu."""

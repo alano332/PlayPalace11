@@ -15,6 +15,7 @@ class DummyDB:
     def __init__(self):
         self.preferences_updates: list[tuple[str, str]] = []
         self.locale_updates: list[tuple[str, str]] = []
+        self.fluent_languages_updates: list[tuple[str, list[str]]] = []
 
     def update_user_preferences(self, username: str, prefs_json: str) -> None:
         self.preferences_updates.append((username, prefs_json))
@@ -22,12 +23,16 @@ class DummyDB:
     def update_user_locale(self, username: str, locale: str) -> None:
         self.locale_updates.append((username, locale))
 
+    def set_user_fluent_languages(self, username: str, languages: list[str]) -> None:
+        self.fluent_languages_updates.append((username, list(languages)))
+
 
 class DummyUser:
     def __init__(self, username: str, locale: str = "en"):
         self.username = username
         self.locale = locale
         self.preferences = UserPreferences()
+        self.fluent_languages: list[str] = []
         self.spoken: list[tuple[str, dict]] = []
         self.menu_id: str | None = None
         self.music_played: list[str] = []
@@ -69,6 +74,10 @@ def server(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "server.messages.localization.Localization.get_available_languages",
         lambda _locale="en", fallback="en": {"en": "English", "es": "Español"},
+    )
+    monkeypatch.setattr(
+        "server.messages.localization.Localization.get_available_locale_codes",
+        lambda: ["en", "es"],
     )
     return srv
 
@@ -161,3 +170,70 @@ def test_show_language_menu_warmup_in_progress(server, monkeypatch):
 
     assert result is False
     assert user.spoken[-1][0] == "localization-in-progress-try-again"
+
+
+@pytest.mark.asyncio
+async def test_fluent_languages_warmup_in_progress(server, monkeypatch):
+    user = DummyUser("alice")
+    shown = {}
+    monkeypatch.setattr(server, "_show_options_menu", lambda u: shown.setdefault("options", True))
+    Localization.set_warmup_active(True)
+
+    try:
+        await server._handle_options_selection(user, "fluent_languages")
+    finally:
+        Localization.set_warmup_active(False)
+
+    assert shown.get("options")
+    assert user.spoken[-1][0] == "localization-in-progress-try-again"
+
+
+@pytest.mark.asyncio
+async def test_fluent_languages_opens_language_menu(server, monkeypatch):
+    user = DummyUser("alice")
+    opened = {}
+    monkeypatch.setattr(
+        "server.core.ui.common_flows.show_language_menu",
+        lambda *a, **kw: opened.setdefault("lang", True),
+    )
+
+    await server._handle_options_selection(user, "fluent_languages")
+
+    assert opened.get("lang")
+    assert server._user_states["alice"]["menu"] == "language_menu"
+
+
+@pytest.mark.asyncio
+async def test_toggle_fluent_language_on(server, monkeypatch):
+    user = DummyUser("alice")
+    user.fluent_languages = []
+    # Stub _show_fluent_languages_menu to avoid full menu rebuild
+    shown = {}
+    monkeypatch.setattr(
+        server, "_show_fluent_languages_menu",
+        lambda u: shown.setdefault("called", True),
+    )
+
+    await server._toggle_fluent_language(user, "es")
+
+    assert "es" in user.fluent_languages
+    assert user.sounds_played[-1] == "checkbox_list_on.wav"
+    assert server._db.fluent_languages_updates == [("alice", ["es"])]
+    assert shown.get("called")
+
+
+@pytest.mark.asyncio
+async def test_toggle_fluent_language_off(server, monkeypatch):
+    user = DummyUser("alice")
+    user.fluent_languages = ["en", "es"]
+    shown = {}
+    monkeypatch.setattr(
+        server, "_show_fluent_languages_menu",
+        lambda u: shown.setdefault("called", True),
+    )
+
+    await server._toggle_fluent_language(user, "es")
+
+    assert "es" not in user.fluent_languages
+    assert user.sounds_played[-1] == "checkbox_list_off.wav"
+    assert server._db.fluent_languages_updates == [("alice", ["en"])]

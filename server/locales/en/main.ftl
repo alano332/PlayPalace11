@@ -84,6 +84,8 @@ language = Language
 language-option = Language: { $language }
 language-changed = Language set to { $language }.
 
+fluent-languages-option = Fluent languages ({ $count })
+
 # Boolean option states
 option-on = On
 option-off = Off

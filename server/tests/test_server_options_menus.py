@@ -211,7 +211,7 @@ async def test_toggle_fluent_language_on(server, monkeypatch):
     shown = {}
     monkeypatch.setattr(
         server, "_show_fluent_languages_menu",
-        lambda u: shown.setdefault("called", True),
+        lambda u, focus_lang=None: shown.update(called=True, focus=focus_lang),
     )
 
     await server._toggle_fluent_language(user, "es")
@@ -220,6 +220,7 @@ async def test_toggle_fluent_language_on(server, monkeypatch):
     assert user.sounds_played[-1] == "checkbox_list_on.wav"
     assert server._db.fluent_languages_updates == [("alice", ["es"])]
     assert shown.get("called")
+    assert shown.get("focus") == "es"
 
 
 @pytest.mark.asyncio
@@ -229,7 +230,7 @@ async def test_toggle_fluent_language_off(server, monkeypatch):
     shown = {}
     monkeypatch.setattr(
         server, "_show_fluent_languages_menu",
-        lambda u: shown.setdefault("called", True),
+        lambda u, focus_lang=None: shown.update(called=True, focus=focus_lang),
     )
 
     await server._toggle_fluent_language(user, "es")

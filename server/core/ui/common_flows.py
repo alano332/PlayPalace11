@@ -104,10 +104,14 @@ def show_language_menu(
     *,
     lang_codes: list[str] | None = None,
     status_labels: dict[str, str] | None = None,
+    focus_lang: str | None = None,
     on_select: Callable[[NetworkUser, str], Awaitable[None]] | None = None,
     on_back: Callable[[NetworkUser], Awaitable[None]] | None = None,
 ) -> bool:
     """Show a language selection menu.
+
+    *focus_lang* sets which language code receives initial focus.  When
+    ``None`` (the default), the user's current locale is focused.
 
     Returns ``True`` if the menu was displayed, ``False`` if it could not be
     shown (e.g. localization warmup still running).
@@ -115,6 +119,8 @@ def show_language_menu(
     if Localization.is_warmup_active():
         user.speak_l("localization-in-progress-try-again", buffer="misc")
         return False
+
+    focus_target = focus_lang or user.locale
 
     # Native names (each language in its own script)
     native_names = Localization.get_available_languages(fallback=user.locale)
@@ -142,7 +148,7 @@ def show_language_menu(
         if status_labels and lang_code in status_labels:
             display = f"{display} {status_labels[lang_code]}"
         items.append(MenuItem(text=display, id=f"lang_{lang_code}"))
-        if lang_code == user.locale:
+        if lang_code == focus_target:
             selected_position = index
 
     items.append(

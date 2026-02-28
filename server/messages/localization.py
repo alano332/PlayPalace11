@@ -288,7 +288,6 @@ class Localization:
         return format_list(items, style="or", locale=locale)
 
     @classmethod
-    @classmethod
     def get_available_locale_codes(cls) -> list[str]:
         """Return sorted language codes from the locales directory.
 

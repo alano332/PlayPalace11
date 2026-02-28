@@ -2024,7 +2024,9 @@ class Server(AdministrationMixin):
         elif selection_id == "back":
             self._show_main_menu(user)
 
-    def _show_fluent_languages_menu(self, user: NetworkUser) -> None:
+    def _show_fluent_languages_menu(
+        self, user: NetworkUser, focus_lang: str | None = None
+    ) -> None:
         """Show fluent languages toggle menu."""
         if self._is_localization_warmup_active():
             self._notify_localization_in_progress(user)
@@ -2043,6 +2045,7 @@ class Server(AdministrationMixin):
             user,
             highlight_active_locale=False,
             status_labels=status_labels,
+            focus_lang=focus_lang,
             on_select=self._toggle_fluent_language,
             on_back=lambda u: self._show_options_menu(u),
         ):
@@ -2059,7 +2062,7 @@ class Server(AdministrationMixin):
             user.fluent_languages.append(lang_code)
             user.play_sound("checkbox_list_on.wav")
         self._db.set_user_fluent_languages(user.username, user.fluent_languages)
-        self._show_fluent_languages_menu(user)
+        self._show_fluent_languages_menu(user, focus_lang=lang_code)
 
     def _show_dice_keeping_style_menu(self, user: NetworkUser) -> None:
         """Show dice keeping style selection menu."""

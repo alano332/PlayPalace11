@@ -25,19 +25,23 @@ Installed `original/` assets (runtime currently prefers these):
 
 - `game_monopoly_hardware/original/play_theme.ogg`
   - Event: `play_theme`
-  - Source: `https://opengameart.org/content/fanfares`
-  - Direct file: `https://opengameart.org/sites/default/files/TITLE%20BOUT_0.ogg`
-  - Author: Spring Spring
-  - License: CC-BY 4.0 / CC-BY 3.0 / CC-BY-SA 4.0 / CC-BY-SA 3.0 (asset page offers multiple; project uses attribution model)
-  - SHA256: `657f76c74d869ff935837a03e3b33d81f31056f1d67eeddf906bee53095369df`
+  - Source: `https://opengameart.org/content/electric-sound-effects-library`
+  - Direct file (pack): `https://opengameart.org/sites/default/files/Electric%20Sound%20Library.zip`
+  - Original member: `Mp3/SpaceEngine/SpaceEngine_Start_01.mp3`
+  - Conversion: transcoded MP3 -> OGG via `sox` for client runtime compatibility
+  - Author: Little Robot Sound Factory
+  - License: CC-BY 3.0
+  - SHA256: `526727a5402cf9f99444347093f1789d27f15a6f3ed4fa43f38563acbdd560b0`
 
 - `game_monopoly_hardware/original/star_wars_theme.ogg`
   - Event: `star_wars_theme`
-  - Source: `https://opengameart.org/content/fanfares`
-  - Direct file: `https://opengameart.org/sites/default/files/WIN_AGAINST_CHAMPION_0.ogg`
-  - Author: Spring Spring
-  - License: CC-BY 4.0 / CC-BY 3.0 / CC-BY-SA 4.0 / CC-BY-SA 3.0 (asset page offers multiple; project uses attribution model)
-  - SHA256: `6af3e4d45e22c2b2e46d4fbb04ea3e691c1991f2199eef50283f5918c87b7766`
+  - Source: `https://opengameart.org/content/sci-fi-sound-effects-library`
+  - Direct file (pack): `https://opengameart.org/sites/default/files/Sci-Fi%20Sound%20Library.zip`
+  - Original member: `Sci-Fi Sound Library/Mp3/Jingle_Win_01.mp3`
+  - Conversion: transcoded MP3 -> OGG via `sox` for client runtime compatibility
+  - Author: Little Robot Sound Factory
+  - License: CC-BY 3.0
+  - SHA256: `e528de55318cb2a5357988aace63113e446e75658e411c6b23288f4cf536dc59`
 
 - `game_monopoly_hardware/original/junior_coin_sound_powerup.ogg`
   - Event: `junior_coin_sound_powerup`

@@ -53,7 +53,7 @@ This pass focuses on "closest-to-board feel" while keeping redistributable licen
 
 ### `star_wars_theme`
 
-1. `Sci-Fi Sound Library/Mp3/Jingle_Win_01.mp3`
+1. `Sci-Fi Sound Library/Mp3/Jingle_Win_01.mp3` (currently installed, transcoded to OGG)
    - Source pack: OpenGameArt Sci-Fi Sound Effects Library
    - License: CC-BY 3.0
    - Fit notes: space/jingle tone, closer to sci-fi board identity than orchestral fanfare
@@ -65,7 +65,7 @@ This pass focuses on "closest-to-board feel" while keeping redistributable licen
    - Fit notes: short synth win cue; good if we want lower latency on repeated triggers
    - Sample duration: ~1.80s
    - Status: `ship_now_attribution`
-3. `WIN_AGAINST_CHAMPION_0.ogg` (currently installed)
+3. `WIN_AGAINST_CHAMPION_0.ogg`
    - Source: OpenGameArt Fanfares
    - License options on page: CC-BY 4.0 / CC-BY 3.0 / CC-BY-SA 4.0 / CC-BY-SA 3.0
    - Fit notes: strong cue but more "victory brass" than "space motif"
@@ -82,7 +82,7 @@ This pass focuses on "closest-to-board feel" while keeping redistributable licen
 
 ### `play_theme`
 
-1. `Electric Sound Library/Mp3/SpaceEngine/SpaceEngine_Start_01.mp3`
+1. `Electric Sound Library/Mp3/SpaceEngine/SpaceEngine_Start_01.mp3` (currently installed, transcoded to OGG)
    - Source pack: OpenGameArt Electric Sound Effects Library
    - License: CC-BY 3.0
    - Fit notes: startup identity cue; better match for "board boots/starts" style event
@@ -93,7 +93,7 @@ This pass focuses on "closest-to-board feel" while keeping redistributable licen
    - License: CC-BY 3.0
    - Fit notes: very short event ping, suitable for frequent triggers
    - Status: `ship_now_attribution`
-3. `TITLE BOUT_0.ogg` (currently installed)
+3. `TITLE BOUT_0.ogg`
    - Source: OpenGameArt Fanfares
    - License options on page: CC-BY 4.0 / CC-BY 3.0 / CC-BY-SA 4.0 / CC-BY-SA 3.0
    - Fit notes: recognizable but long and brass-forward
@@ -109,13 +109,14 @@ This pass focuses on "closest-to-board feel" while keeping redistributable licen
 
 ## Recommendation
 
-Recommended next legal swap set (closest fit + lowest license friction):
+Recommended legal swap set (closest fit + lowest license friction):
 
 1. Keep `junior_coin_sound_powerup` as current `Collect_Point_00` mapping.
-2. Replace `star_wars_theme` with `Jingle_Win_01` from Sci-Fi pack.
-3. Replace `play_theme` with `SpaceEngine_Start_01` from Electric pack.
+2. Use `star_wars_theme` from Sci-Fi pack `Jingle_Win_01`.
+3. Use `play_theme` from Electric pack `SpaceEngine_Start_01`.
 
-These three are all CC-BY 3.0 from the same author/publisher family, which simplifies attribution and keeps a coherent synthesis style.
+Status on this branch: applied.  
+All three live mappings now resolve to CC-BY 3.0 stand-ins from the same author/publisher family (Little Robot Sound Factory), which simplifies attribution and keeps a coherent synthesis style.
 
 ## Sources
 

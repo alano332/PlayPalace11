@@ -365,4 +365,24 @@ documents-uncategorized = Uncategorized documents
 documents-no-documents = No documents found.
 documents-no-content = No content available for this document.
 
+# Transcriber management
+transcribers-by-language = View transcribers by language
+transcribers-by-user = View transcribers by user
+transcribers-language-users = { $language } ({ $count } users)
+transcribers-language-users-one = { $language } ({ $count } user)
+transcribers-user-languages = { $user } ({ $count } languages)
+transcribers-user-languages-one = { $user } ({ $count } language)
+transcribers-no-users = No transcribers assigned to this language.
+transcribers-no-languages = No languages assigned to this user.
+transcribers-no-transcribers = No transcribers have been assigned yet.
+transcribers-add-users = Add users
+transcribers-add-languages = Add languages
+transcribers-remove-confirm = Remove { $user } as a transcriber for { $language }?
+transcribers-remove-lang-confirm = Remove { $language } from { $user }'s transcriber assignments?
+transcribers-removed = { $user } has been removed as a transcriber for { $language }.
+transcribers-added = { $user } has been added as a transcriber for { $language }.
+transcribers-not-fluent = { $user } does not have { $language } in their fluent languages and cannot be assigned as a transcriber for it.
+transcribers-no-eligible-users = No eligible users found. Users must have this language in their fluent languages.
+transcribers-no-eligible-languages = No eligible languages found. This user has no unassigned fluent languages.
+
 localization-in-progress-try-again = Localization in progress. Please try again in a minute.

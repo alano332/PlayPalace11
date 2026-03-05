@@ -21,11 +21,12 @@ Random = each turn any judging method can be chosen, allowing for chaotic scorin
 
 Allow judges to submit cards (bool):
 Determines if judges are allowed to submit their own cards for a chance at winning the round.
+Use true if judges = max players.
 default false
 
 Allow judges to pick their own submissions (bool):
 Determine if judges must only select submissions from other players or if they are allowed to select their's as well.
-Use false if allow judges to submit cards is false.
+Use false if allow judges to submit cards =false.
 default false
 
 number of required minimum picked submissions (int): 1 to (max submissions -1)

@@ -68,6 +68,8 @@ class Action(DataClassJSONMixin):
         get_sound: Optional method name for highlight sound.
         input_request: Optional MenuInput/EditboxInput.
         show_in_actions_menu: If True, shown in actions list.
+        keep_visible_when_disabled: If True, remain in menu when disabled.
+        disabled_message: Locale key spoken when activated while disabled.
     """
 
     id: str
@@ -79,6 +81,8 @@ class Action(DataClassJSONMixin):
     get_sound: str | None = None  # Optional method name (e.g., "_get_roll_sound")
     input_request: MenuInput | EditboxInput | None = None
     show_in_actions_menu: bool = True
+    keep_visible_when_disabled: bool = False  # Stay in menu when disabled
+    disabled_message: str = ""  # Locale key spoken when activated while disabled
 
 
 @dataclass
@@ -204,11 +208,15 @@ class ActionSet(DataClassJSONMixin):
     def get_visible_actions(
         self, game: "Game", player: "Player"
     ) -> list[ResolvedAction]:
-        """Get enabled, visible actions for the turn menu."""
+        """Get enabled, visible actions for the turn menu.
+
+        Actions with keep_visible_when_disabled are included even when
+        disabled, allowing them to remain in the menu in a locked state.
+        """
         return [
             ra
             for ra in self.resolve_actions(game, player)
-            if ra.enabled and ra.visible
+            if ra.visible and (ra.enabled or ra.action.keep_visible_when_disabled)
         ]
 
     def get_enabled_actions(

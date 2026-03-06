@@ -168,6 +168,10 @@ class ActionVisibilityMixin:
         """Always hide an action from menus (keybind only)."""
         return Visibility.HIDDEN
 
+    def _is_always_disabled(self, player: "Player") -> str | None:
+        """Always disable an action (used with keep_visible_when_disabled)."""
+        return "action-locked"
+
     def _is_save_table_enabled(self, player: "Player") -> str | None:
         """Check if save_table action is enabled."""
         if player.name != self.host:

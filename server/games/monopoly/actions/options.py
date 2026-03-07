@@ -22,7 +22,7 @@ def encode_banking_transfer_option(
     label = Localization.get(
         locale,
         "monopoly-banking-transfer-option",
-        amount=f"${amount}",
+        amount=game._format_money(amount),
         target=target.name,
     )
     return f"{label} ## target={target.id};amount={amount}"
@@ -64,7 +64,7 @@ def encode_property_amount_option(
         locale,
         "monopoly-property-amount-option",
         property=game._space_label(space_id, locale),
-        amount=f"${amount}",
+        amount=game._format_money(amount),
     )
     return f"{label} ## space={space_id}"
 

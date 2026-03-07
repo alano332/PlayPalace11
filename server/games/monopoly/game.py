@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import random
+import re
 
 from ..base import Game, Player, GameOptions
 from ..registry import register_game
@@ -628,6 +629,7 @@ class MonopolyGame(ActionGuardMixin, Game):
     )
     active_board_size: int = BOARD_SIZE
     active_sound_mode: str = "none"
+    active_currency_name: str = ""
     last_hardware_event_id: str = ""
     last_hardware_event_status: str = "none"
     last_hardware_event_details: str = ""
@@ -1407,10 +1409,99 @@ class MonopolyGame(ActionGuardMixin, Game):
         **kwargs,
     ) -> str:
         """Return one Monopoly locale string with optional fallback text."""
+        kwargs = self._format_monopoly_message_kwargs(kwargs)
         text = Localization.get(locale, key, **kwargs)
         if fallback is not None and text == key:
             return fallback
         return text
+
+    def _format_money(self, amount: int) -> str:
+        """Format one Monopoly money value using the active board currency style."""
+        sign = "-" if amount < 0 else ""
+        digits = f"{abs(amount):,}"
+        if self.active_currency_name:
+            return f"{sign}{digits} {self.active_currency_name}"
+        return f"{sign}${digits}"
+
+    def _format_monopoly_message_kwargs(self, kwargs: dict[str, object]) -> dict[str, object]:
+        """Format Monopoly money placeholders before localization."""
+        if not kwargs:
+            return kwargs
+        formatted = dict(kwargs)
+        for key in ("amount", "cash", "price"):
+            value = formatted.get(key)
+            if isinstance(value, int):
+                formatted[key] = self._format_money(value)
+        return formatted
+
+    def broadcast_l(
+        self,
+        message_id: str,
+        buffer: str = "table",
+        exclude: Player | None = None,
+        **kwargs,
+    ) -> None:
+        """Send localized messages, formatting Monopoly money placeholders centrally."""
+        if message_id.startswith("monopoly-"):
+            kwargs = self._format_monopoly_message_kwargs(kwargs)
+        super().broadcast_l(message_id, buffer=buffer, exclude=exclude, **kwargs)
+
+    def broadcast_personal_l(
+        self,
+        player: Player,
+        personal_message_id: str,
+        others_message_id: str,
+        buffer: str = "table",
+        **kwargs,
+    ) -> None:
+        """Send personalized localized messages with Monopoly money formatting."""
+        if personal_message_id.startswith("monopoly-") or others_message_id.startswith("monopoly-"):
+            kwargs = self._format_monopoly_message_kwargs(kwargs)
+        super().broadcast_personal_l(
+            player,
+            personal_message_id,
+            others_message_id,
+            buffer=buffer,
+            **kwargs,
+        )
+
+    def _speak_monopoly_l(
+        self,
+        user,
+        message_id: str,
+        buffer: str = "misc",
+        **kwargs,
+    ) -> None:
+        """Speak one localized Monopoly message with formatted money placeholders."""
+        user.speak_l(
+            message_id,
+            buffer,
+            **self._format_monopoly_message_kwargs(kwargs),
+        )
+
+    def _detect_manual_currency_name(self, payload: object) -> str:
+        """Extract a themed currency name from manual-rule payload text notes."""
+        if isinstance(payload, str):
+            match = re.search(r"Themed currency:\s*([A-Za-z][A-Za-z ]*[A-Za-z])\.", payload)
+            return match.group(1).strip() if match else ""
+        if isinstance(payload, dict):
+            for value in payload.values():
+                currency_name = self._detect_manual_currency_name(value)
+                if currency_name:
+                    return currency_name
+            return ""
+        if isinstance(payload, list):
+            for value in payload:
+                currency_name = self._detect_manual_currency_name(value)
+                if currency_name:
+                    return currency_name
+        return ""
+
+    def _resolve_active_currency_name(self) -> str:
+        """Resolve the active board currency name, defaulting to dollars."""
+        if self.active_manual_rule_set is None:
+            return ""
+        return self._detect_manual_currency_name(self.active_manual_rule_set.cards)
 
     def _space_display_name(self, space: MonopolySpace, locale: str) -> str:
         """Return localized display text for one board space."""
@@ -1588,8 +1679,8 @@ class MonopolyGame(ActionGuardMixin, Game):
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-purchase-price",
-                    fallback=f"Purchase price: ${space.price}",
-                    amount=f"${space.price}",
+                    fallback=f"Purchase price: {self._format_money(space.price)}",
+                    amount=space.price,
                 )
             )
 
@@ -1599,16 +1690,16 @@ class MonopolyGame(ActionGuardMixin, Game):
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-rent",
-                    fallback=f"Rent: ${base_rent}",
-                    amount=f"${base_rent}",
+                    fallback=f"Rent: {self._format_money(base_rent)}",
+                    amount=base_rent,
                 )
             )
             lines.append(
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-full-set-rent",
-                    fallback=f"If owner has full color set: ${base_rent * 2}",
-                    amount=f"${base_rent * 2}",
+                    fallback=f"If owner has full color set: {self._format_money(base_rent * 2)}",
+                    amount=base_rent * 2,
                 )
             )
             if space.rents:
@@ -1617,8 +1708,8 @@ class MonopolyGame(ActionGuardMixin, Game):
                         self._monopoly_text(
                             locale,
                             "monopoly-deed-rent-one-house",
-                            fallback=f"With 1 house: ${space.rents[1]}",
-                            amount=f"${space.rents[1]}",
+                            fallback=f"With 1 house: {self._format_money(space.rents[1])}",
+                            amount=space.rents[1],
                         )
                     )
                 if len(space.rents) > 2:
@@ -1626,9 +1717,9 @@ class MonopolyGame(ActionGuardMixin, Game):
                         self._monopoly_text(
                             locale,
                             "monopoly-deed-rent-houses",
-                            fallback=f"With 2 houses: ${space.rents[2]}",
+                            fallback=f"With 2 houses: {self._format_money(space.rents[2])}",
                             count=2,
-                            amount=f"${space.rents[2]}",
+                            amount=space.rents[2],
                         )
                     )
                 if len(space.rents) > 3:
@@ -1636,9 +1727,9 @@ class MonopolyGame(ActionGuardMixin, Game):
                         self._monopoly_text(
                             locale,
                             "monopoly-deed-rent-houses",
-                            fallback=f"With 3 houses: ${space.rents[3]}",
+                            fallback=f"With 3 houses: {self._format_money(space.rents[3])}",
                             count=3,
-                            amount=f"${space.rents[3]}",
+                            amount=space.rents[3],
                         )
                     )
                 if len(space.rents) > 4:
@@ -1646,9 +1737,9 @@ class MonopolyGame(ActionGuardMixin, Game):
                         self._monopoly_text(
                             locale,
                             "monopoly-deed-rent-houses",
-                            fallback=f"With 4 houses: ${space.rents[4]}",
+                            fallback=f"With 4 houses: {self._format_money(space.rents[4])}",
                             count=4,
-                            amount=f"${space.rents[4]}",
+                            amount=space.rents[4],
                         )
                     )
                 if len(space.rents) > 5:
@@ -1656,8 +1747,8 @@ class MonopolyGame(ActionGuardMixin, Game):
                         self._monopoly_text(
                             locale,
                             "monopoly-deed-rent-hotel",
-                            fallback=f"With hotel: ${space.rents[5]}",
-                            amount=f"${space.rents[5]}",
+                            fallback=f"With hotel: {self._format_money(space.rents[5])}",
+                            amount=space.rents[5],
                         )
                     )
             if space.house_cost > 0:
@@ -1665,8 +1756,8 @@ class MonopolyGame(ActionGuardMixin, Game):
                     self._monopoly_text(
                         locale,
                         "monopoly-deed-house-cost",
-                        fallback=f"House cost: ${space.house_cost}",
-                        amount=f"${space.house_cost}",
+                        fallback=f"House cost: {self._format_money(space.house_cost)}",
+                        amount=space.house_cost,
                     )
                 )
         elif space.kind == "railroad":
@@ -1674,36 +1765,36 @@ class MonopolyGame(ActionGuardMixin, Game):
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-railroad-rent",
-                    fallback="Rent with 1 railroad: $25",
+                    fallback=f"Rent with 1 railroad: {self._format_money(25)}",
                     count=1,
-                    amount="$25",
+                    amount=25,
                 )
             )
             lines.append(
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-railroad-rent",
-                    fallback="Rent with 2 railroads: $50",
+                    fallback=f"Rent with 2 railroads: {self._format_money(50)}",
                     count=2,
-                    amount="$50",
+                    amount=50,
                 )
             )
             lines.append(
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-railroad-rent",
-                    fallback="Rent with 3 railroads: $100",
+                    fallback=f"Rent with 3 railroads: {self._format_money(100)}",
                     count=3,
-                    amount="$100",
+                    amount=100,
                 )
             )
             lines.append(
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-railroad-rent",
-                    fallback="Rent with 4 railroads: $200",
+                    fallback=f"Rent with 4 railroads: {self._format_money(200)}",
                     count=4,
-                    amount="$200",
+                    amount=200,
                 )
             )
         elif space.kind == "utility":
@@ -1725,8 +1816,8 @@ class MonopolyGame(ActionGuardMixin, Game):
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-utility-base-rent",
-                    fallback="Utility base rent (legacy fallback): $20",
-                    amount="$20",
+                    fallback=f"Utility base rent (legacy fallback): {self._format_money(20)}",
+                    amount=20,
                 )
             )
         else:
@@ -1734,8 +1825,8 @@ class MonopolyGame(ActionGuardMixin, Game):
                 self._monopoly_text(
                     locale,
                     "monopoly-deed-rent",
-                    fallback=f"Rent: ${space.rent}",
-                    amount=f"${space.rent}",
+                    fallback=f"Rent: {self._format_money(space.rent)}",
+                    amount=space.rent,
                 )
             )
 
@@ -1743,16 +1834,16 @@ class MonopolyGame(ActionGuardMixin, Game):
             self._monopoly_text(
                 locale,
                 "monopoly-deed-mortgage-value",
-                fallback=f"Mortgage value: ${self._mortgage_value(space)}",
-                amount=f"${self._mortgage_value(space)}",
+                fallback=f"Mortgage value: {self._format_money(self._mortgage_value(space))}",
+                amount=self._mortgage_value(space),
             )
         )
         lines.append(
             self._monopoly_text(
                 locale,
                 "monopoly-deed-unmortgage-cost",
-                fallback=f"Unmortgage cost: ${self._unmortgage_cost(space)}",
-                amount=f"${self._unmortgage_cost(space)}",
+                fallback=f"Unmortgage cost: {self._format_money(self._unmortgage_cost(space))}",
+                amount=self._unmortgage_cost(space),
             )
         )
         owner = self._owner_name_for_space(space.space_id, locale)
@@ -2042,7 +2133,12 @@ class MonopolyGame(ActionGuardMixin, Game):
         locale = user.locale if user else "en"
         space = self._pending_purchase_space()
         amount = space.price if space else 0
-        return Localization.get(locale, "monopoly-buy-for", amount=f"${amount}")
+        return self._monopoly_text(
+            locale,
+            "monopoly-buy-for",
+            fallback=f"Buy for {self._format_money(amount)}",
+            amount=amount,
+        )
 
     def _action_view_selected_deed(self, player: Player, space_id: str, action_id: str) -> None:
         """Read one selected deed from board or owned-property menus."""
@@ -5816,9 +5912,10 @@ class MonopolyGame(ActionGuardMixin, Game):
         if not user:
             return
         mono_player = player  # type: ignore[assignment]
-        user.speak_l(
+        self._speak_monopoly_l(
+            user,
             "monopoly-cash-report",
-            cash=f"${self._current_liquid_balance(mono_player):,}",
+            cash=self._current_liquid_balance(mono_player),
         )
 
     def _action_build_house(self, player: Player, space_id: str, action_id: str) -> None:
@@ -6071,6 +6168,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             self.active_board_deck_mode,
         ).mode
         self.active_manual_rule_set = self._load_active_manual_rule_set()
+        self.active_currency_name = self._resolve_active_currency_name()
         (
             self.active_board_spaces,
             self.active_space_by_id,

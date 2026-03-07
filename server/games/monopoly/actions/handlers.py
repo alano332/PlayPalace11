@@ -118,7 +118,8 @@ def action_banking_balance(game: MonopolyGame, player: Player, action_id: str) -
     mono_player = player  # type: ignore[assignment]
     user = game.get_user(player)
     if user:
-        user.speak_l(
+        game._speak_monopoly_l(
+            user,
             "monopoly-banking-balance-report",
             player=mono_player.name,
             cash=game._bank_balance(mono_player),
@@ -204,9 +205,9 @@ def action_banking_ledger(game: MonopolyGame, player: Player, action_id: str) ->
             )
 
     if not entries:
-        user.speak_l("monopoly-banking-ledger-empty")
+        game._speak_monopoly_l(user, "monopoly-banking-ledger-empty")
         return
-    user.speak_l("monopoly-banking-ledger-report", entries=" | ".join(entries))
+    game._speak_monopoly_l(user, "monopoly-banking-ledger-report", entries=" | ".join(entries))
 
 
 def action_voice_command(game: MonopolyGame, player: Player, text: str, action_id: str) -> None:
@@ -220,13 +221,14 @@ def action_voice_command(game: MonopolyGame, player: Player, text: str, action_i
     if parsed.error:
         game.voice_last_response_by_player_id[mono_player.id] = parsed.error
         if user:
-            user.speak_l("monopoly-voice-command-error", reason=parsed.error)
+            game._speak_monopoly_l(user, "monopoly-voice-command-error", reason=parsed.error)
         return
 
     if parsed.intent == "check_balance":
         game.voice_last_response_by_player_id[mono_player.id] = parsed.intent
         if user:
-            user.speak_l(
+            game._speak_monopoly_l(
+                user,
                 "monopoly-banking-balance-report",
                 player=mono_player.name,
                 cash=game._bank_balance(mono_player),
@@ -242,7 +244,7 @@ def action_voice_command(game: MonopolyGame, player: Player, text: str, action_i
         previous = game.voice_last_response_by_player_id.get(mono_player.id, "none")
         game.voice_last_response_by_player_id[mono_player.id] = parsed.intent
         if user:
-            user.speak_l("monopoly-voice-command-repeat", response=previous)
+            game._speak_monopoly_l(user, "monopoly-voice-command-repeat", response=previous)
         return
 
     if parsed.intent == "transfer_amount_to_player":
@@ -258,13 +260,14 @@ def action_voice_command(game: MonopolyGame, player: Player, text: str, action_i
         if target is None:
             game.voice_last_response_by_player_id[mono_player.id] = "invalid_target"
             if user:
-                user.speak_l("monopoly-voice-command-error", reason="invalid_target")
+                game._speak_monopoly_l(user, "monopoly-voice-command-error", reason="invalid_target")
             return
 
         game.voice_pending_transfer_by_player_id[mono_player.id] = (target.id, parsed.amount)
         game.voice_last_response_by_player_id[mono_player.id] = "transfer_pending_confirm"
         if user:
-            user.speak_l(
+            game._speak_monopoly_l(
+                user,
                 "monopoly-voice-transfer-staged",
                 amount=parsed.amount,
                 target=target.name,
@@ -276,7 +279,7 @@ def action_voice_command(game: MonopolyGame, player: Player, text: str, action_i
         if not pending:
             game.voice_last_response_by_player_id[mono_player.id] = "no_pending_transfer"
             if user:
-                user.speak_l("monopoly-voice-command-error", reason="no_pending_transfer")
+                game._speak_monopoly_l(user, "monopoly-voice-command-error", reason="no_pending_transfer")
             return
 
         target_id, amount = pending
@@ -285,7 +288,7 @@ def action_voice_command(game: MonopolyGame, player: Player, text: str, action_i
             game.voice_pending_transfer_by_player_id.pop(mono_player.id, None)
             game.voice_last_response_by_player_id[mono_player.id] = "invalid_target"
             if user:
-                user.speak_l("monopoly-voice-command-error", reason="invalid_target")
+                game._speak_monopoly_l(user, "monopoly-voice-command-error", reason="invalid_target")
             return
 
         transferred = game._transfer_between_players(
@@ -308,12 +311,12 @@ def action_voice_command(game: MonopolyGame, player: Player, text: str, action_i
         else:
             game.voice_last_response_by_player_id[mono_player.id] = "insufficient_funds"
             if user:
-                user.speak_l("monopoly-voice-command-error", reason="insufficient_funds")
+                game._speak_monopoly_l(user, "monopoly-voice-command-error", reason="insufficient_funds")
         return
 
     game.voice_last_response_by_player_id[mono_player.id] = parsed.intent
     if user:
-        user.speak_l("monopoly-voice-command-accepted", intent=parsed.intent)
+        game._speak_monopoly_l(user, "monopoly-voice-command-accepted", intent=parsed.intent)
 
 
 def action_auction_property(game: MonopolyGame, player: Player, action_id: str) -> None:

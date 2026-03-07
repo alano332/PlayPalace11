@@ -546,7 +546,7 @@ def test_monopoly_trade_keybinds_use_e_and_shift_e() -> None:
     menu = host_user.menus.get("action_input_menu")
     assert menu is not None
 
-    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for 60")
+    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for $60")
     assert offer is not None
     game.execute_action(host, "offer_trade", input_value=offer)
     assert game.pending_trade_offer is not None
@@ -716,6 +716,34 @@ def test_monopoly_mortgage_and_unmortgage_options_include_amounts() -> None:
     assert unmortgage_options == [
         f"Atlantic Avenue for ${game._unmortgage_cost(game.active_space_by_id['atlantic_avenue'])} ## space=atlantic_avenue"
     ]
+
+
+def test_monopoly_read_cash_uses_dollar_currency_format() -> None:
+    game = _start_two_player_game()
+    host = game.players[0]
+    host_user = game.get_user(host)
+    assert host_user is not None
+
+    game.execute_action(host, "read_cash")
+
+    assert host_user.get_last_spoken() == "$1,500 in cash."
+
+
+def test_monopoly_star_wars_board_preserves_credits_currency_format() -> None:
+    game = _start_two_player_game(
+        MonopolyOptions(board_id="star_wars_mandalorian", board_rules_mode="auto")
+    )
+    host = game.players[0]
+    host_user = game.get_user(host)
+    assert host_user is not None
+
+    game.execute_action(host, "read_cash")
+    assert host_user.get_last_spoken() == "1,500 Credits in cash."
+
+    host.owned_space_ids.append("atlantic_avenue")
+    game.property_owners["atlantic_avenue"] = host.id
+    mortgage_options = game._options_for_mortgage_property(host)
+    assert mortgage_options == ["Atlantic Avenue for 130 Credits ## space=atlantic_avenue"]
 
 
 def test_monopoly_income_tax_space_deducts_cash(monkeypatch):
@@ -1107,7 +1135,7 @@ def test_monopoly_mortgaged_trade_charges_interest_to_new_owner():
     game.property_owners["baltic_avenue"] = host.id
     game.mortgaged_space_ids.append("baltic_avenue")
 
-    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for 60")
+    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for $60")
     assert offer is not None
 
     game.execute_action(host, "offer_trade", input_value=offer)
@@ -1277,7 +1305,7 @@ def test_monopoly_trade_offer_accept_transfers_property_for_cash():
     host.owned_space_ids.append("baltic_avenue")
     game.property_owners["baltic_avenue"] = host.id
 
-    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for 60")
+    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for $60")
     assert offer is not None
 
     game.execute_action(host, "offer_trade", input_value=offer)
@@ -1303,7 +1331,7 @@ def test_monopoly_trade_offer_decline_keeps_state_unchanged():
     host.owned_space_ids.append("baltic_avenue")
     game.property_owners["baltic_avenue"] = host.id
 
-    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for 60")
+    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for $60")
     assert offer is not None
 
     game.execute_action(host, "offer_trade", input_value=offer)
@@ -1344,7 +1372,7 @@ def test_monopoly_trade_options_include_swap_and_cash_balancing():
     options = game._options_for_offer_trade(host)
     assert any("Swap Baltic Avenue with Guest for Oriental Avenue" in option for option in options)
     assert any(
-        "Swap Baltic Avenue + 40 with Guest for Oriental Avenue" in option
+        "Swap Baltic Avenue + $40 with Guest for Oriental Avenue" in option
         for option in options
     )
 
@@ -1358,7 +1386,7 @@ def test_monopoly_trade_accept_invalid_offer_cancels_pending():
     host.owned_space_ids.append("baltic_avenue")
     game.property_owners["baltic_avenue"] = host.id
 
-    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for 60")
+    offer = _find_trade_option(game, host, "Sell Baltic Avenue to Guest for $60")
     assert offer is not None
 
     game.execute_action(host, "offer_trade", input_value=offer)

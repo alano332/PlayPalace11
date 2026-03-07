@@ -53,6 +53,12 @@ monopoly-buy-disabled = Buying property directly is disabled for this preset.
 monopoly-pass-go = { $player } passed GO and collected { $amount } (cash: { $cash }).
 monopoly-roll-result = { $player } rolled { $die1 } + { $die2 } = { $total } and landed on { $space }.
 monopoly-roll-only = { $player } rolled { $die1 } + { $die2 } = { $total }.
+monopoly-you-roll-result = You rolled { $die1 } + { $die2 } = { $total } and landed on { $space }.
+monopoly-player-roll-result = { $player } rolled { $die1 } + { $die2 } = { $total } and landed on { $space }.
+monopoly-you-roll-only = You rolled { $die1 } + { $die2 } = { $total }.
+monopoly-player-roll-only = { $player } rolled { $die1 } + { $die2 } = { $total }.
+monopoly-you-roll-only-doubles = You rolled { $die1 } + { $die2 } = { $total }. Doubles!
+monopoly-player-roll-only-doubles = { $player } rolled { $die1 } + { $die2 } = { $total }. Doubles!
 monopoly-property-available = { $property } is available for { $price }.
 monopoly-property-bought = { $player } bought { $property } for { $price } (cash: { $cash }).
 monopoly-rent-paid = { $player } paid { $amount } in rent to { $owner } for { $property }.
@@ -109,10 +115,16 @@ monopoly-resolve-property-first = Resolve the pending property decision first.
 
 # Additional turn events
 monopoly-roll-again = { $player } rolled doubles and gets another roll.
+monopoly-you-roll-again = You rolled doubles and get another roll.
+monopoly-player-roll-again = { $player } rolled doubles and gets another roll.
 monopoly-jail-roll-doubles = { $player } rolled doubles ({ $die1 } and { $die2 }) and leaves jail.
+monopoly-you-jail-roll-doubles = You rolled doubles ({ $die1 } and { $die2 }) and leave jail.
+monopoly-player-jail-roll-doubles = { $player } rolled doubles ({ $die1 } and { $die2 }) and leaves jail.
 monopoly-jail-roll-failed = { $player } rolled { $die1 } and { $die2 } in jail (attempt { $attempts }).
 monopoly-bail-paid = { $player } paid { $amount } bail (cash: { $cash }).
 monopoly-three-doubles-jail = { $player } rolled three doubles in one turn and is sent to jail.
+monopoly-you-three-doubles-jail = You rolled three doubles in one turn and are sent to jail.
+monopoly-player-three-doubles-jail = { $player } rolled three doubles in one turn and is sent to jail.
 monopoly-jail-card-used = { $player } used a get-out-of-jail card ({ $cards } remaining).
 monopoly-sore-loser-rebate = { $player } received a sore loser rebate of { $amount } (cash: { $cash }).
 monopoly-cheaters-early-end-turn-blocked = { $player } tried to end the turn early and paid a cheating penalty of { $amount } (cash: { $cash }).

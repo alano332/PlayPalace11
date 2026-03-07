@@ -211,7 +211,7 @@ def test_monopoly_roll_waits_for_movement_then_announces_square_name(monkeypatch
     _finish_animation(game)
 
     spoken = " ".join(host_user.get_spoken_messages())
-    assert "rolled 1 + 2 = 3." in spoken
+    assert "You rolled 1 + 2 = 3." in spoken
     assert "Baltic Avenue" in spoken
     assert "landed on Baltic Avenue" not in spoken
     assert host.position == 3
@@ -582,6 +582,19 @@ def test_monopoly_banking_balance_blocked_after_roll():
     assert game._is_banking_balance_enabled(host) == "monopoly-already-rolled"
 
 
+def test_monopoly_mortgage_remains_available_while_buying() -> None:
+    game = _start_two_player_game()
+    host = game.players[0]
+    host.owned_space_ids.append("mediterranean_avenue")
+    game.property_owners["mediterranean_avenue"] = host.id
+    game.current_player = host
+    game.turn_has_rolled = True
+    game.turn_pending_purchase_space_id = "baltic_avenue"
+
+    assert game._is_mortgage_property_enabled(host) is None
+    assert game._is_mortgage_property_hidden(host).name != "HIDDEN"
+
+
 def test_monopoly_income_tax_space_deducts_cash(monkeypatch):
     game = _start_two_player_game()
     host = game.current_player
@@ -763,6 +776,29 @@ def test_monopoly_doubles_grant_extra_roll(monkeypatch):
     assert game.turn_has_rolled is False
     assert game.turn_doubles_count == 1
     assert host.position == 4
+
+
+def test_monopoly_roll_messages_use_you_and_call_out_doubles(monkeypatch):
+    game = _start_two_player_game()
+    host = game.current_player
+    assert host is not None
+    host_user = game.get_user(host)
+    guest = game.players[1]
+    guest_user = game.get_user(guest)
+    assert host_user is not None
+    assert guest_user is not None
+
+    rolls = iter([2, 2])  # total = 4 (income tax), doubles
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+
+    game.execute_action(host, "roll_dice")
+
+    host_spoken = " ".join(host_user.get_spoken_messages())
+    guest_spoken = " ".join(guest_user.get_spoken_messages())
+    assert "You rolled 2 + 2 = 4. Doubles!" in host_spoken
+    assert "Host rolled 2 + 2 = 4. Doubles!" in guest_spoken
+    assert "You rolled doubles and get another roll." in host_spoken
+    assert "Host rolled doubles and gets another roll." in guest_spoken
 
 
 def test_monopoly_speed_doubles_do_not_grant_extra_roll(monkeypatch):

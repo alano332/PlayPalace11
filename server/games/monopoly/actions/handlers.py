@@ -38,12 +38,12 @@ def _schedule_monopoly_roll_resolution(
     """Queue Monopoly movement pacing, then resolve the landing."""
     game.is_animating = True
     if roll_message_key:
-        game.broadcast_l(
-            roll_message_key,
-            player=player.name,
-            die1=die_1,
-            die2=die_2,
+        game._broadcast_roll_only(
+            player,  # type: ignore[arg-type]
+            die_1=die_1,
+            die_2=die_2,
             total=total,
+            is_doubles=is_doubles,
         )
     delay = game.schedule_standard_token_movement_sounds(
         total,
@@ -804,11 +804,10 @@ def action_roll_dice(game: MonopolyGame, player: Player, action_id: str) -> None
         if is_doubles:
             mono_player.in_jail = False
             mono_player.jail_turns = 0
-            game.broadcast_l(
-                "monopoly-jail-roll-doubles",
-                player=mono_player.name,
-                die1=die_1,
-                die2=die_2,
+            game._broadcast_jail_roll_doubles(
+                mono_player,
+                die_1=die_1,
+                die_2=die_2,
             )
             _schedule_monopoly_roll_resolution(
                 game,

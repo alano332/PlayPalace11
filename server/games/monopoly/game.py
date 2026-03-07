@@ -2997,7 +2997,76 @@ class MonopolyGame(ActionGuardMixin, Game):
         self.turn_last_roll.clear()
         self.turn_pending_purchase_space_id = ""
         self.turn_can_roll_again = False
-        self.broadcast_l("monopoly-roll-again", player=player.name)
+        self.broadcast_personal_l(
+            player,
+            "monopoly-you-roll-again",
+            "monopoly-player-roll-again",
+        )
+
+    def _broadcast_roll_only(
+        self,
+        player: MonopolyPlayer,
+        *,
+        die_1: int,
+        die_2: int,
+        total: int,
+        is_doubles: bool = False,
+    ) -> None:
+        """Broadcast one localized roll announcement with personal wording."""
+        if is_doubles:
+            self.broadcast_personal_l(
+                player,
+                "monopoly-you-roll-only-doubles",
+                "monopoly-player-roll-only-doubles",
+                die1=die_1,
+                die2=die_2,
+                total=total,
+            )
+            return
+        self.broadcast_personal_l(
+            player,
+            "monopoly-you-roll-only",
+            "monopoly-player-roll-only",
+            die1=die_1,
+            die2=die_2,
+            total=total,
+        )
+
+    def _broadcast_roll_result(
+        self,
+        player: MonopolyPlayer,
+        *,
+        die_1: int,
+        die_2: int,
+        total: int,
+        space: str,
+    ) -> None:
+        """Broadcast one localized roll-and-land announcement with personal wording."""
+        self.broadcast_personal_l(
+            player,
+            "monopoly-you-roll-result",
+            "monopoly-player-roll-result",
+            die1=die_1,
+            die2=die_2,
+            total=total,
+            space=space,
+        )
+
+    def _broadcast_jail_roll_doubles(
+        self,
+        player: MonopolyPlayer,
+        *,
+        die_1: int,
+        die_2: int,
+    ) -> None:
+        """Broadcast doubles release from jail with personal wording."""
+        self.broadcast_personal_l(
+            player,
+            "monopoly-you-jail-roll-doubles",
+            "monopoly-player-jail-roll-doubles",
+            die1=die_1,
+            die2=die_2,
+        )
 
     def _finish_turn(self, player: MonopolyPlayer | None = None) -> None:
         """Advance from the current turn to the next player."""
@@ -3284,11 +3353,10 @@ class MonopolyGame(ActionGuardMixin, Game):
         if outcome_type == "power_up":
             extra_steps = random.randint(1, 6)
             landed_space = self._move_player(player, extra_steps, collect_pass_go=True)
-            self.broadcast_l(
-                "monopoly-roll-result",
-                player=player.name,
-                die1=extra_steps,
-                die2=0,
+            self._broadcast_roll_result(
+                player,
+                die_1=extra_steps,
+                die_2=0,
                 total=extra_steps,
                 space=landed_space.name,
             )
@@ -3356,11 +3424,10 @@ class MonopolyGame(ActionGuardMixin, Game):
         if outcome == "roll_numbered_die_again":
             extra_steps = random.randint(1, 6)
             landed_space = self._move_player(player, extra_steps, collect_pass_go=True)
-            self.broadcast_l(
-                "monopoly-roll-result",
-                player=player.name,
-                die1=extra_steps,
-                die2=0,
+            self._broadcast_roll_result(
+                player,
+                die_1=extra_steps,
+                die_2=0,
                 total=extra_steps,
                 space=landed_space.name,
             )
@@ -3451,7 +3518,11 @@ class MonopolyGame(ActionGuardMixin, Game):
         self.turn_can_roll_again = False
 
         if by_triple_doubles:
-            self.broadcast_l("monopoly-three-doubles-jail", player=player.name)
+            self.broadcast_personal_l(
+                player,
+                "monopoly-you-three-doubles-jail",
+                "monopoly-player-three-doubles-jail",
+            )
         else:
             jail_space = self._space_at(10)
             self.broadcast_l(

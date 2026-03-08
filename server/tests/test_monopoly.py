@@ -914,6 +914,30 @@ def test_monopoly_bankrupt_when_no_manual_rent_options_remain(monkeypatch):
     assert host.cash == STARTING_CASH + 30
 
 
+def test_monopoly_bot_bankruptcy_finishes_game(monkeypatch):
+    game = _start_two_player_game()
+    host = game.players[0]
+    guest = game.players[1]
+    guest.is_bot = True
+
+    host.owned_space_ids.append("boardwalk")
+    game.property_owners["boardwalk"] = host.id
+    guest.cash = 30
+    game.current_player = guest
+    landed_space = game.active_space_by_id["boardwalk"]
+
+    result = game._resolve_owned_purchasable_space(guest, landed_space, host.id, dice_total=3)
+
+    assert guest.bankrupt is True
+    assert result == "bankrupt"
+    assert game.status == "finished"
+    assert game.game_active is False
+    assert game.pending_rent_payment_amount == 0
+    assert game.current_player is not None
+    assert game.current_player.name == "Host"
+    assert host.cash == STARTING_CASH + 30
+
+
 def test_monopoly_bankruptcy_transfers_assets_to_creditor(monkeypatch):
     game = _start_two_player_game()
     host = game.players[0]

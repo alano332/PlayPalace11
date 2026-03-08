@@ -2873,6 +2873,19 @@ class MonopolyGame(ActionGuardMixin, Game):
                 )
                 self.rebuild_all_menus()
                 return "resolved"
+        if not manual_core and self._current_liquid_balance(player) < rent_due:
+            if player.is_bot:
+                self._liquidate_assets_for_debt(player, rent_due)
+            if self._current_liquid_balance(player) < rent_due and not player.is_bot:
+                self._start_pending_rent_payment(
+                    player,
+                    owner=owner,
+                    amount_due=rent_due,
+                    landed_space=landed_space,
+                    reason=reason,
+                )
+                self.rebuild_all_menus()
+                return "resolved"
         if not manual_core and self._current_liquid_balance(player) < rent_due and not player.is_bot:
             self._start_pending_rent_payment(
                 player,
@@ -6284,7 +6297,7 @@ class MonopolyGame(ActionGuardMixin, Game):
                 )
                 self.rebuild_all_menus()
                 return "resolved"
-        if not manual_core and self._current_liquid_balance(player) < rent_due:
+        if not manual_core and self._current_liquid_balance(player) < rent_due and not player.is_bot:
             self._start_pending_rent_payment(
                 player,
                 owner=owner,

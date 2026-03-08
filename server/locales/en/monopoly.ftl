@@ -87,7 +87,7 @@ monopoly-you-go-to-jail = You go to jail (moved to { $space }).
 monopoly-player-go-to-jail = { $player } goes to jail (moved to { $space }).
 monopoly-bankrupt-player = You are bankrupt and out of the game.
 monopoly-player-bankrupt = { $player } is bankrupt. Creditor: { $creditor }.
-monopoly-winner-by-bankruptcy = { $player } wins by bankruptcy with { $cash } cash remaining.
+monopoly-winner-by-bankruptcy = { $player } wins by bankruptcy with total asset value { $cash }.
 monopoly-winner-by-cash = { $player } wins with the highest cash total: { $cash }.
 monopoly-city-winner-by-value = { $player } wins Monopoly City with final value { $total }.
 
@@ -440,7 +440,7 @@ monopoly-space-kentucky_avenue = Kentucky Avenue
 monopoly-space-chance_2 = Chance
 monopoly-space-indiana_avenue = Indiana Avenue
 monopoly-space-illinois_avenue = Illinois Avenue
-monopoly-space-bo_railroad = B. & O. Railroad
+monopoly-space-bo_railroad = B&O Railroad
 monopoly-space-atlantic_avenue = Atlantic Avenue
 monopoly-space-ventnor_avenue = Ventnor Avenue
 monopoly-space-water_works = Water Works

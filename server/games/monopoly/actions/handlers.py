@@ -1119,6 +1119,13 @@ def action_roll_dice(game: MonopolyGame, player: Player, action_id: str) -> None
         game.turn_doubles_count = 0
 
     if game.rule_profile.doubles_grant_extra_roll and game.turn_doubles_count >= 3:
+        game._broadcast_roll_only(
+            mono_player,
+            die_1=die_1,
+            die_2=die_2,
+            total=total,
+            is_doubles=is_doubles,
+        )
         game._send_to_jail(mono_player, by_triple_doubles=True)
         game._sync_cash_scores()
         game._advance_after_roll_resolution(mono_player)

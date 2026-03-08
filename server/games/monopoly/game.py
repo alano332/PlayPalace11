@@ -279,7 +279,7 @@ CLASSIC_STANDARD_BOARD = [
         house_cost=150,
         rents=(20, 100, 300, 750, 925, 1100),
     ),
-    MonopolySpace(25, "bo_railroad", "B. & O. Railroad", "railroad", 200, 25),
+    MonopolySpace(25, "bo_railroad", "B&O Railroad", "railroad", 200, 25),
     MonopolySpace(
         26,
         "atlantic_avenue",
@@ -2961,6 +2961,9 @@ class MonopolyGame(ActionGuardMixin, Game):
         owner_id = self.property_owners.get(landed_space.space_id)
         if owner_id is None:
             return self._resolve_unowned_purchasable_space(player, landed_space)
+        no_rent_result = self._resolve_owned_space_no_rent_case(player, landed_space, owner_id)
+        if no_rent_result is not None:
+            return no_rent_result
         utility_die_1 = random.randint(1, 6)
         utility_die_2 = random.randint(1, 6)
         utility_total = utility_die_1 + utility_die_2
@@ -3517,6 +3520,8 @@ class MonopolyGame(ActionGuardMixin, Game):
         """Auto-liquidate: sell buildings first, then mortgage, until debt is covered."""
         if amount_due <= 0 or self._current_liquid_balance(player) >= amount_due:
             return
+        if self._maximum_raiseable_cash(player) < amount_due:
+            return
 
         attempts = 0
         max_attempts = max(8, len(player.owned_space_ids) * 8)
@@ -3538,6 +3543,20 @@ class MonopolyGame(ActionGuardMixin, Game):
                     continue
 
             break
+
+    def _maximum_raiseable_cash(self, player: MonopolyPlayer) -> int:
+        """Estimate the most cash a player could raise immediately."""
+        total = max(0, self._current_liquid_balance(player))
+        for space_id in player.owned_space_ids:
+            space = self._space_by_id_or_none(space_id)
+            if not space:
+                continue
+            level = self._building_level(space_id)
+            if self._is_street_property(space) and level > 0:
+                total += max(0, space.house_cost // 2) * level
+            if space_id not in self.mortgaged_space_ids:
+                total += self._mortgage_value(space)
+        return total
 
     def _property_trade_value(self, space_id: str) -> int:
         """Estimate trade value for a property."""
@@ -5416,6 +5435,35 @@ class MonopolyGame(ActionGuardMixin, Game):
         """Return City final value used by anchor-backed winner resolution."""
         return max(0, self._current_liquid_balance(player)) + self._city_rent_value_total(player)
 
+    def _standard_total_asset_value(self, player: MonopolyPlayer) -> int:
+        """Return a standard Monopoly total-asset estimate for endgame scoring."""
+        total = max(0, self._current_liquid_balance(player))
+        for space_id in player.owned_space_ids:
+            space = self._space_by_id_or_none(space_id)
+            if not space:
+                continue
+            if space_id in self.mortgaged_space_ids:
+                total += self._mortgage_value(space)
+            else:
+                total += max(0, space.price)
+            if self._is_street_property(space):
+                total += max(0, space.house_cost // 2) * self._building_level(space_id)
+        return total
+
+    def _sync_total_asset_scores(self) -> None:
+        """Mirror total asset value into team scores for finished standard games."""
+        if self._team_manager.team_mode != "individual":
+            return
+        for team in self._team_manager.teams:
+            if not team.members:
+                continue
+            player = self.get_player_by_name(team.members[0])
+            if player and isinstance(player, MonopolyPlayer):
+                team.total_score = self._standard_total_asset_value(player)
+            else:
+                team.total_score = 0
+            team.round_score = 0
+
     def _finish_city_game_by_value(
         self,
         winner: MonopolyPlayer,
@@ -5646,12 +5694,13 @@ class MonopolyGame(ActionGuardMixin, Game):
             self.status = "finished"
             self.game_active = False
             self.set_turn_players(remaining)
+            self._sync_total_asset_scores()
             if remaining:
                 winner = remaining[0]
                 self.broadcast_l(
                     "monopoly-winner-by-bankruptcy",
                     player=winner.name,
-                    cash=self._current_liquid_balance(winner),
+                    cash=self._standard_total_asset_value(winner),
                 )
             return
 
@@ -5691,7 +5740,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             creditor=creditor_name or (creditor.name if creditor else "Bank"),
         )
         self._finalize_turn_order_after_bankruptcy(player)
-        if creditor and transferred_mortgaged_space_ids:
+        if self.status == "playing" and creditor and transferred_mortgaged_space_ids:
             self._settle_transferred_mortgage_interest(
                 creditor,
                 transferred_mortgaged_space_ids,

@@ -45,7 +45,7 @@ monopoly-roll-first = You need to roll first.
 monopoly-already-rolled = You already rolled this turn.
 monopoly-no-property-to-buy = There is no property to buy right now.
 monopoly-property-owned = That property is already owned.
-monopoly-not-enough-cash = You don't have enough cash.
+monopoly-not-enough-cash = You do not have enough money to do this.
 monopoly-action-disabled-for-preset = This action is disabled for the selected preset.
 monopoly-buy-disabled = Buying property directly is disabled for this preset.
 
@@ -59,14 +59,14 @@ monopoly-you-roll-only = You rolled { $die1 } + { $die2 } = { $total }.
 monopoly-player-roll-only = { $player } rolled { $die1 } + { $die2 } = { $total }.
 monopoly-you-roll-only-doubles = You rolled { $die1 } + { $die2 } = { $total }. Doubles!
 monopoly-player-roll-only-doubles = { $player } rolled { $die1 } + { $die2 } = { $total }. Doubles!
-monopoly-property-available = { $property } is available for { $price }.
+monopoly-property-available = It's available for { $price }.
 monopoly-property-bought = { $player } bought { $property } for { $price }.
 monopoly-you-property-bought = You bought { $property } for { $price }.
 monopoly-player-property-bought = { $player } bought { $property } for { $price }.
-monopoly-rent-paid = { $player } paid { $amount } in rent to { $owner } for { $property }.
-monopoly-you-rent-paid = You paid { $amount } in rent to { $owner } for { $property }.
-monopoly-player-rent-paid = { $player } paid { $amount } in rent to { $owner } for { $property }.
-monopoly-player-paid-you-rent = { $player } paid { $amount } in rent to you for { $property }.
+monopoly-rent-paid = { $player } paid { $amount } in rent to { $owner } for { $property }. { $detail }
+monopoly-you-rent-paid = You paid { $amount } in rent to { $owner } for { $property }. { $detail }
+monopoly-player-rent-paid = { $player } paid { $amount } in rent to { $owner } for { $property }. { $detail }
+monopoly-player-paid-you-rent = { $player } paid { $amount } in rent to you for { $property }. { $detail }
 monopoly-player-paid-player = { $player } paid { $amount } to { $target }.
 monopoly-you-paid-player = You paid { $amount } to { $target }.
 monopoly-player-paid-you = { $player } paid { $amount } to you.
@@ -76,7 +76,9 @@ monopoly-you-completed-railroads = You now own all of the railroads.
 monopoly-player-completed-railroads = { $player } now owns all of the railroads.
 monopoly-you-completed-utilities = You now own all of the utilities.
 monopoly-player-completed-utilities = { $player } now owns all of the utilities.
-monopoly-landed-owned = { $player } landed on their own property: { $property }.
+monopoly-landed-owned = { $player } owns it.
+monopoly-you-landed-owned = You own it.
+monopoly-player-landed-owned = { $player } owns it.
 monopoly-tax-paid = { $player } paid { $amount } for { $tax }.
 monopoly-you-tax-paid = You paid { $amount } for { $tax }.
 monopoly-player-tax-paid = { $player } paid { $amount } for { $tax }.
@@ -93,6 +95,7 @@ monopoly-city-winner-by-value = { $player } wins Monopoly City with final value 
 monopoly-auction-property = Auction property
 monopoly-auction-property-space = Auction { $property }
 monopoly-auction-bid = Place auction bid
+monopoly-auction-bid-custom-option = Enter bid amount
 monopoly-auction-pass = Pass in auction
 monopoly-mortgage-property = Mortgage property
 monopoly-unmortgage-property = Unmortgage property
@@ -111,6 +114,7 @@ monopoly-banking-transfer-option = Transfer { $amount } to { $target }
 # Additional prompts
 monopoly-select-property-mortgage = Select a property to mortgage
 monopoly-select-property-unmortgage = Select a property to unmortgage
+monopoly-enter-auction-bid = Enter auction bid amount
 monopoly-select-property-build = Select a property to build on
 monopoly-select-property-sell = Select a property to sell from
 monopoly-select-trade-offer = Select a trade offer
@@ -228,6 +232,9 @@ monopoly-you-card-move = You moved to { $space }.
 monopoly-player-card-move = { $player } moved to { $space }.
 monopoly-card-jail-free = { $player } received a get-out-of-jail card.
 monopoly-card-utility-roll = { $player } rolled { $die1 } + { $die2 } = { $total } for utility rent.
+monopoly-utility-rent-detail = { $multiplier } times roll of { $roll }.
+monopoly-space-with-houses = With { $count } houses.
+monopoly-space-with-hotel = With a hotel.
 monopoly-deck-chance = Chance
 monopoly-deck-community-chest = Community Chest
 

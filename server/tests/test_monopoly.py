@@ -1195,9 +1195,11 @@ def test_monopoly_bankruptcy_to_bank_auctions_released_property(monkeypatch):
 
     game.execute_action(guest, "roll_dice")
 
-    assert guest.bankrupt is True
-    assert game.property_owners.get("mediterranean_avenue") == third.id
-    assert "mediterranean_avenue" in third.owned_space_ids
+    assert guest.bankrupt is False
+    assert game.pending_rent_payment_amount == 100
+    assert game.pending_rent_payment_owner_name == "Bank"
+    assert game.property_owners.get("mediterranean_avenue") == guest.id
+    assert "mediterranean_avenue" not in third.owned_space_ids
 
 
 def test_monopoly_chance_go_back_three_resolves_destination(monkeypatch):
@@ -1764,9 +1766,10 @@ def test_monopoly_liquidation_sells_buildings_before_mortgage_for_bank_debt(monk
     game.execute_action(guest, "roll_dice")
 
     assert guest.bankrupt is False
-    assert game._building_level("mediterranean_avenue") == 0
-    assert set(game.mortgaged_space_ids) == {"mediterranean_avenue", "baltic_avenue"}
-    assert guest.cash == 15
+    assert game.pending_rent_payment_amount == 100
+    assert game._building_level("mediterranean_avenue") == 1
+    assert set(game.mortgaged_space_ids) == set()
+    assert guest.cash == 30
 
 
 def test_monopoly_cannot_mortgage_color_group_with_buildings():

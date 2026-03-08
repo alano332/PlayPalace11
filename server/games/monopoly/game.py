@@ -651,6 +651,7 @@ class MonopolyGame(ActionGuardMixin, Game):
     building_levels: dict[str, int] = field(default_factory=dict)
     pending_trade_offer: MonopolyTradeOffer | None = None
     deed_browse_owner_by_viewer_id: dict[str, str] = field(default_factory=dict)
+    deed_browse_return_by_viewer_id: dict[str, str] = field(default_factory=dict)
     turn_menu_roll_focus_player_ids: set[str] = field(default_factory=set)
     held_get_out_of_jail_cards_by_player_id: dict[str, list[tuple[str, str]]] = field(
         default_factory=dict
@@ -1342,16 +1343,56 @@ class MonopolyGame(ActionGuardMixin, Game):
         *,
         owner: Player | None,
         amount_due: int,
-        landed_space: MonopolySpace,
+        landed_space: MonopolySpace | None,
         reason: str,
+        payment_label: str | None = None,
     ) -> None:
         """Pause the turn so the player can manually raise rent money."""
         self.pending_rent_payment_amount = amount_due
         self.pending_rent_payment_owner_id = owner.id if owner else ""
         self.pending_rent_payment_owner_name = owner.name if owner else "Bank"
-        self.pending_rent_payment_space_id = landed_space.space_id
+        if landed_space is not None:
+            self.pending_rent_payment_space_id = landed_space.space_id
+        else:
+            self.pending_rent_payment_space_id = payment_label or ""
         self.pending_rent_payment_reason = reason
         self._announce_pending_rent_shortfall(player)
+
+    def _is_pending_bank_payment(self) -> bool:
+        """Return True when the current pending payment is owed to the bank."""
+        if self.pending_rent_payment_amount <= 0:
+            return False
+        return bool(
+            self.pending_rent_payment_reason
+            and not self.pending_rent_payment_reason.startswith("rent:")
+            and not self.pending_rent_payment_reason.startswith("card_rent:")
+        )
+
+    def _utility_rent_detail(self, dice_total: int, multiplier: int) -> str:
+        """Describe utility rent as multiplier times the triggering roll."""
+        return self._monopoly_text(
+            "en",
+            "monopoly-utility-rent-detail",
+            fallback=f"{multiplier} times roll of {dice_total}.",
+            multiplier=multiplier,
+            roll=dice_total,
+        )
+
+    def _rent_detail_text(
+        self,
+        space: MonopolySpace | None,
+        *,
+        owner_id: str,
+        dice_total: int | None,
+        utility_multiplier: int | None = None,
+    ) -> str:
+        """Return optional trailing rent detail for utility spaces."""
+        if space is None or space.kind != "utility":
+            return ""
+        owned = max(1, self._count_owned_kind(owner_id, "utility"))
+        multiplier = utility_multiplier if utility_multiplier is not None else (10 if owned >= 2 else 4)
+        roll_value = dice_total if dice_total is not None else sum(self.turn_last_roll)
+        return self._utility_rent_detail(roll_value, multiplier)
 
     def _try_resolve_pending_rent_payment(self, player: MonopolyPlayer) -> bool:
         """Settle the current pending rent payment when enough cash has been raised."""
@@ -1379,35 +1420,55 @@ class MonopolyGame(ActionGuardMixin, Game):
 
         owner = self.get_player_by_id(self.pending_rent_payment_owner_id)
         space = self._space_by_id_or_none(self.pending_rent_payment_space_id)
-        paid = self._pay_rent_to_owner_or_bank(
-            player,
-            owner,
-            amount_due,
-            self.pending_rent_payment_reason or "rent",
-        )
+        pending_reason = self.pending_rent_payment_reason or "rent"
+        pending_bank_payment = self._is_pending_bank_payment()
+        if pending_bank_payment:
+            paid = self._debit_player_to_bank(
+                player,
+                amount_due,
+                pending_reason,
+                allow_partial=True,
+            )
+            if self._is_free_parking_jackpot_enabled():
+                self.free_parking_pool += paid
+        else:
+            paid = self._pay_rent_to_owner_or_bank(
+                player,
+                owner,
+                amount_due,
+                pending_reason,
+            )
         owner_name = owner.name if owner else self.pending_rent_payment_owner_name or "Bank"
         self._clear_pending_rent_payment()
         property_name = space.name if space else self.pending_rent_payment_space_id
-        self._broadcast_monopoly_transaction(
-            player,
-            owner,
-            actor_message_id="monopoly-you-rent-paid",
-            recipient_message_id="monopoly-player-paid-you-rent",
-            others_message_id="monopoly-player-rent-paid",
-            actor_fallback=(
-                f"You paid {self._format_money(paid)} in rent to {owner_name} for {property_name}."
-            ),
-            recipient_fallback=(
-                f"{player.name} paid {self._format_money(paid)} in rent to you for {property_name}."
-            ),
-            others_fallback=(
-                f"{player.name} paid {self._format_money(paid)} in rent to {owner_name} for {property_name}."
-            ),
-            player=player.name,
-            owner=owner_name,
-            amount=paid,
-            property=property_name,
-        )
+        if pending_bank_payment:
+            self._broadcast_bank_payment(player, paid, property_name or owner_name, None)
+        else:
+            self._broadcast_monopoly_transaction(
+                player,
+                owner,
+                actor_message_id="monopoly-you-rent-paid",
+                recipient_message_id="monopoly-player-paid-you-rent",
+                others_message_id="monopoly-player-rent-paid",
+                actor_fallback=(
+                    f"You paid {self._format_money(paid)} in rent to {owner_name} for {property_name}."
+                ),
+                recipient_fallback=(
+                    f"{player.name} paid {self._format_money(paid)} in rent to you for {property_name}."
+                ),
+                others_fallback=(
+                    f"{player.name} paid {self._format_money(paid)} in rent to {owner_name} for {property_name}."
+                ),
+                player=player.name,
+                owner=owner_name,
+                amount=paid,
+                property=property_name,
+                detail=self._rent_detail_text(
+                    space,
+                    owner_id=owner.id if owner and isinstance(owner, MonopolyPlayer) else "",
+                    dice_total=None,
+                ),
+            )
         self._apply_sore_loser_rebate(player, paid)
         if paid < amount_due:
             creditor_id = owner.id if owner and isinstance(owner, MonopolyPlayer) else None
@@ -2320,6 +2381,7 @@ class MonopolyGame(ActionGuardMixin, Game):
     def _action_browse_all_deeds(self, player: Player, action_id: str) -> None:
         """Open board-ordered deed list and allow selection."""
         _ = action_id
+        self.deed_browse_return_by_viewer_id[player.id] = "all"
         self._open_deed_selection_menu(
             player,
             space_ids=[space.space_id for space in self._deed_capable_spaces_in_board_order()],
@@ -2331,6 +2393,7 @@ class MonopolyGame(ActionGuardMixin, Game):
         """Open this player's owned properties and allow deed selection."""
         _ = action_id
         mono_player = player  # type: ignore[assignment]
+        self.deed_browse_return_by_viewer_id[player.id] = "mine"
         self._open_deed_selection_menu(
             player,
             space_ids=self._sorted_owned_space_ids(mono_player.id),
@@ -2391,6 +2454,7 @@ class MonopolyGame(ActionGuardMixin, Game):
         if not owner or not isinstance(owner, MonopolyPlayer):
             return
         self.deed_browse_owner_by_viewer_id[player.id] = owner.id
+        self.deed_browse_return_by_viewer_id[player.id] = "owner"
         self._open_deed_selection_menu(
             player,
             space_ids=self._sorted_owned_space_ids(owner.id),
@@ -2459,6 +2523,8 @@ class MonopolyGame(ActionGuardMixin, Game):
         space = self.active_space_by_id.get(space_id)
         if not space or space.kind not in PURCHASABLE_KINDS:
             return
+        if player.id not in self.deed_browse_return_by_viewer_id:
+            self.deed_browse_return_by_viewer_id[player.id] = "all"
         user = self.get_user(player)
         locale = user.locale if user else "en"
         self.status_box(player, self._deed_lines(space, locale))
@@ -2468,7 +2534,50 @@ class MonopolyGame(ActionGuardMixin, Game):
     ) -> None:
         """Read one selected deed from player-property browsing flow."""
         _ = action_id
+        self.deed_browse_return_by_viewer_id[player.id] = "owner"
         self._action_view_selected_deed(player, space_id, "view_selected_deed")
+
+    def _reopen_deed_return_menu(self, player: Player) -> bool:
+        """Reopen the appropriate deed browser after closing a deed detail."""
+        mode = self.deed_browse_return_by_viewer_id.get(player.id, "")
+        if mode == "mine":
+            self._action_view_my_properties(player, "view_my_properties")
+            return True
+        if mode == "owner":
+            owner_id = self.deed_browse_owner_by_viewer_id.get(player.id, "")
+            owner = self.get_player_by_id(owner_id)
+            if owner and isinstance(owner, MonopolyPlayer):
+                self._action_select_player_property_owner(
+                    player,
+                    owner.id,
+                    "select_player_property_owner",
+                )
+                return True
+        if mode == "all":
+            self._action_browse_all_deeds(player, "browse_all_deeds")
+            return True
+        return False
+
+    def _handle_menu_event(self, player: Player, event: dict) -> None:
+        """Handle deed-browser return paths before generic menu behavior."""
+        menu_id = event.get("menu_id")
+        selection_id = event.get("selection_id", "")
+        user = self.get_user(player)
+        if menu_id == "status_box" and player.id in self.deed_browse_return_by_viewer_id:
+            if user:
+                user.remove_menu("status_box")
+                self._status_box_open.discard(player.id)
+            if self._reopen_deed_return_menu(player):
+                return
+        if (
+            menu_id == "action_input_menu"
+            and selection_id == "_cancel"
+            and self._pending_actions.get(player.id) == "view_selected_owner_property_deed"
+        ):
+            self._pending_actions.pop(player.id, None)
+            self._action_view_player_properties(player, "view_player_properties")
+            return
+        super()._handle_menu_event(player, event)
 
     def _build_space_from_manual_row(self, row: dict[str, object], fallback_index: int) -> MonopolySpace:
         """Build one MonopolySpace from a manual rule artifact row."""
@@ -2752,6 +2861,19 @@ class MonopolyGame(ActionGuardMixin, Game):
         ):
             return "bankrupt" if player.bankrupt else "resolved"
         if not manual_core and self._current_liquid_balance(player) < rent_due:
+            if player.is_bot:
+                self._liquidate_assets_for_debt(player, rent_due)
+            if self._current_liquid_balance(player) < rent_due and not player.is_bot:
+                self._start_pending_rent_payment(
+                    player,
+                    owner=owner,
+                    amount_due=rent_due,
+                    landed_space=landed_space,
+                    reason=reason,
+                )
+                self.rebuild_all_menus()
+                return "resolved"
+        if not manual_core and self._current_liquid_balance(player) < rent_due and not player.is_bot:
             self._start_pending_rent_payment(
                 player,
                 owner=owner,
@@ -2782,6 +2904,12 @@ class MonopolyGame(ActionGuardMixin, Game):
             owner=owner_name,
             amount=paid,
             property=landed_space.name,
+            detail=self._rent_detail_text(
+                landed_space,
+                owner_id=owner_id,
+                dice_total=None,
+                utility_multiplier=10 if landed_space.kind == "utility" else None,
+            ),
         )
         self._apply_sore_loser_rebate(player, paid)
         if not self._apply_cheaters_payment_result(
@@ -3119,6 +3247,25 @@ class MonopolyGame(ActionGuardMixin, Game):
             if not user:
                 continue
             user.speak(self._space_display_name(space, user.locale))
+            if self._is_street_property(space):
+                level = self._building_level(space.space_id)
+                if level >= 5:
+                    user.speak(
+                        self._monopoly_text(
+                            user.locale,
+                            "monopoly-space-with-hotel",
+                            fallback="With a hotel.",
+                        )
+                    )
+                elif level > 0:
+                    user.speak(
+                        self._monopoly_text(
+                            user.locale,
+                            "monopoly-space-with-houses",
+                            fallback=f"With {level} houses.",
+                            count=level,
+                        )
+                    )
 
     def _mortgage_value(self, space: MonopolySpace) -> int:
         """Get mortgage value for a space."""
@@ -5184,7 +5331,19 @@ class MonopolyGame(ActionGuardMixin, Game):
             return False
 
         if not manual_core and self._current_liquid_balance(player) < amount:
-            self._liquidate_assets_for_debt(player, amount)
+            if player.is_bot:
+                self._liquidate_assets_for_debt(player, amount)
+            else:
+                self._start_pending_rent_payment(
+                    player,
+                    owner=None,
+                    amount_due=amount,
+                    landed_space=None,
+                    reason=reason,
+                    payment_label=tax_name or card_reason_key or "Bank",
+                )
+                self.rebuild_all_menus()
+                return True
 
         paid = self._debit_player_to_bank(player, amount, reason, allow_partial=True)
         if self._is_free_parking_jackpot_enabled():
@@ -6018,8 +6177,12 @@ class MonopolyGame(ActionGuardMixin, Game):
     ) -> str | None:
         """Resolve owned-space outcomes where no rent transfer is required."""
         if owner_id == player.id:
-            self.broadcast_l(
-                "monopoly-landed-owned",
+            self._broadcast_monopoly_personal(
+                player,
+                personal_message_id="monopoly-you-landed-owned",
+                others_message_id="monopoly-player-landed-owned",
+                personal_fallback="You own it.",
+                others_fallback=f"{player.name} owns it.",
                 player=player.name,
                 property=landed_space.name,
             )
@@ -6109,6 +6272,19 @@ class MonopolyGame(ActionGuardMixin, Game):
         ):
             return "bankrupt" if player.bankrupt else "resolved"
         if not manual_core and self._current_liquid_balance(player) < rent_due:
+            if player.is_bot:
+                self._liquidate_assets_for_debt(player, rent_due)
+            if self._current_liquid_balance(player) < rent_due and not player.is_bot:
+                self._start_pending_rent_payment(
+                    player,
+                    owner=owner,
+                    amount_due=rent_due,
+                    landed_space=landed_space,
+                    reason=rent_reason,
+                )
+                self.rebuild_all_menus()
+                return "resolved"
+        if not manual_core and self._current_liquid_balance(player) < rent_due:
             self._start_pending_rent_payment(
                 player,
                 owner=owner,
@@ -6121,6 +6297,11 @@ class MonopolyGame(ActionGuardMixin, Game):
         paid = self._pay_rent_to_owner_or_bank(player, owner, rent_due, rent_reason)
 
         owner_name = owner.name if owner else "Bank"
+        detail = self._rent_detail_text(
+            landed_space,
+            owner_id=owner_id,
+            dice_total=dice_total,
+        )
         self._broadcast_monopoly_transaction(
             player,
             owner,
@@ -6140,6 +6321,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             owner=owner_name,
             amount=paid,
             property=landed_space.name,
+            detail=detail,
         )
         self._apply_sore_loser_rebate(player, paid)
         if not self._apply_cheaters_payment_result(

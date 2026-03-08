@@ -140,7 +140,17 @@ def options_for_auction_bid(game: MonopolyGame, player: Player) -> list[str]:
         if candidate >= min_bid:
             options.add(candidate)
 
-    return [str(value) for value in sorted(options)]
+    user = game.get_user(player)
+    locale = user.locale if user else "en"
+    values = [str(value) for value in sorted(options)]
+    values.append(
+        game._monopoly_text(
+            locale,
+            "monopoly-auction-bid-custom-option",
+            fallback="Enter bid amount",
+        )
+    )
+    return values
 
 
 def bot_select_auction_bid(game: MonopolyGame, player: Player, options: list[str]) -> str | None:

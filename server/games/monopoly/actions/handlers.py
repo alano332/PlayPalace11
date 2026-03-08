@@ -403,15 +403,36 @@ def action_auction_bid(game: MonopolyGame, player: Player, option: str, action_i
     current_bidder = game._current_auction_bidder()
     if current_bidder is None or current_bidder.id != player.id:
         return
-    if option not in game._options_for_auction_bid(player):
-        return
     space = game._pending_auction_space()
     if not space:
         return
 
+    user = game.get_user(player)
+    locale = user.locale if user else "en"
+    bid_options = game._options_for_auction_bid(player)
+    custom_label = game._monopoly_text(
+        locale,
+        "monopoly-auction-bid-custom-option",
+        fallback="Enter bid amount",
+    )
+    if option == custom_label:
+        if user:
+            game._pending_actions[player.id] = "auction_bid"
+            user.show_editbox(
+                "action_input_editbox",
+                game._monopoly_text(
+                    locale,
+                    "monopoly-enter-auction-bid",
+                    fallback="Enter auction bid amount",
+                ),
+                str(game._auction_min_bid()),
+            )
+        return
     try:
         bid = int(option)
     except ValueError:
+        if option not in bid_options:
+            return
         return
 
     min_bid = game._auction_min_bid()
@@ -513,6 +534,14 @@ def action_mortgage_property(
 
     game._sync_cash_scores()
     game._try_resolve_pending_rent_payment(mono_player)
+    remaining_options = game._options_for_mortgage_property(player)
+    if remaining_options:
+        game._reopen_action_options_menu(
+            player,
+            pending_action_id="mortgage_property",
+            options=remaining_options,
+        )
+        return
     game.rebuild_all_menus()
 
 
@@ -540,6 +569,16 @@ def action_unmortgage_property(
 
     cost = game._unmortgage_cost(space)
     if game._current_liquid_balance(mono_player) < cost:
+        user = game.get_user(player)
+        if user:
+            user.speak_l("monopoly-not-enough-cash")
+        remaining_options = game._options_for_unmortgage_property(player)
+        if remaining_options:
+            game._reopen_action_options_menu(
+                player,
+                pending_action_id="unmortgage_property",
+                options=remaining_options,
+            )
         return
     paid = game._debit_player_to_bank(mono_player, cost, f"unmortgage:{space.space_id}")
     if paid < cost:
@@ -558,6 +597,14 @@ def action_unmortgage_property(
 
     game._sync_cash_scores()
     game._try_resolve_pending_rent_payment(mono_player)
+    remaining_options = game._options_for_unmortgage_property(player)
+    if remaining_options:
+        game._reopen_action_options_menu(
+            player,
+            pending_action_id="unmortgage_property",
+            options=remaining_options,
+        )
+        return
     game.rebuild_all_menus()
 
 

@@ -66,7 +66,7 @@ def encode_property_amount_option(
         property=game._space_label(space_id, locale),
         amount=game._format_money(amount),
     )
-    return f"{label} ## space={space_id}"
+    return label
 
 
 def parse_property_amount_option(game: MonopolyGame, option: str) -> str | None:
@@ -170,7 +170,7 @@ def mortgage_space_ids(game: MonopolyGame, player: Player) -> list[str]:
     """Return unmortgaged owned property ids eligible for mortgaging."""
     mono_player = player  # type: ignore[assignment]
     space_ids: list[str] = []
-    for space_id in mono_player.owned_space_ids:
+    for space_id in game._sorted_owned_space_ids(mono_player.id):
         if game.property_owners.get(space_id) != mono_player.id:
             continue
         if space_id in game.mortgaged_space_ids:
@@ -181,20 +181,18 @@ def mortgage_space_ids(game: MonopolyGame, player: Player) -> list[str]:
         if game._is_street_property(space) and game._group_has_any_buildings(space.color_group):
             continue
         space_ids.append(space_id)
-    return sorted(space_ids)
+    return space_ids
 
 
 def unmortgage_space_ids(game: MonopolyGame, player: Player) -> list[str]:
     """Return mortgaged owned property ids eligible for unmortgaging."""
     mono_player = player  # type: ignore[assignment]
-    return sorted(
-        [
-            space_id
-            for space_id in mono_player.owned_space_ids
-            if game.property_owners.get(space_id) == mono_player.id
-            and space_id in game.mortgaged_space_ids
-        ]
-    )
+    return [
+        space_id
+        for space_id in game._sorted_owned_space_ids(mono_player.id)
+        if game.property_owners.get(space_id) == mono_player.id
+        and space_id in game.mortgaged_space_ids
+    ]
 
 
 def options_for_mortgage_property(game: MonopolyGame, player: Player) -> list[str]:
@@ -293,22 +291,23 @@ def bot_select_mortgage_property(game: MonopolyGame, player: Player, options: li
     _ = player
     if not options:
         return None
+    pairs = list(zip(options, mortgage_space_ids(game, player), strict=False))
+    if not pairs:
+        return None
     return max(
-        options,
-        key=lambda option: game._mortgage_value(
-            game.active_space_by_id[parse_property_amount_option(game, option) or ""]
-        ),
-    )
+        pairs,
+        key=lambda pair: game._mortgage_value(game.active_space_by_id[pair[1]]),
+    )[0]
 
 
 def bot_select_unmortgage_property(
     game: MonopolyGame, player: Player, options: list[str]
 ) -> str | None:
     """Pick the cheapest affordable unmortgage option."""
+    pairs = list(zip(options, unmortgage_space_ids(game, player), strict=False))
     affordable = [
         option
-        for option in options
-        if (space_id := parse_property_amount_option(game, option))
+        for option, space_id in pairs
         if game._current_liquid_balance(player)
         >= game._unmortgage_cost(game.active_space_by_id[space_id])
     ]
@@ -317,7 +316,9 @@ def bot_select_unmortgage_property(
     return min(
         affordable,
         key=lambda option: game._unmortgage_cost(
-            game.active_space_by_id[parse_property_amount_option(game, option) or ""]
+            game.active_space_by_id[
+                unmortgage_space_ids(game, player)[options.index(option)]
+            ]
         ),
     )
 

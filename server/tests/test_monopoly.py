@@ -707,18 +707,21 @@ def test_monopoly_unmortgage_remains_available_while_buying() -> None:
 def test_monopoly_mortgage_and_unmortgage_options_include_amounts() -> None:
     game = _start_two_player_game()
     host = game.players[0]
+    host.owned_space_ids.extend(["pennsylvania_avenue", "atlantic_avenue"])
+    game.property_owners["pennsylvania_avenue"] = host.id
     host.owned_space_ids.append("atlantic_avenue")
     game.property_owners["atlantic_avenue"] = host.id
 
     mortgage_options = game._options_for_mortgage_property(host)
     assert mortgage_options == [
-        f"Atlantic Avenue for ${game._mortgage_value(game.active_space_by_id['atlantic_avenue'])} ## space=atlantic_avenue"
+        f"Atlantic Avenue for ${game._mortgage_value(game.active_space_by_id['atlantic_avenue'])}",
+        f"Pennsylvania Avenue for ${game._mortgage_value(game.active_space_by_id['pennsylvania_avenue'])}",
     ]
 
     game.mortgaged_space_ids.append("atlantic_avenue")
     unmortgage_options = game._options_for_unmortgage_property(host)
     assert unmortgage_options == [
-        f"Atlantic Avenue for ${game._unmortgage_cost(game.active_space_by_id['atlantic_avenue'])} ## space=atlantic_avenue"
+        f"Atlantic Avenue for ${game._unmortgage_cost(game.active_space_by_id['atlantic_avenue'])}"
     ]
 
 
@@ -747,7 +750,7 @@ def test_monopoly_star_wars_board_preserves_credits_currency_format() -> None:
     host.owned_space_ids.append("atlantic_avenue")
     game.property_owners["atlantic_avenue"] = host.id
     mortgage_options = game._options_for_mortgage_property(host)
-    assert mortgage_options == ["Atlantic Avenue for 130 Credits ## space=atlantic_avenue"]
+    assert mortgage_options == ["Atlantic Avenue for 130 Credits"]
     assert game._resolve_card_draw_text(None, "bank_dividend_50", locale="en") == (
         "Bank pays you dividend of 50 Credits"
     )
@@ -841,10 +844,12 @@ def test_monopoly_go_to_jail_space_moves_player_to_jail(monkeypatch):
     assert game.turn_pending_purchase_space_id == ""
 
 
-def test_monopoly_rent_shortfall_triggers_auto_liquidation_before_payment(monkeypatch):
+def test_monopoly_rent_shortfall_pauses_for_manual_payment(monkeypatch):
     game = _start_two_player_game()
     host = game.players[0]
     guest = game.players[1]
+    guest_user = game.get_user(guest)
+    assert guest_user is not None
 
     host.owned_space_ids.append("boardwalk")
     game.property_owners["boardwalk"] = host.id
@@ -862,13 +867,23 @@ def test_monopoly_rent_shortfall_triggers_auto_liquidation_before_payment(monkey
     game.execute_action(guest, "roll_dice")
 
     assert guest.bankrupt is False
+    assert game.pending_rent_payment_amount == 50
+    assert host.cash == STARTING_CASH
+    assert guest.cash == 30
+    assert "baltic_avenue" in guest.owned_space_ids
+    assert "short by $20" in " ".join(guest_user.get_spoken_messages()).lower()
+
+    mortgage_option = game._options_for_mortgage_property(guest)[0]
+    game.execute_action(guest, "mortgage_property", input_value=mortgage_option)
+
+    assert mortgage_option == f"Baltic Avenue for ${game._mortgage_value(game.active_space_by_id['baltic_avenue'])}"
+    assert game.pending_rent_payment_amount == 0
     assert host.cash == STARTING_CASH + 50
     assert guest.cash == 10
-    assert "baltic_avenue" in guest.owned_space_ids
     assert "baltic_avenue" in game.mortgaged_space_ids
 
 
-def test_monopoly_bankrupt_when_liquidation_cannot_cover_rent(monkeypatch):
+def test_monopoly_bankrupt_when_no_manual_rent_options_remain(monkeypatch):
     game = _start_two_player_game()
     host = game.players[0]
     guest = game.players[1]
@@ -885,6 +900,11 @@ def test_monopoly_bankrupt_when_liquidation_cannot_cover_rent(monkeypatch):
     monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
 
     game.execute_action(guest, "roll_dice")
+
+    assert guest.bankrupt is False
+    assert game.pending_rent_payment_amount == 50
+
+    game._try_resolve_pending_rent_payment(guest)
 
     assert guest.bankrupt is True
     assert game.status == "finished"
@@ -915,13 +935,19 @@ def test_monopoly_bankruptcy_transfers_assets_to_creditor(monkeypatch):
 
     game.execute_action(guest, "roll_dice")
 
-    assert guest.bankrupt is True
-    assert game.property_owners["mediterranean_avenue"] == host.id
-    assert "mediterranean_avenue" in host.owned_space_ids
-    assert guest.get_out_of_jail_cards == 0
-    assert host.get_out_of_jail_cards == 1
+    assert game.pending_rent_payment_amount == 50
+    mortgage_option = game._options_for_mortgage_property(guest)[0]
+    game.execute_action(guest, "mortgage_property", input_value=mortgage_option)
+
+    assert guest.bankrupt is False
+    assert game.pending_rent_payment_amount == 50
+    assert game.property_owners["mediterranean_avenue"] == guest.id
+    assert "mediterranean_avenue" in guest.owned_space_ids
+    assert guest.get_out_of_jail_cards == 1
+    assert host.get_out_of_jail_cards == 0
     assert "mediterranean_avenue" in game.mortgaged_space_ids
-    assert host.cash == STARTING_CASH + 37
+    assert guest.cash == 40
+    assert host.cash == STARTING_CASH
 
 
 def test_monopoly_doubles_grant_extra_roll(monkeypatch):
@@ -1229,6 +1255,40 @@ def test_monopoly_auction_sells_pending_property(monkeypatch):
     assert game.turn_pending_purchase_space_id == ""
     assert game.pending_auction_space_id == ""
     assert game.property_owners.get("baltic_avenue") is not None
+
+
+def test_monopoly_auction_rebuilds_turn_menu_for_next_bidder(monkeypatch):
+    game = _start_two_player_game()
+    host = game.current_player
+    assert host is not None
+    host_user = game.get_user(host)
+    guest = game.players[1]
+    guest_user = game.get_user(guest)
+    assert host_user is not None
+    assert guest_user is not None
+
+    rolls = iter([1, 2])  # total = 3 -> Baltic
+    monkeypatch.setattr("server.games.monopoly.game.random.randint", lambda a, b: next(rolls))
+    game.execute_action(host, "roll_dice")
+    game.execute_action(host, "auction_property")
+
+    guest_ids = [item.id for item in guest_user.get_current_menu_items("turn_menu")]
+    assert "auction_bid" in guest_ids
+    assert "auction_pass" in guest_ids
+
+
+def test_monopoly_mortgage_allowed_for_current_auction_bidder() -> None:
+    game = _start_two_player_game()
+    host = game.players[0]
+    guest = game.players[1]
+    guest.owned_space_ids.append("baltic_avenue")
+    game.property_owners["baltic_avenue"] = guest.id
+    game.pending_auction_space_id = "boardwalk"
+    game.pending_auction_bidder_ids = [host.id, guest.id]
+    game.pending_auction_turn_index = 1
+
+    assert game._is_mortgage_property_enabled(guest) is None
+    assert game._is_mortgage_property_hidden(guest).name != "HIDDEN"
 
 
 def test_monopoly_speed_auto_auctions_and_disables_manual_buy(monkeypatch):

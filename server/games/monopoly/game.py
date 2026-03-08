@@ -661,6 +661,11 @@ class MonopolyGame(ActionGuardMixin, Game):
     pending_auction_turn_index: int = 0
     pending_auction_high_bidder_id: str = ""
     pending_auction_current_bid: int = 0
+    pending_rent_payment_amount: int = 0
+    pending_rent_payment_owner_id: str = ""
+    pending_rent_payment_owner_name: str = ""
+    pending_rent_payment_space_id: str = ""
+    pending_rent_payment_reason: str = ""
 
     turn_has_rolled: bool = False
     turn_last_roll: list[int] = field(default_factory=list)
@@ -1281,6 +1286,140 @@ class MonopolyGame(ActionGuardMixin, Game):
     def _current_liquid_balance(self, player: MonopolyPlayer) -> int:
         """Return current spendable balance for decision and validation logic."""
         return self._bank_balance(player)
+
+    def _has_pending_rent_payment(self, player: MonopolyPlayer | None = None) -> bool:
+        """Return True when the current turn is paused for unresolved rent."""
+        if self.pending_rent_payment_amount <= 0:
+            return False
+        if player is None:
+            return isinstance(self.current_player, MonopolyPlayer)
+        current = self.current_player
+        return isinstance(current, MonopolyPlayer) and current.id == player.id
+
+    def _pending_rent_shortfall(self, player: MonopolyPlayer) -> int:
+        """Return the remaining shortfall on the active pending rent payment."""
+        if not self._has_pending_rent_payment(player):
+            return 0
+        return max(0, self.pending_rent_payment_amount - self._current_liquid_balance(player))
+
+    def _clear_pending_rent_payment(self) -> None:
+        """Clear the active unresolved rent payment state."""
+        self.pending_rent_payment_amount = 0
+        self.pending_rent_payment_owner_id = ""
+        self.pending_rent_payment_owner_name = ""
+        self.pending_rent_payment_space_id = ""
+        self.pending_rent_payment_reason = ""
+
+    def _announce_pending_rent_shortfall(self, player: MonopolyPlayer) -> None:
+        """Tell the player how much rent they still need to raise."""
+        shortfall = self._pending_rent_shortfall(player)
+        if shortfall <= 0:
+            return
+        user = self.get_user(player)
+        if not user:
+            return
+        user.speak(
+            (
+                f"You are short by {self._format_money(shortfall)}. "
+                "Use mortgage, sell house, or trade actions to raise cash."
+            ),
+            buffer="table",
+        )
+
+    def _can_raise_cash_for_pending_rent(self, player: MonopolyPlayer) -> bool:
+        """Return True when the player still has plausible ways to raise cash."""
+        return bool(
+            self._mortgage_space_ids(player)
+            or self._options_for_sell_house(player)
+            or self._options_for_offer_trade(player)
+            or self.pending_trade_offer is not None
+        )
+
+    def _start_pending_rent_payment(
+        self,
+        player: MonopolyPlayer,
+        *,
+        owner: Player | None,
+        amount_due: int,
+        landed_space: MonopolySpace,
+        reason: str,
+    ) -> None:
+        """Pause the turn so the player can manually raise rent money."""
+        self.pending_rent_payment_amount = amount_due
+        self.pending_rent_payment_owner_id = owner.id if owner else ""
+        self.pending_rent_payment_owner_name = owner.name if owner else "Bank"
+        self.pending_rent_payment_space_id = landed_space.space_id
+        self.pending_rent_payment_reason = reason
+        self._announce_pending_rent_shortfall(player)
+
+    def _try_resolve_pending_rent_payment(self, player: MonopolyPlayer) -> bool:
+        """Settle the current pending rent payment when enough cash has been raised."""
+        if not self._has_pending_rent_payment(player):
+            return False
+        amount_due = self.pending_rent_payment_amount
+        if amount_due <= 0:
+            self._clear_pending_rent_payment()
+            return False
+        if self._current_liquid_balance(player) < amount_due:
+            if not self._can_raise_cash_for_pending_rent(player):
+                owner = self.get_player_by_id(self.pending_rent_payment_owner_id)
+                creditor_name = owner.name if owner else self.pending_rent_payment_owner_name or "Bank"
+                creditor_id = owner.id if owner and isinstance(owner, MonopolyPlayer) else None
+                self._clear_pending_rent_payment()
+                self._declare_bankrupt(
+                    player,
+                    creditor_name=creditor_name,
+                    creditor_id=creditor_id,
+                )
+                return True
+            self._announce_pending_rent_shortfall(player)
+            self.rebuild_all_menus()
+            return False
+
+        owner = self.get_player_by_id(self.pending_rent_payment_owner_id)
+        space = self._space_by_id_or_none(self.pending_rent_payment_space_id)
+        paid = self._pay_rent_to_owner_or_bank(
+            player,
+            owner,
+            amount_due,
+            self.pending_rent_payment_reason or "rent",
+        )
+        owner_name = owner.name if owner else self.pending_rent_payment_owner_name or "Bank"
+        self._clear_pending_rent_payment()
+        self.broadcast_l(
+            "monopoly-rent-paid",
+            player=player.name,
+            owner=owner_name,
+            amount=paid,
+            property=space.name if space else self.pending_rent_payment_space_id,
+        )
+        self._apply_sore_loser_rebate(player, paid)
+        if paid < amount_due:
+            creditor_id = owner.id if owner and isinstance(owner, MonopolyPlayer) else None
+            self._declare_bankrupt(
+                player,
+                creditor_name=owner_name,
+                creditor_id=creditor_id,
+            )
+            return True
+        self._sync_cash_scores()
+        self._advance_after_roll_resolution(player)
+        return True
+
+    def _asset_management_actor(self) -> MonopolyPlayer | None:
+        """Return the player who may currently use cash-raising actions."""
+        if self._is_auction_active():
+            return self._current_auction_bidder()
+        current = self.current_player
+        if isinstance(current, MonopolyPlayer):
+            return current
+        return None
+
+    def _can_manage_assets_now(self, player: Player) -> bool:
+        """Return True when this player may raise cash via asset actions."""
+        mono_player = player  # type: ignore[assignment]
+        actor = self._asset_management_actor()
+        return actor is not None and actor.id == mono_player.id and not mono_player.bankrupt
 
     def _credit_player(self, player: MonopolyPlayer, amount: int, reason: str) -> int:
         """Credit player funds and return actual amount credited."""
@@ -2473,7 +2612,15 @@ class MonopolyGame(ActionGuardMixin, Game):
         ):
             return "bankrupt" if player.bankrupt else "resolved"
         if not manual_core and self._current_liquid_balance(player) < rent_due:
-            self._liquidate_assets_for_debt(player, rent_due)
+            self._start_pending_rent_payment(
+                player,
+                owner=owner,
+                amount_due=rent_due,
+                landed_space=landed_space,
+                reason=reason,
+            )
+            self.rebuild_all_menus()
+            return "resolved"
         paid = self._pay_rent_to_owner_or_bank(player, owner, rent_due, reason)
         self.broadcast_l(
             "monopoly-rent-paid",
@@ -3981,6 +4128,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             amount=MIN_AUCTION_INCREMENT,
         )
         self._advance_pending_auction_turn(-1)
+        self.rebuild_all_menus()
 
     def _is_free_parking_jackpot_enabled(self) -> bool:
         """Return True when current preset enables jackpot on Free Parking."""
@@ -4076,6 +4224,7 @@ class MonopolyGame(ActionGuardMixin, Game):
         self.turn_last_roll.clear()
         self.turn_pending_purchase_space_id = ""
         self.turn_can_roll_again = False
+        self._clear_pending_rent_payment()
         if reset_doubles:
             self.turn_doubles_count = 0
 
@@ -4274,6 +4423,7 @@ class MonopolyGame(ActionGuardMixin, Game):
             or self.turn_pending_purchase_space_id
             or self.turn_can_roll_again
             or self._is_auction_active()
+            or self._has_pending_rent_payment(player)
         ):
             self.rebuild_all_menus()
             return False
@@ -5072,6 +5222,8 @@ class MonopolyGame(ActionGuardMixin, Game):
         creditor: MonopolyPlayer | None,
     ) -> None:
         """Zero all transferable state and close banking account for bankrupt player."""
+        if creditor and not self._is_electronic_banking_preset() and player.cash > 0:
+            creditor.cash += player.cash
         if creditor and player.get_out_of_jail_cards > 0:
             creditor.get_out_of_jail_cards += player.get_out_of_jail_cards
             self._transfer_held_get_out_of_jail_cards(
@@ -5732,7 +5884,15 @@ class MonopolyGame(ActionGuardMixin, Game):
         ):
             return "bankrupt" if player.bankrupt else "resolved"
         if not manual_core and self._current_liquid_balance(player) < rent_due:
-            self._liquidate_assets_for_debt(player, rent_due)
+            self._start_pending_rent_payment(
+                player,
+                owner=owner,
+                amount_due=rent_due,
+                landed_space=landed_space,
+                reason=rent_reason,
+            )
+            self.rebuild_all_menus()
+            return "resolved"
         paid = self._pay_rent_to_owner_or_bank(player, owner, rent_due, rent_reason)
 
         self.broadcast_l(

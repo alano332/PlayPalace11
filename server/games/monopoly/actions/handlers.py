@@ -22,6 +22,25 @@ MONOPOLY_MOVE_START_DELAY_TICKS = 8
 MONOPOLY_MOVE_STEP_INTERVAL_TICKS = 4
 
 
+def _resolve_property_amount_selection(
+    game: MonopolyGame,
+    player: Player,
+    option: str,
+    *,
+    option_builder: str,
+    space_ids: list[str],
+) -> str | None:
+    """Map a property amount label back to its underlying space id."""
+    resolved = game._parse_property_amount_option(option)
+    if resolved in space_ids:
+        return resolved
+    built_options = getattr(game, option_builder)(player)
+    for built_option, space_id in zip(built_options, space_ids, strict=False):
+        if built_option == option:
+            return space_id
+    return option if option in space_ids else None
+
+
 def _schedule_monopoly_roll_resolution(
     game: MonopolyGame,
     player: Player,
@@ -410,8 +429,15 @@ def action_mortgage_property(
     if game._is_junior_preset():
         return
     mono_player = player  # type: ignore[assignment]
-    resolved_space_id = game._parse_property_amount_option(space_id) or space_id
-    if resolved_space_id not in game._mortgage_space_ids(player):
+    mortgage_space_ids = game._mortgage_space_ids(player)
+    resolved_space_id = _resolve_property_amount_selection(
+        game,
+        player,
+        space_id,
+        option_builder="_options_for_mortgage_property",
+        space_ids=mortgage_space_ids,
+    )
+    if resolved_space_id not in mortgage_space_ids:
         return
     space = game.active_space_by_id.get(resolved_space_id)
     if not space:
@@ -430,6 +456,7 @@ def action_mortgage_property(
     )
 
     game._sync_cash_scores()
+    game._try_resolve_pending_rent_payment(mono_player)
     game.rebuild_all_menus()
 
 
@@ -441,8 +468,15 @@ def action_unmortgage_property(
     if game._is_junior_preset():
         return
     mono_player = player  # type: ignore[assignment]
-    resolved_space_id = game._parse_property_amount_option(space_id) or space_id
-    if resolved_space_id not in game._unmortgage_space_ids(player):
+    unmortgage_space_ids = game._unmortgage_space_ids(player)
+    resolved_space_id = _resolve_property_amount_selection(
+        game,
+        player,
+        space_id,
+        option_builder="_options_for_unmortgage_property",
+        space_ids=unmortgage_space_ids,
+    )
+    if resolved_space_id not in unmortgage_space_ids:
         return
     space = game.active_space_by_id.get(resolved_space_id)
     if not space:
@@ -463,6 +497,7 @@ def action_unmortgage_property(
     )
 
     game._sync_cash_scores()
+    game._try_resolve_pending_rent_payment(mono_player)
     game.rebuild_all_menus()
 
 
@@ -549,6 +584,7 @@ def action_sell_house(game: MonopolyGame, player: Player, space_id: str, action_
     )
 
     game._sync_cash_scores()
+    game._try_resolve_pending_rent_payment(mono_player)
     game.rebuild_all_menus()
 
 
@@ -637,6 +673,8 @@ def action_accept_trade(game: MonopolyGame, player: Player, action_id: str) -> N
     )
     game.pending_trade_offer = None
     game._sync_cash_scores()
+    game._try_resolve_pending_rent_payment(proposer)
+    game._try_resolve_pending_rent_payment(mono_player)
     game.rebuild_all_menus()
 
 

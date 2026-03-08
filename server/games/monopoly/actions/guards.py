@@ -178,10 +178,20 @@ def is_auction_pass_hidden(game: MonopolyGame, player: Player) -> Visibility:
 
 def is_mortgage_property_enabled(game: MonopolyGame, player: Player) -> str | None:
     """Enable mortgage action when player owns eligible properties."""
-    error = game.guard_turn_action_enabled(player)
+    error = game.guard_turn_action_enabled(
+        player,
+        require_current_player=not game._is_auction_active(),
+    )
     if error:
         return error
-    if game.turn_has_rolled and not game.turn_pending_purchase_space_id:
+    if not game._can_manage_assets_now(player):
+        return "monopoly-not-your-auction-turn" if game._is_auction_active() else "action-not-your-turn"
+    if (
+        game.turn_has_rolled
+        and not game.turn_pending_purchase_space_id
+        and not game._has_pending_rent_payment(player)  # type: ignore[arg-type]
+        and not game._is_auction_active()
+    ):
         return "monopoly-already-rolled"
     if game._is_junior_preset():
         return "monopoly-action-disabled-for-preset"
@@ -199,8 +209,15 @@ def is_mortgage_property_hidden(game: MonopolyGame, player: Player) -> Visibilit
         return Visibility.HIDDEN
     return game.turn_action_visibility(
         player,
+        require_current_player=not game._is_auction_active(),
         extra_condition=(
-            (not game.turn_has_rolled or bool(game.turn_pending_purchase_space_id))
+            game._can_manage_assets_now(player)
+            and (
+                not game.turn_has_rolled
+                or bool(game.turn_pending_purchase_space_id)
+                or game._has_pending_rent_payment(player)  # type: ignore[arg-type]
+                or game._is_auction_active()
+            )
             and bool(game._options_for_mortgage_property(player))
         ),
     )
@@ -266,14 +283,19 @@ def is_build_house_hidden(game: MonopolyGame, player: Player) -> Visibility:
 
 def is_sell_house_enabled(game: MonopolyGame, player: Player) -> str | None:
     """Enable house selling when at least one valid sell exists."""
-    error = game.guard_turn_action_enabled(player)
+    error = game.guard_turn_action_enabled(
+        player,
+        require_current_player=not game._is_auction_active(),
+    )
     if error:
         return error
-    if game.turn_has_rolled:
+    if not game._can_manage_assets_now(player):
+        return "monopoly-not-your-auction-turn" if game._is_auction_active() else "action-not-your-turn"
+    if game.turn_has_rolled and not game._has_pending_rent_payment(player) and not game._is_auction_active():  # type: ignore[arg-type]
         return "monopoly-already-rolled"
     if game._is_junior_preset():
         return "monopoly-action-disabled-for-preset"
-    if game.turn_pending_purchase_space_id:
+    if game.turn_pending_purchase_space_id and not game._has_pending_rent_payment(player):  # type: ignore[arg-type]
         return "monopoly-resolve-property-first"
     mono_player = player  # type: ignore[assignment]
     if mono_player.bankrupt:
@@ -288,7 +310,15 @@ def is_sell_house_hidden(game: MonopolyGame, player: Player) -> Visibility:
     if game._is_junior_preset():
         return Visibility.HIDDEN
     return game.turn_action_visibility(
-        player, extra_condition=not game.turn_has_rolled and bool(game._options_for_sell_house(player))
+        player,
+        require_current_player=not game._is_auction_active(),
+        extra_condition=game._can_manage_assets_now(player)
+        and (
+            not game.turn_has_rolled
+            or game._has_pending_rent_payment(player)  # type: ignore[arg-type]
+            or game._is_auction_active()
+        )
+        and bool(game._options_for_sell_house(player)),
     )
 
 
@@ -297,7 +327,7 @@ def is_offer_trade_enabled(game: MonopolyGame, player: Player) -> str | None:
     error = game.guard_turn_action_enabled(player)
     if error:
         return error
-    if game.turn_has_rolled:
+    if game.turn_has_rolled and not game._has_pending_rent_payment(player):  # type: ignore[arg-type]
         return "monopoly-already-rolled"
     if game._is_junior_preset():
         return "monopoly-action-disabled-for-preset"
@@ -319,7 +349,7 @@ def is_offer_trade_hidden(game: MonopolyGame, player: Player) -> Visibility:
         return Visibility.HIDDEN
     return game.turn_action_visibility(
         player,
-        extra_condition=not game.turn_has_rolled
+        extra_condition=(not game.turn_has_rolled or game._has_pending_rent_payment(player))  # type: ignore[arg-type]
         and game.pending_trade_offer is None
         and bool(game._options_for_offer_trade(player)),
     )

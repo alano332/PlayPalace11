@@ -227,11 +227,11 @@ def options_for_unmortgage_property(game: MonopolyGame, player: Player) -> list[
     ]
 
 
-def options_for_build_house(game: MonopolyGame, player: Player) -> list[str]:
-    """Menu options for buildable street properties."""
+def build_house_space_ids(game: MonopolyGame, player: Player) -> list[str]:
+    """Return buildable street-property ids in board order."""
     mono_player = player  # type: ignore[assignment]
-    options: list[str] = []
-    for space_id in mono_player.owned_space_ids:
+    space_ids: list[str] = []
+    for space_id in game._sorted_owned_space_ids(mono_player.id):
         if game.property_owners.get(space_id) != mono_player.id:
             continue
         space = game.active_space_by_id.get(space_id)
@@ -260,15 +260,31 @@ def options_for_build_house(game: MonopolyGame, player: Player) -> list[str]:
             continue
         if game._current_liquid_balance(mono_player) < space.house_cost:
             continue
-        options.append(space_id)
-    return sorted(options)
+        space_ids.append(space_id)
+    return space_ids
 
 
-def options_for_sell_house(game: MonopolyGame, player: Player) -> list[str]:
-    """Menu options for sellable street properties."""
-    mono_player = player  # type: ignore[assignment]
+def options_for_build_house(game: MonopolyGame, player: Player) -> list[str]:
+    """Menu options for buildable street properties."""
+    user = game.get_user(player)
+    locale = user.locale if user else "en"
     options: list[str] = []
-    for space_id in mono_player.owned_space_ids:
+    for space_id in build_house_space_ids(game, player):
+        space = game.active_space_by_id[space_id]
+        level = game._building_level(space_id)
+        house_word = "hotel" if level >= 4 else ("house" if level == 1 else "houses")
+        options.append(
+            f"{game._space_label(space_id, locale=locale)}, "
+            f"{level} {house_word}, price {game._format_money(space.house_cost)}"
+        )
+    return options
+
+
+def sell_house_space_ids(game: MonopolyGame, player: Player) -> list[str]:
+    """Return sellable street-property ids in board order."""
+    mono_player = player  # type: ignore[assignment]
+    space_ids: list[str] = []
+    for space_id in game._sorted_owned_space_ids(mono_player.id):
         if game.property_owners.get(space_id) != mono_player.id:
             continue
         space = game.active_space_by_id.get(space_id)
@@ -282,8 +298,24 @@ def options_for_sell_house(game: MonopolyGame, player: Player) -> list[str]:
         levels = game._group_levels(space.color_group)
         if not levels or level != max(levels):
             continue
-        options.append(space_id)
-    return sorted(options)
+        space_ids.append(space_id)
+    return space_ids
+
+
+def options_for_sell_house(game: MonopolyGame, player: Player) -> list[str]:
+    """Menu options for sellable street properties."""
+    user = game.get_user(player)
+    locale = user.locale if user else "en"
+    options: list[str] = []
+    for space_id in sell_house_space_ids(game, player):
+        space = game.active_space_by_id[space_id]
+        level = game._building_level(space_id)
+        house_word = "hotel" if level >= 5 else ("house" if level == 1 else "houses")
+        options.append(
+            f"{game._space_label(space_id, locale=locale)}, "
+            f"{level} {house_word}, price {game._format_money(max(0, space.house_cost // 2))}"
+        )
+    return options
 
 
 def bot_select_mortgage_property(game: MonopolyGame, player: Player, options: list[str]) -> str | None:

@@ -2093,6 +2093,28 @@ class MonopolyGame(ActionGuardMixin, Game):
             position=1,
         )
 
+    def _reopen_action_options_menu(
+        self,
+        player: Player,
+        *,
+        pending_action_id: str,
+        options: list[str],
+    ) -> None:
+        """Reopen a standard action-input menu and keep focus at the first option."""
+        user = self.get_user(player)
+        if not user or not options:
+            return
+        items = [MenuItem(text=option, id=option) for option in options]
+        items.append(MenuItem(text=Localization.get(user.locale, "back"), id="_cancel"))
+        self._pending_actions[player.id] = pending_action_id
+        user.show_menu(
+            "action_input_menu",
+            items,
+            multiletter=True,
+            escape_behavior=EscapeBehavior.SELECT_LAST,
+            position=1,
+        )
+
     def _is_view_active_deed_enabled(self, player: Player) -> str | None:
         """Enable active-deed lookup during an active game for all viewers."""
         if self.status != "playing":
@@ -3191,7 +3213,7 @@ class MonopolyGame(ActionGuardMixin, Game):
         while self._current_liquid_balance(player) < amount_due and attempts < max_attempts:
             attempts += 1
 
-            sell_choice = self._pick_best_building_sale(self._options_for_sell_house(player))
+            sell_choice = self._pick_best_building_sale(self._sell_house_space_ids(player))
             if sell_choice:
                 cash_before = self._current_liquid_balance(player)
                 self._action_sell_house(player, sell_choice, "sell_house")
@@ -6141,9 +6163,17 @@ class MonopolyGame(ActionGuardMixin, Game):
         """Menu options for buildable street properties."""
         return action_options.options_for_build_house(self, player)
 
+    def _build_house_space_ids(self, player: Player) -> list[str]:
+        """Return buildable street-property ids in board order."""
+        return action_options.build_house_space_ids(self, player)
+
     def _options_for_sell_house(self, player: Player) -> list[str]:
         """Menu options for sellable street properties."""
         return action_options.options_for_sell_house(self, player)
+
+    def _sell_house_space_ids(self, player: Player) -> list[str]:
+        """Return sellable street-property ids in board order."""
+        return action_options.sell_house_space_ids(self, player)
 
     def _is_mortgage_property_enabled(self, player: Player) -> str | None:
         """Enable mortgage action when player owns eligible properties."""

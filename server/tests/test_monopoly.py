@@ -1705,6 +1705,72 @@ def test_monopoly_sell_house_obeys_even_selling_rules():
     assert host.cash == starting_cash + sell_value
 
 
+def test_monopoly_build_and_sell_house_options_include_level_and_price() -> None:
+    game = _start_two_player_game()
+    host = game.players[0]
+
+    for space_id in ("mediterranean_avenue", "baltic_avenue"):
+        host.owned_space_ids.append(space_id)
+        game.property_owners[space_id] = host.id
+
+    assert game._options_for_build_house(host) == [
+        "Mediterranean Avenue, 0 houses, price $50",
+        "Baltic Avenue, 0 houses, price $50",
+    ]
+
+    game._set_building_level("mediterranean_avenue", 1)
+    game._set_building_level("baltic_avenue", 1)
+    assert game._options_for_sell_house(host) == [
+        "Mediterranean Avenue, 1 house, price $25",
+        "Baltic Avenue, 1 house, price $25",
+    ]
+
+
+def test_monopoly_build_house_menu_stays_open_when_more_options_remain() -> None:
+    game = _start_two_player_game()
+    host = game.players[0]
+    host_user = game.get_user(host)
+    assert host_user is not None
+
+    for space_id in ("mediterranean_avenue", "baltic_avenue"):
+        host.owned_space_ids.append(space_id)
+        game.property_owners[space_id] = host.id
+
+    game.execute_action(host, "build_house", input_value="Mediterranean Avenue, 0 houses, price $50")
+
+    menu = host_user.menus.get("action_input_menu")
+    assert menu is not None
+    labels = [item.text for item in menu["items"][:-1]]
+    assert labels == [
+        "Baltic Avenue, 0 houses, price $50",
+    ]
+    assert game._pending_actions.get(host.id) == "build_house"
+
+
+def test_monopoly_sell_house_menu_stays_open_when_more_options_remain() -> None:
+    game = _start_two_player_game()
+    host = game.players[0]
+    host_user = game.get_user(host)
+    assert host_user is not None
+
+    for space_id in ("mediterranean_avenue", "baltic_avenue"):
+        host.owned_space_ids.append(space_id)
+        game.property_owners[space_id] = host.id
+
+    game._set_building_level("mediterranean_avenue", 1)
+    game._set_building_level("baltic_avenue", 1)
+
+    game.execute_action(host, "sell_house", input_value="Mediterranean Avenue, 1 house, price $25")
+
+    menu = host_user.menus.get("action_input_menu")
+    assert menu is not None
+    labels = [item.text for item in menu["items"][:-1]]
+    assert labels == [
+        "Baltic Avenue, 1 house, price $25",
+    ]
+    assert game._pending_actions.get(host.id) == "sell_house"
+
+
 def test_monopoly_house_supply_limit_blocks_new_house_builds():
     game = _start_two_player_game()
     host = game.current_player

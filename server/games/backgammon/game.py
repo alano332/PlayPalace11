@@ -866,7 +866,9 @@ class BackgammonGame(Game):
         opp_player = self._get_player_by_color(opp_color)
         if opp_player:
             self.current_player = opp_player
-            self.broadcast_personal_l(opp_player, "game-your-turn", "game-turn-start")
+            user = self.get_user(opp_player)
+            sound = "game-turn-start" if user and user.preferences.play_turn_sound else None
+            self.broadcast_personal_l(opp_player, "game-your-turn", sound)
             if opp_player.is_bot:
                 BotHelper.jolt_bot(opp_player, ticks=random.randint(5, 10))  # nosec B311
 

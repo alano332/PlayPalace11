@@ -70,12 +70,13 @@ def _score_move(gs, move: SenetMove, player_num: int) -> int:
         score += 60
 
     # Forming or extending a protective pair at the destination
+    # Exclude the source square since that piece is the one moving
     if not move.is_bear_off and move.destination < 30:
         board = gs.board
         dest = move.water_dest if move.water_dest is not None else move.destination
-        if dest > 0 and board[dest - 1] == player_num:
+        if dest > 0 and board[dest - 1] == player_num and (dest - 1) != move.source:
             score += 50
-        if dest < 29 and board[dest + 1] == player_num:
+        if dest < 29 and board[dest + 1] == player_num and (dest + 1) != move.source:
             score += 50
 
     # Penalty for breaking own protection at source

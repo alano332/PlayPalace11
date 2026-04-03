@@ -18,11 +18,14 @@ senet-swap-you = You swap with { $opponent } on square { $to }. { $opponent } go
 senet-swap-other = { $player } swaps with { $opponent } on square { $to }. { $opponent } goes back to square { $from }.
 senet-bearoff-you = You bear off from square { $from }. { $remaining } remaining.
 senet-bearoff-other = { $player } bears off from square { $from }. { $remaining } remaining.
-senet-water = Landed in the House of Water! Piece sent to square { $dest }.
-senet-happiness = Reached the House of Happiness.
+senet-water-you = You landed in the House of Water! Piece sent to square { $dest }.
+senet-water-other = { $player } landed in the House of Water! Piece sent to square { $dest }.
+senet-happiness-you = You reached the House of Happiness.
+senet-happiness-other = { $player } reached the House of Happiness.
 
 # No moves
-senet-no-moves = { $player } has no legal moves.
+senet-no-moves-you = You have no legal moves.
+senet-no-moves-other = { $player } has no legal moves.
 
 # Square labels
 senet-sq-empty = { $sq }

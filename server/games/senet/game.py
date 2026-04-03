@@ -483,7 +483,9 @@ class SenetGame(Game):
         gs.turn_phase = "moving"
 
         if not has_any_legal_move(gs, player.player_num, value):
-            self.broadcast_l("senet-no-moves", player=player.name)
+            self.broadcast_personal_l(
+                player, "senet-no-moves-you", "senet-no-moves-other",
+            )
             self._after_move_or_skip(player)
             return
 
@@ -529,11 +531,22 @@ class SenetGame(Game):
             self.broadcast_sound("game_chess/capture1.ogg")
             if move.water_dest is not None:
                 dest_sq = move.water_dest + 1
-                self.broadcast_l("senet-water", dest=dest_sq)
+                self.broadcast_personal_l(
+                    player, "senet-water-you", "senet-water-other", dest=dest_sq,
+                )
                 self.broadcast_sound("game_squares/step1.ogg")
         elif move.water_dest is not None:
+            to_sq = move.destination + 1
+            self.broadcast_personal_l(
+                player,
+                "senet-move-you",
+                "senet-move-other",
+                **{"from": from_sq, "to": to_sq},
+            )
             dest_sq = move.water_dest + 1
-            self.broadcast_l("senet-water", dest=dest_sq)
+            self.broadcast_personal_l(
+                player, "senet-water-you", "senet-water-other", dest=dest_sq,
+            )
             self.broadcast_sound("game_squares/step1.ogg")
         else:
             to_sq = move.destination + 1
@@ -547,7 +560,9 @@ class SenetGame(Game):
 
             # Announce reaching House of Happiness
             if move.destination == HOUSE_HAPPINESS:
-                self.broadcast_l("senet-happiness")
+                self.broadcast_personal_l(
+                    player, "senet-happiness-you", "senet-happiness-other",
+                )
 
         # Check win
         if gs.off[pnum] >= PIECES_PER_PLAYER:

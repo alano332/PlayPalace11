@@ -168,13 +168,13 @@ default_locale = "es"
 
 def test_check_registration_rate_limit_blocked(monkeypatch, server):
     monkeypatch.setattr(server, "_allow_attempt", lambda *args, **kwargs: False)
-    msg = server._check_registration_rate_limit("1.2.3.4", "en")
+    msg = server._check_registration_rate_limit("1.2.3.4", locale="en")
     assert "registration attempts" in msg
 
 
 def test_check_refresh_rate_limit_blocked(monkeypatch, server):
     monkeypatch.setattr(server, "_allow_attempt", lambda *args, **kwargs: False)
-    msg = server._check_refresh_rate_limit("1.2.3.4", "en")
+    msg = server._check_refresh_rate_limit("1.2.3.4", locale="en")
     assert "refresh attempts" in msg
 
 

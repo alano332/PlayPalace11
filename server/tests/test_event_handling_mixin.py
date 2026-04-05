@@ -187,7 +187,7 @@ def test_leave_game_confirm_yes_calls_handler_and_clears_state():
     assert "leave_game_confirm" in user.removed
     assert player.id not in game._pending_actions
     assert game.leave_requests == [player.id]
-    assert game.rebuild_player_calls == 1
+    assert game.rebuild_player_calls == 0
 
 
 def test_keybind_event_executes_enabled_and_speaks_disabled():

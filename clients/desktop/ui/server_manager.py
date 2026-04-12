@@ -138,10 +138,7 @@ class AccountEditorDialog(wx.Dialog):
     def on_key(self, event):
         """Handle key events."""
         if event.GetKeyCode() == wx.WXK_ESCAPE:
-            if not self._validate_for_close():
-                return
-            self._save_if_needed()
-            self.EndModal(wx.ID_OK)
+            self.EndModal(wx.ID_CANCEL)
         else:
             event.Skip()
 
@@ -282,6 +279,11 @@ class AccountEditorDialog(wx.Dialog):
 
     def on_close(self, event):
         """Handle close button click."""
+        username = self.username_input.GetValue().strip()
+        if not username:
+            self.EndModal(wx.ID_CANCEL)
+            return
+
         if not self._validate_for_close():
             return
         self._save_if_needed()
@@ -570,10 +572,7 @@ class ServerEditorDialog(wx.Dialog):
     def on_key(self, event):
         """Handle key events."""
         if event.GetKeyCode() == wx.WXK_ESCAPE:
-            if not self._validate_for_close():
-                return
-            self._save_if_needed()
-            self.EndModal(wx.ID_OK)
+            self.EndModal(wx.ID_CANCEL)
         else:
             event.Skip()
 
@@ -656,13 +655,18 @@ class ServerEditorDialog(wx.Dialog):
         if not name:
             return  # Don't save without a name
 
+        try:
+            port_num = int(port)
+        except ValueError:
+            return  # Don't save with an invalid port
+
         if self.server_id:
             # Update existing server
             self.config_manager.update_server(
                 self.server_id,
                 name=name,
                 host=host,
-                port=int(port),
+                port=port_num,
                 notes=notes,
             )
         else:
@@ -670,7 +674,7 @@ class ServerEditorDialog(wx.Dialog):
             self.server_id = self.config_manager.add_server(
                 name=name,
                 host=host,
-                port=int(port),
+                port=port_num,
                 notes=notes,
             )
             # Reload server data
@@ -678,6 +682,11 @@ class ServerEditorDialog(wx.Dialog):
 
     def on_close(self, event):
         """Handle close button click."""
+        name = self.name_input.GetValue().strip()
+        if not name:
+            self.EndModal(wx.ID_CANCEL)
+            return
+
         if not self._validate_for_close():
             return
         self._save_if_needed()

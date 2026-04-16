@@ -134,8 +134,15 @@ class EventHandlingMixin:
             resolved = self.resolve_action(player, action)
             if resolved.enabled:
                 self.execute_action(player, action_id)
-        # Don't rebuild if action is waiting for input or status box is open
-        if player.id not in self._pending_actions and player.id not in self._status_box_open:
+        # Don't rebuild if action opened another transient UI
+        if (
+            player.id not in self._pending_actions
+            and player.id not in self._status_box_open
+            and (
+                not hasattr(self, "_game_options_view_path")
+                or player.id not in self._game_options_view_path
+            )
+        ):
             self.rebuild_player_menu(player)
 
     def _handle_turn_menu_selection(self, player: "Player", event: dict, selection_id: str) -> None:
@@ -180,6 +187,10 @@ class EventHandlingMixin:
             player.id not in self._pending_actions
             and player.id not in self._status_box_open
             and player.id not in self._actions_menu_open
+            and (
+                not hasattr(self, "_game_options_view_path")
+                or player.id not in self._game_options_view_path
+            )
         ):
             self.rebuild_player_menu(player)
 
@@ -279,4 +290,8 @@ class EventHandlingMixin:
             and player.id not in self._pending_actions
             and player.id not in self._status_box_open
             and player.id not in self._actions_menu_open
+            and (
+                not hasattr(self, "_game_options_view_path")
+                or player.id not in self._game_options_view_path
+            )
         )

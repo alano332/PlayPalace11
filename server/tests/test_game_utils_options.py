@@ -18,6 +18,7 @@ from server.game_utils.options import (
     option_group,
 )
 from server.game_utils.options import OptionsHandlerMixin
+from server.game_utils.event_handling_mixin import EventHandlingMixin
 from server.games.base import Player
 from server.messages.localization import Localization
 
@@ -69,6 +70,20 @@ class ReadonlyOptionsGame(OptionsHandlerMixin):
 
     def rebuild_player_menu(self, player: Player) -> None:
         self.rebuilt_players.append(player.id)
+
+
+class ViewerRebuildGuardGame(EventHandlingMixin, OptionsHandlerMixin):
+    def __init__(self, user: OptionsUser, options: GameOptions):
+        self._user = user
+        self.options = options
+        self.players: list[Player] = []
+        self._game_options_view_path: dict[str, list[str]] = {}
+        self._pending_actions: dict[str, str] = {}
+        self._status_box_open: set[str] = set()
+        self._actions_menu_open: set[str] = set()
+
+    def get_user(self, player: Player) -> OptionsUser | None:
+        return self._user
 
 
 @dataclass
@@ -912,3 +927,22 @@ def test_check_game_options_without_options_speaks_message(monkeypatch):
     game._action_check_game_options(player, "check_game_options")
 
     assert user._last_speak == ("no-game-options", {})
+
+
+def test_game_options_view_blocks_post_action_rebuilds(monkeypatch):
+    monkeypatch.setattr(
+        "server.game_utils.options.Localization.get",
+        lambda locale, key, **kw: key,
+    )
+
+    user = OptionsUser()
+    game = ViewerRebuildGuardGame(user, GroupedOptions())
+    player = Player(id="p1", name="Alice")
+    game.players = [player]
+
+    assert game._should_rebuild_after_keybind(player, executed_any=True) is True
+
+    game._action_check_game_options(player, "check_game_options")
+
+    assert player.id in game._game_options_view_path
+    assert game._should_rebuild_after_keybind(player, executed_any=True) is False

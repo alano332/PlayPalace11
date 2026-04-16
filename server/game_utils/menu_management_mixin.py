@@ -42,6 +42,8 @@ class MenuManagementMixin:
             return  # Don't rebuild turn menu after game has ended
         if player.id in self._status_box_open:
             return  # Don't clobber status box with turn menu
+        if hasattr(self, "_game_options_view_path") and player.id in self._game_options_view_path:
+            return  # Don't clobber the readonly game options view
         user = self.get_user(player)
         if not user:
             return
@@ -82,6 +84,8 @@ class MenuManagementMixin:
             return
         if player.id in self._status_box_open:
             return  # Don't clobber status box with turn menu
+        if hasattr(self, "_game_options_view_path") and player.id in self._game_options_view_path:
+            return  # Don't clobber the readonly game options view
         user = self.get_user(player)
         if not user:
             return

@@ -88,7 +88,7 @@ export function createMarkdownViewer({ dialogEl, onSubmit }) {
         });
       } else {
         // Fallback if parsing libraries fail to load
-        htmlOutput = `<p style="color: red;">Markdown renderer failed to load.</p><pre>${rawMarkdown.replace(/</g, '&lt;')}</pre>`;
+        htmlOutput = `<p style="color: red;">Markdown renderer failed to load.</p><pre>${rawMarkdown.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`;
       }
       
       contentEl.innerHTML = htmlOutput;

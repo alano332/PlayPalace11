@@ -184,8 +184,8 @@
           await loadScript(`./config.sample.js?${cacheBust}`, { optional: true });
           await loadScript(`./config.js?${cacheBust}`, { optional: true });
           
-          await loadScript(`./libs/marked.min.js?${cacheBust}`);
-          await loadScript(`./libs/purify.min.js?${cacheBust}`);
+          await loadScript(`./libs/marked.min.js?${cacheBust}`, { optional: true });
+          await loadScript(`./libs/purify.min.js?${cacheBust}`, { optional: true });
 
           const version = String(window.PLAYPALACE_WEB_VERSION || "2026.02.08.1").trim();
           await loadScript(`./app.js?v=${encodeURIComponent(version)}&${cacheBust}`, {

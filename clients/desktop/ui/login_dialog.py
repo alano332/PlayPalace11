@@ -64,6 +64,7 @@ class LoginDialog(wx.Dialog):
         self.tree = ManagedTreeCtrl(
             self.panel,
             style=wx.TR_HAS_BUTTONS | wx.TR_SINGLE | wx.TR_HIDE_ROOT,
+            name="Servers and accounts",
         )
         sizer.Add(self.tree, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
 
